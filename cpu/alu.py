@@ -25,7 +25,7 @@ class ALU:
         sa = a if a < 0x80000000 else a - 0x100000000
         sb = b if b < 0x80000000 else b - 0x100000000
 
-        if op == Opcode.OP_ADD:
+        if op == Opcode.OP_ADD or op in (Opcode.OP_LD, Opcode.OP_ST):
             out.result = (a + b) & 0xFFFFFFFF
 
         elif op == Opcode.OP_SUB:

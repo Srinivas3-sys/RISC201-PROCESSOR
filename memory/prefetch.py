@@ -106,17 +106,18 @@ class Prefetcher:
             if pc in self.rpt:
                 entry = self.rpt[pc]
                 stride = addr - entry.last_addr
+                if entry.state == "TRANSIENT" and stride == entry.stride:
+                    entry.state = "STEADY"
+                elif entry.state != "STEADY":
+                    entry.stride = stride
+                    entry.state = "TRANSIENT"
+
                 if entry.state == "STEADY" and stride == entry.stride:
                     for d in range(1, self.degree + 1):
                         target = line_aligned + (d * entry.stride)
                         target = (target // self.line_size) * self.line_size
                         if not self._crosses_page(line_aligned, target):
                             candidates.append(target)
-                elif entry.state == "TRANSIENT" and stride == entry.stride:
-                    entry.state = "STEADY"
-                else:
-                    entry.stride = stride
-                    entry.state = "TRANSIENT"
                 entry.last_addr = addr
             else:
                 if len(self.rpt) >= self.max_rpt_entries:

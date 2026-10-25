@@ -256,7 +256,7 @@ class VirtualMemorySubsystem:
 
         # Physical Memory & Frame Allocator
         self.phys_mem_size = config.phys_mem_size_bytes
-        self.total_frames = max(4, self.phys_mem_size // self.page_size)
+        self.total_frames = max(2, self.phys_mem_size // self.page_size)
         self.free_frames: List[int] = list(range(self.total_frames))
         self.frame_to_vpn: Dict[int, Tuple[int, int]] = {} # frame_id -> (asid, vpn)
         self.frame_use_bits: Dict[int, bool] = {f: False for f in range(self.total_frames)}
@@ -325,7 +325,8 @@ class VirtualMemorySubsystem:
         execute: bool = False,
         user: bool = True,
         asid: int = 0,
-        is_guard: bool = False
+        is_guard: bool = False,
+        present: bool = True
     ) -> PTE:
         """
         Inserts or maps a page in the multi-level page table.
@@ -349,6 +350,8 @@ class VirtualMemorySubsystem:
         if is_guard:
             # Guard page has no permissions (causes guard page fault on access)
             pte = PTE(pfn=0, present=False, read=False, write=False, execute=False, user=user)
+        elif not present:
+            pte = PTE(pfn=0, present=False, read=read, write=write, execute=execute, user=user)
         else:
             if pfn is None:
                 pfn = self.allocate_frame(vpn, asid)
@@ -483,16 +486,6 @@ class VirtualMemorySubsystem:
                 details=f"Unmapped virtual address 0x{vaddr:08X}"
             )
 
-        # Check permissions
-        if is_write and not pte.write:
-            self.protection_faults += 1
-            raise PageFaultException(
-                fault_type="protection_violation",
-                vaddr=vaddr,
-                pc=pc,
-                details=f"Write permission violation at 0x{vaddr:08X}"
-            )
-
         if not pte.read and not pte.write:
             # Guard Page Fault
             self.protection_faults += 1
@@ -501,6 +494,16 @@ class VirtualMemorySubsystem:
                 vaddr=vaddr,
                 pc=pc,
                 details=f"Stack guard page violation at 0x{vaddr:08X}"
+            )
+
+        # Check permissions
+        if is_write and not pte.write:
+            self.protection_faults += 1
+            raise PageFaultException(
+                fault_type="protection_violation",
+                vaddr=vaddr,
+                pc=pc,
+                details=f"Write permission violation at 0x{vaddr:08X}"
             )
 
         if not pte.present:
