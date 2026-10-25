@@ -153,6 +153,8 @@ class Pipeline6Stage:
         self.cache_stall_cycles = 0
         self.ma_pending_stall = 0
         self.if_pending_stall = 0
+        self.if_latched_inst = 0
+        self.if_latched_pc = 0
 
         self.forwarding_enabled = True
         self.asid = 0
@@ -186,6 +188,8 @@ class Pipeline6Stage:
         self.cache_stall_cycles = 0
         self.ma_pending_stall = 0
         self.if_pending_stall = 0
+        self.if_latched_inst = 0
+        self.if_latched_pc = 0
 
     def is_drained(self) -> bool:
         return (self.program_size > 0 and self.pc >= self.program_size) and \
@@ -209,6 +213,19 @@ class Pipeline6Stage:
             self.ma_pending_stall -= 1
             self.cache_stall_cycles += 1
             return
+
+        if self.if_pending_stall > 0:
+            self.if_pending_stall -= 1
+            self.cache_stall_cycles += 1
+            stall_if = True
+            if self.if_pending_stall == 0:
+                self.next_if_id.pc = self.if_latched_pc
+                self.next_if_id.instruction = self.if_latched_inst
+                self.next_if_id.is_bubble = False
+                self.next_if_id.disassembly = disassemble_instruction(self.if_latched_inst, self.if_latched_pc)
+                self.pc += 4
+            else:
+                self.next_if_id.reset()
 
         # =====================================================================
         # STAGE 6: RW (Register Writeback Stage)
@@ -457,7 +474,15 @@ class Pipeline6Stage:
                 )
                 if fetch_lat > 1:
                     self.if_pending_stall = fetch_lat - 1
-                    self.cache_stall_cycles += (fetch_lat - 1)
+                    self.if_latched_inst = inst_word
+                    self.if_latched_pc = self.pc
+                    self.next_if_id.reset()
+                else:
+                    self.next_if_id.pc = self.pc
+                    self.next_if_id.instruction = inst_word
+                    self.next_if_id.is_bubble = False
+                    self.next_if_id.disassembly = disassemble_instruction(inst_word, self.pc)
+                    self.pc += 4
             except PageFaultException as pfe:
                 self.current_exception.type = ExceptionType.OUT_OF_BOUNDS_MEMORY
                 self.current_exception.faulting_pc = self.pc
@@ -465,13 +490,6 @@ class Pipeline6Stage:
                 self.current_exception.details = pfe.details
                 self.halted = True
                 return
-
-            self.next_if_id.pc = self.pc
-            self.next_if_id.instruction = inst_word
-            self.next_if_id.is_bubble = False
-            self.next_if_id.disassembly = disassemble_instruction(inst_word, self.pc)
-
-            self.pc += 4
 
         # Synchronous Latch Updates
         if bubble_ex:
@@ -481,8 +499,10 @@ class Pipeline6Stage:
 
         if not stall_id:
             self.l_id_rf = self.next_id_rf
-        if not stall_if:
+        if not stall_if or self.if_pending_stall == 0:
             self.l_if_id = self.next_if_id
+        else:
+            self.l_if_id.reset()
 
         self.l_ex_ma = self.next_ex_ma
         self.l_ma_rw = self.next_ma_rw
