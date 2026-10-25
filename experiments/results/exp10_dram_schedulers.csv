@@ -1,0 +1,3 @@
+Scheduler,Total_Requests,Row_Hits,Row_Empties,Row_Conflicts,HitRate_Pct,Total_DRAM_Cycles
+FCFS,60,59,1,0,98.33,2024
+FRFCFS,60,59,1,0,98.33,2024

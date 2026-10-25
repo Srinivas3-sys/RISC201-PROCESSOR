@@ -1,0 +1,7 @@
+Channels,Banks,Mapping,Conflicts,Max_Bank_Accesses,Avg_Latency_Cycles
+1,16,row_bg_bank_col_chan_byte,0,16,2268.00
+1,16,xor_hash,48,4,5524.31
+2,16,row_bg_bank_col_chan_byte,0,32,2197.00
+2,16,xor_hash,48,4,5508.53
+4,16,row_bg_bank_col_chan_byte,0,64,2175.00
+4,16,xor_hash,48,4,5519.62

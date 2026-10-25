@@ -20,4 +20,23 @@ risc201_eval: evaluation/CompareProcessors.cpp common/*.hpp alu/*.hpp microcode/
 clean:
 	rm -f $(TARGETS) *.hex *.bin
 
-.PHONY: all clean
+# Python Memory Hierarchy & VM Targets
+test-mem:
+	pytest -v tests/test_mem*.py
+
+test-vm:
+	pytest -v tests/test_vm*.py
+
+test-all:
+	pytest -v tests/
+
+exp:
+	python3 experiments/run_experiments.py
+
+demo-mem:
+	python3 sim.py benchmarks/factorial_iter.s --mem-preset modern
+
+demo-vm:
+	python3 sim.py benchmarks/factorial_rec.s --mem-preset modern --pipeline 6
+
+.PHONY: all clean test-mem test-vm test-all exp demo-mem demo-vm

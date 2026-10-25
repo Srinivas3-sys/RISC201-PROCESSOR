@@ -1,0 +1,3 @@
+Scheme,Switches,Total_Translations,TLB_Hits,TLB_Misses,HitRate_Pct,Page_Walk_Cycles
+No ASID (Flush on Switch),100,100,0,100,0.00,1244
+With ASID,100,100,84,16,84.00,236

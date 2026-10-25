@@ -1,0 +1,3 @@
+DRAM_Type,Bus_Clock_MHz,Data_Rate_MTs,Subchannels,Bus_Width_Bits,Peak_Bandwidth_GBs,tCL_ns,Row_Hit_Latency_ns
+DDR4-3200,1600,3200,1,64,25.60,13.75,16.25
+DDR5-4800,2404,4808,2,32,38.46,16.64,19.97

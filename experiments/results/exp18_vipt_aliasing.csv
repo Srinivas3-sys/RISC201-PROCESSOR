@@ -1,0 +1,13 @@
+Cache_Size_KB,Assoc,Bytes_Per_Way_KB,Page_Size_KB,Aliasing_Detected,Hardware_Cost
+16,2,8,4,YES (Aliasing!),Synonym bits needed / Page color tag
+16,4,4,4,NO (Safe),Zero hardware overhead (VIPT transparent)
+16,8,2,4,NO (Safe),Zero hardware overhead (VIPT transparent)
+32,2,16,4,YES (Aliasing!),Synonym bits needed / Page color tag
+32,4,8,4,YES (Aliasing!),Synonym bits needed / Page color tag
+32,8,4,4,NO (Safe),Zero hardware overhead (VIPT transparent)
+64,2,32,4,YES (Aliasing!),Synonym bits needed / Page color tag
+64,4,16,4,YES (Aliasing!),Synonym bits needed / Page color tag
+64,8,8,4,YES (Aliasing!),Synonym bits needed / Page color tag
+128,2,64,4,YES (Aliasing!),Synonym bits needed / Page color tag
+128,4,32,4,YES (Aliasing!),Synonym bits needed / Page color tag
+128,8,16,4,YES (Aliasing!),Synonym bits needed / Page color tag

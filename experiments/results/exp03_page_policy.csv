@@ -1,0 +1,7 @@
+Policy,Pattern,Total_Accesses,Row_Hits,Row_Empties,Row_Conflicts,HitRate_Pct,Avg_DRAM_Latency
+OPEN,Sequential,100,99,1,0,99.00,3363.00
+OPEN,Strided_4KB,100,93,7,0,93.00,3619.00
+OPEN,Random,100,0,16,84,0.00,8526.74
+CLOSED,Sequential,100,0,100,0,0.00,7112.54
+CLOSED,Strided_4KB,100,0,100,0,0.00,7106.78
+CLOSED,Random,100,0,100,0,0.00,6929.54

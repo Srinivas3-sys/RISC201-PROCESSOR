@@ -1,0 +1,5 @@
+PTE_Served_By,Walk_Levels,Per_Level_Latency_Cycles,Total_Walk_Cost_Cycles
+L1D (Cache Hit),4,4,17
+L2 (Cache Hit),4,12,49
+L3 (Cache Hit),4,38,153
+DRAM (Cache Miss),4,70,281

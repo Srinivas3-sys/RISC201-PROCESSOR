@@ -157,7 +157,16 @@ class Assembler:
                 continue
 
             tokens = [t.strip() for t in re.split(r"[\s,]+", line) if t.strip()]
-            m = tokens[0].lower()
+            raw_m = tokens[0].lower()
+            m = raw_m
+            modifier = 0 # 00: default, 01: unsigned 'u', 10: high 'h'
+            if len(raw_m) > 2 and raw_m != "push":
+                if raw_m.endswith("u"):
+                    modifier = 1
+                    m = raw_m[:-1]
+                elif raw_m.endswith("h"):
+                    modifier = 2
+                    m = raw_m[:-1]
 
             word = 0
             if m == "nop":
@@ -188,7 +197,7 @@ class Assembler:
                 else:
                     raise ValueError(f"Malformed memory operand: {mem_spec}")
                 op = Opcode.OP_LD if m == "ld" else Opcode.OP_ST
-                word = (op << 27) | (1 << 26) | (rd << 22) | (rs1 << 18) | (offset & 0xFFFF)
+                word = (op << 27) | (1 << 26) | (rd << 22) | (rs1 << 18) | ((modifier & 3) << 16) | (offset & 0xFFFF)
 
             elif m == "mov":
                 rd = self._parse_reg(tokens[1])
@@ -198,7 +207,7 @@ class Assembler:
                     word = (Opcode.OP_MOV << 27) | (0 << 26) | (rd << 22) | (rs2 << 14)
                 else:
                     imm = self._parse_imm(arg2)
-                    word = (Opcode.OP_MOV << 27) | (1 << 26) | (rd << 22) | (imm & 0xFFFF)
+                    word = (Opcode.OP_MOV << 27) | (1 << 26) | (rd << 22) | ((modifier & 3) << 16) | (imm & 0xFFFF)
 
             elif m == "not":
                 rd = self._parse_reg(tokens[1])
@@ -208,7 +217,7 @@ class Assembler:
                     word = (Opcode.OP_NOT << 27) | (0 << 26) | (rd << 22) | (rs2 << 14)
                 else:
                     imm = self._parse_imm(arg2)
-                    word = (Opcode.OP_NOT << 27) | (1 << 26) | (rd << 22) | (imm & 0xFFFF)
+                    word = (Opcode.OP_NOT << 27) | (1 << 26) | (rd << 22) | ((modifier & 3) << 16) | (imm & 0xFFFF)
 
             elif m == "cmp":
                 rs1 = self._parse_reg(tokens[1])
@@ -218,7 +227,7 @@ class Assembler:
                     word = (Opcode.OP_CMP << 27) | (0 << 26) | (rs1 << 18) | (rs2 << 14)
                 else:
                     imm = self._parse_imm(arg2)
-                    word = (Opcode.OP_CMP << 27) | (1 << 26) | (rs1 << 18) | (imm & 0xFFFF)
+                    word = (Opcode.OP_CMP << 27) | (1 << 26) | (rs1 << 18) | ((modifier & 3) << 16) | (imm & 0xFFFF)
 
             else:
                 # 3-operand instructions: add, sub, mul, div, mod, and, or, lsl, lsr, asr, min, max, rots
@@ -241,7 +250,7 @@ class Assembler:
                     word = (op << 27) | (0 << 26) | (rd << 22) | (rs1 << 18) | (rs2 << 14)
                 else:
                     imm = self._parse_imm(arg3)
-                    word = (op << 27) | (1 << 26) | (rd << 22) | (rs1 << 18) | (imm & 0xFFFF)
+                    word = (op << 27) | (1 << 26) | (rd << 22) | (rs1 << 18) | ((modifier & 3) << 16) | (imm & 0xFFFF)
 
             self.machine_words.append(word)
             self.assembled_lines.append((pc, word, line))
