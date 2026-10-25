@@ -65,7 +65,16 @@ public:
         hword.disassembly = vinst.disassembly;
 
         // Map source register to write-bus enable
-        switch (vinst.src) {
+        MicroReg srcReg = vinst.src;
+        MicroReg destReg = vinst.dest;
+        if (vinst.type == MicroOp::MBEQ) {
+            if (srcReg == MicroReg::NONE) {
+                srcReg = destReg;
+            }
+            destReg = MicroReg::NONE; // Conditional microbranch does not write back to destination register
+        }
+
+        switch (srcReg) {
             case MicroReg::PC: hword.setSignal(HorizontalControlWord::CB_PC_OUT); break;
             case MicroReg::IR: hword.setSignal(HorizontalControlWord::CB_IR_OUT); break;
             case MicroReg::I_BIT: hword.setSignal(HorizontalControlWord::CB_I_OUT); break;
@@ -89,7 +98,7 @@ public:
         }
 
         // Map dest register to read-bus enable
-        switch (vinst.dest) {
+        switch (destReg) {
             case MicroReg::PC: hword.setSignal(HorizontalControlWord::CB_PC_IN); break;
             case MicroReg::REG_SRC: hword.setSignal(HorizontalControlWord::CB_REG_SRC_IN); break;
             case MicroReg::REG_DATA: hword.setSignal(HorizontalControlWord::CB_REG_DATA_IN); break;

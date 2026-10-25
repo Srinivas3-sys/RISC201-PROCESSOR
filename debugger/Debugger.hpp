@@ -20,6 +20,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <regex>
 
 namespace risc201 {
 namespace debugger {
@@ -45,7 +46,7 @@ public:
     stage6::Pipeline6Stage p6;
     microcode::MicroController mcu;
 
-    SimMode currentSimMode{SimMode::PIPELINE_4STAGE};
+    SimMode currentSimMode{SimMode::MICROCODED};
     std::set<Word> breakpoints;
     std::string loadedProgramSource;
     assembler::Assembler asmEngine;
@@ -80,6 +81,12 @@ public:
         std::cout << "Successfully assembled and loaded " << words.size()
                   << " instructions (" << (words.size() * 4) << " bytes) at address 0x00000000.\n";
         return true;
+    }
+
+    bool setCustomInput(Word n) {
+        std::regex reg(R"(\bmov\s+r0\s*,\s*\d+)");
+        std::string updated = std::regex_replace(loadedProgramSource, reg, "mov r0, " + std::to_string(n));
+        return loadAssemblyString(updated);
     }
 
     void setBreakpoint(Word addr) {
@@ -285,6 +292,7 @@ public:
                   << "  div <rest|nonrest>      : Select ALU divider algorithm\n"
                   << "  mem <start_hex> <count> : Dump memory words (e.g. mem 0x0 8)\n"
                   << "  disasm <start> <count>  : Disassemble memory instructions\n"
+                  << "  set_n <n>, input <n>    : Set custom input number for r0 (e.g. set_n 7)\n"
                   << "  stats                   : Display performance & hazard counters\n"
                   << "  help                    : Show this command list\n"
                   << "  q, quit                 : Exit debugger\n"
@@ -413,6 +421,20 @@ public:
                 ss >> startStr >> count;
                 Word start = assembler::Disassembler::parseHexString(startStr);
                 disassembleMemory(start, count);
+            } else if (cmd == "set_n" || cmd == "input" || cmd == "n") {
+                std::string nStr;
+                if (ss >> nStr) {
+                    try {
+                        Word nVal = std::stoul(nStr);
+                        if (setCustomInput(nVal)) {
+                            std::cout << "Successfully updated input: n = " << nVal << ". Type 'r' to execute.\n";
+                        }
+                    } catch (...) {
+                        std::cout << "Invalid number: " << nStr << "\n";
+                    }
+                } else {
+                    std::cout << "Usage: set_n <number> (e.g. set_n 7)\n";
+                }
             } else {
                 std::cout << "Unknown command: '" << cmd << "'. Type 'help' for instructions.\n";
             }

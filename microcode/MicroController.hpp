@@ -145,7 +145,7 @@ public:
             emit(MicroOp::MMOV, MicroReg::A, MicroReg::REG_VAL, 0, 0, FunctionalArg::NONE, "mmov A, regVal");
             // mbeq I, 1, .imm
             uint16_t branchIdx = static_cast<uint16_t>(controlStoreVertical.size());
-            emit(MicroOp::MBEQ, MicroReg::I_BIT, MicroReg::NONE, 1, branchIdx + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
+            emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::I_BIT, 1, branchIdx + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
             // mmov regSrc, rs2, <read>
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS2, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs2, <read>");
             // mmov B, regVal, <aluop>
@@ -179,7 +179,7 @@ public:
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
             opcodeDispatchTable[OP_MOV] = start;
             // mbeq I, 1, .imm
-            emit(MicroOp::MBEQ, MicroReg::I_BIT, MicroReg::NONE, 1, start + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
+            emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::I_BIT, 1, start + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
             // mmov regSrc, rs2, <read>
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS2, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs2, <read>");
             // mmov regData, regVal
@@ -198,7 +198,7 @@ public:
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
             opcodeDispatchTable[OP_NOT] = start;
-            emit(MicroOp::MBEQ, MicroReg::I_BIT, MicroReg::NONE, 1, start + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
+            emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::I_BIT, 1, start + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS2, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs2, <read>");
             emit(MicroOp::MMOV, MicroReg::B, MicroReg::REG_VAL, 0, 0, FunctionalArg::ALU_NOT, "mmov B, regVal, <not>");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, start + 5, FunctionalArg::NONE, "mb .rw");
@@ -214,7 +214,7 @@ public:
             opcodeDispatchTable[OP_CMP] = start;
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS1, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs1, <read>");
             emit(MicroOp::MMOV, MicroReg::A, MicroReg::REG_VAL, 0, 0, FunctionalArg::NONE, "mmov A, regVal");
-            emit(MicroOp::MBEQ, MicroReg::I_BIT, MicroReg::NONE, 1, start + 5, FunctionalArg::NONE, "mbeq I, 1, .imm");
+            emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::I_BIT, 1, start + 6, FunctionalArg::NONE, "mbeq I, 1, .imm");
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS2, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs2, <read>");
             emit(MicroOp::MMOV, MicroReg::B, MicroReg::REG_VAL, 0, 0, FunctionalArg::ALU_CMP, "mmov B, regVal, <cmp>");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
@@ -267,7 +267,7 @@ public:
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
             opcodeDispatchTable[OP_BEQ] = start;
-            emit(MicroOp::MBEQ, MicroReg::FLAGS_E, MicroReg::NONE, 1, start + 3, FunctionalArg::NONE, "mbeq flags.E, 1, .branch");
+            emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::FLAGS_E, 1, start + 2, FunctionalArg::NONE, "mbeq flags.E, 1, .branch");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
             emit(MicroOp::MMOV, MicroReg::PC, MicroReg::BRANCH_TARGET, 0, 0, FunctionalArg::NONE, "mmov pc, branchTarget");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
@@ -277,7 +277,7 @@ public:
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
             opcodeDispatchTable[OP_BGT] = start;
-            emit(MicroOp::MBEQ, MicroReg::FLAGS_GT, MicroReg::NONE, 1, start + 3, FunctionalArg::NONE, "mbeq flags.GT, 1, .branch");
+            emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::FLAGS_GT, 1, start + 2, FunctionalArg::NONE, "mbeq flags.GT, 1, .branch");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
             emit(MicroOp::MMOV, MicroReg::PC, MicroReg::BRANCH_TARGET, 0, 0, FunctionalArg::NONE, "mmov pc, branchTarget");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");

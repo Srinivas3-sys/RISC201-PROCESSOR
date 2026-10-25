@@ -2,10 +2,10 @@
 ; Benchmark: Recursive Factorial (Sarangi Example 34)
 ; Tests procedure calls, return address (ra), stack frames,
 ; and full-descending stack pointer updates.
-; Computes 5! = 120 (0x78) into r1
+; Computes 10! = 3628800 (0x375F00) into r1
 ; ========================================================
 .text
-    mov r0, 5          ; Input n = 5
+    mov r0, 10         ; Input n = 10 (10! = 3628800 = 0x375F00)
     call .factorial    ; invoke factorial(n)
     b .exit
 

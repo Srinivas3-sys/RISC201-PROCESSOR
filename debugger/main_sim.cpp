@@ -61,6 +61,17 @@ int main(int argc, char* argv[]) {
     }
 
     dbg.loadAssemblyString(programToLoad);
+
+    if (argc > 2) {
+        try {
+            Word customN = std::stoul(argv[2]);
+            dbg.setCustomInput(customN);
+            std::cout << ">>> Configured custom input: n = " << customN << " <<<\n";
+        } catch (...) {
+            std::cerr << "Invalid custom input number: " << argv[2] << "\n";
+        }
+    }
+
     dbg.repl();
 
     return 0;

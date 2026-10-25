@@ -21,7 +21,7 @@ namespace visualizer {
  */
 class StackVisualizer {
 public:
-    static std::string render(const Memory& memory, const RegisterFile& rf, Word maxFrames = 16) {
+    static std::string render(const Memory& memory, const RegisterFile& rf, Word maxFrames = 32) {
         std::ostringstream oss;
         Word sp = rf.getSP();
         const auto& bounds = memory.getStackBounds();
