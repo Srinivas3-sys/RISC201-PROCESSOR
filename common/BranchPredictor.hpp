@@ -24,8 +24,8 @@ inline BranchPolicy parseBranchPolicy(const std::string& str) {
     std::string s = str;
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     if (s == "stall") return BranchPolicy::STALL;
-    if (s == "flush" || s == "predict-not-taken") return BranchPolicy::FLUSH;
-    if (s == "predict-taken") return BranchPolicy::PREDICT_TAKEN;
+    if (s == "flush" || s == "predict-not-taken" || s == "not-taken" || s == "not_taken" || s == "always-not-taken" || s == "nottaken") return BranchPolicy::FLUSH;
+    if (s == "predict-taken" || s == "always-taken") return BranchPolicy::PREDICT_TAKEN;
     if (s == "static-btfn" || s == "btfn") return BranchPolicy::STATIC_BTFN;
     if (s == "1bit" || s == "bimodal-1bit") return BranchPolicy::BIMODAL_1BIT;
     if (s == "2bit" || s == "bimodal-2bit" || s == "smith") return BranchPolicy::BIMODAL_2BIT;

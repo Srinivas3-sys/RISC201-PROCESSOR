@@ -299,15 +299,15 @@ int main() {
         auto t0 = std::chrono::high_resolution_clock::now();
         Word q1 = 0;
         for (int i = 0; i < N_ITER; ++i) {
-            auto [q, r, z] = alu::restoringDivideUnsigned(a + i, b);
-            q1 ^= q;
+            auto res = alu::restoringDivideUnsigned(a + i, b);
+            q1 ^= std::get<0>(res);
         }
         auto t1 = std::chrono::high_resolution_clock::now();
 
         Word q2 = 0;
         for (int i = 0; i < N_ITER; ++i) {
-            auto [q, r, z] = alu::nonRestoringDivideUnsigned(a + i, b);
-            q2 ^= q;
+            auto res = alu::nonRestoringDivideUnsigned(a + i, b);
+            q2 ^= std::get<0>(res);
         }
         auto t2 = std::chrono::high_resolution_clock::now();
 

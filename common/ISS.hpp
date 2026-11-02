@@ -47,7 +47,9 @@ public:
         }
 
         // Fetch instruction
-        auto [word, fetchLat] = mem.readWord(pc, true, pc, cycles);
+        auto fetchRes = mem.readWord(pc, true, pc, cycles);
+        uint32_t word = std::get<0>(fetchRes);
+        uint32_t fetchLat = std::get<1>(fetchRes);
         cycles += std::max(1U, fetchLat);
 
         Instruction inst;
@@ -88,7 +90,9 @@ public:
             branchTaken = true;
         } else if (inst.opcode == isa::OP_LD) {
             uint32_t effAddr = op1 + inst.immx;
-            auto [loadedVal, memLat] = mem.readWord(effAddr, false, pc, cycles);
+            auto ldRes = mem.readWord(effAddr, false, pc, cycles);
+            uint32_t loadedVal = std::get<0>(ldRes);
+            uint32_t memLat = std::get<1>(ldRes);
             cycles += std::max(1U, memLat);
             regFile.write(inst.rd, loadedVal);
         } else if (inst.opcode == isa::OP_ST) {

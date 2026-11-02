@@ -125,6 +125,12 @@ public:
                 else oss << getReg(d.rs2);
                 return oss.str();
 
+            case OP_ABS:
+                oss << "abs" << getImmSuffix(d.modifier) << " " << getReg(d.rd) << ", ";
+                if (d.isImmediate) oss << d.imm16;
+                else oss << getReg(d.rs2);
+                return oss.str();
+
             case OP_CMP:
                 oss << "cmp" << getImmSuffix(d.modifier) << " " << getReg(d.rs1) << ", ";
                 if (d.isImmediate) oss << d.imm16;
@@ -141,6 +147,7 @@ public:
                     case OP_MOD: opName = "mod"; break;
                     case OP_AND: opName = "and"; break;
                     case OP_OR:  opName = "or"; break;
+                    case OP_XOR: opName = "xor"; break;
                     case OP_LSL: opName = "lsl"; break;
                     case OP_LSR: opName = "lsr"; break;
                     case OP_ASR: opName = "asr"; break;

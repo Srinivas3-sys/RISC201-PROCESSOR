@@ -121,13 +121,73 @@ inline std::tuple<Word, Word, bool> nonRestoringDivideUnsigned(Word dividend, Wo
     return {quotient, remainder, false};
 }
 
+enum class DividerAlgorithm {
+    RESTORING,
+    NON_RESTORING,
+    NEWTON_RAPHSON
+};
+
+/**
+ * 3. Newton-Raphson Division Algorithm
+ * Solves 1/D via iterative root-finding: X_{k+1} = X_k * (2 - D * X_k)
+ * Then computes Q = N * X with hardware exact integer remainder post-correction.
+ */
+inline std::tuple<Word, Word, bool> newtonRaphsonDivideUnsigned(Word dividend, Word divisor) {
+    if (divisor == 0) {
+        return {0, 0, true}; // Division by zero flag
+    }
+    if (dividend < divisor) {
+        return {0, dividend, false};
+    }
+
+    double d = static_cast<double>(divisor);
+    double n = static_cast<double>(dividend);
+
+    // Normalize divisor to [0.5, 1.0)
+    int shift = 0;
+    double d_norm = d;
+    while (d_norm >= 1.0) {
+        d_norm /= 2.0;
+        shift++;
+    }
+
+    // Initial linear approximation seed: X0 = 48/17 - (32/17)*d_norm
+    double x = (48.0 / 17.0) - (32.0 / 17.0) * d_norm;
+
+    // Quadratic convergence: 5 iterations guarantee full precision for 32-bit integers
+    for (int i = 0; i < 5; ++i) {
+        x = x * (2.0 - d_norm * x);
+    }
+
+    double scale = 1.0;
+    for (int i = 0; i < shift; ++i) scale *= 2.0;
+    double recip = x / scale;
+
+    uint64_t q_approx = static_cast<uint64_t>(n * recip + 1e-9);
+
+    // Exact integer correction (hardware post-processing)
+    uint64_t rem = dividend - q_approx * divisor;
+    while (rem >= divisor) {
+        q_approx++;
+        rem -= divisor;
+    }
+    while (rem > dividend) {
+        q_approx--;
+        rem += divisor;
+    }
+
+    Word quotient = static_cast<Word>(q_approx & 0xFFFFFFFF);
+    Word remainder = static_cast<Word>(rem & 0xFFFFFFFF);
+    return {quotient, remainder, false};
+}
+
 /**
  * Signed Division Wrapper (Sarangi Section 8.3.1):
  * Converts negative inputs to 2's complement magnitudes,
- * performs division via restoring or non-restoring algorithm,
+ * performs division via restoring, non-restoring, or Newton-Raphson algorithm,
  * and fixes signs (truncation towards zero).
  */
-inline std::tuple<Word, Word, bool> divideSigned(Word n, Word d, bool useNonRestoring = true) {
+inline std::tuple<Word, Word, bool> divideSigned(Word n, Word d, DividerAlgorithm algo) {
     if (d == 0) {
         return {0, 0, true}; // Division by zero
     }
@@ -139,9 +199,13 @@ inline std::tuple<Word, Word, bool> divideSigned(Word n, Word d, bool useNonRest
     Word absN = nNeg ? std::get<0>(subtract32(0, n)) : n;
     Word absD = dNeg ? std::get<0>(subtract32(0, d)) : d;
 
-    auto [quot, rem, divZero] = useNonRestoring ?
-        nonRestoringDivideUnsigned(absN, absD) :
-        restoringDivideUnsigned(absN, absD);
+    auto divRes = (algo == DividerAlgorithm::NEWTON_RAPHSON) ?
+        newtonRaphsonDivideUnsigned(absN, absD) :
+        ((algo == DividerAlgorithm::RESTORING) ?
+            restoringDivideUnsigned(absN, absD) :
+            nonRestoringDivideUnsigned(absN, absD));
+    Word quot = std::get<0>(divRes);
+    Word rem  = std::get<1>(divRes);
 
     // Quotient is negative if sign(N) != sign(D)
     if (nNeg ^ dNeg) {
@@ -154,6 +218,10 @@ inline std::tuple<Word, Word, bool> divideSigned(Word n, Word d, bool useNonRest
     }
 
     return {quot, rem, false};
+}
+
+inline std::tuple<Word, Word, bool> divideSigned(Word n, Word d, bool useNonRestoring = true) {
+    return divideSigned(n, d, useNonRestoring ? DividerAlgorithm::NON_RESTORING : DividerAlgorithm::RESTORING);
 }
 
 } // namespace alu

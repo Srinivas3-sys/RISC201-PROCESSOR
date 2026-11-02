@@ -62,6 +62,10 @@ public:
     uint64_t branchCount{0};
     uint64_t branchTakenCount{0};
 
+    // Cycle history tracking for pipeline trace & timing diagram
+    uint64_t nextInstId{1};
+    std::vector<visualizer::CycleSnapshot> cycleHistory;
+
     // Forwarding Enable toggle (for evaluation comparison)
     bool forwardingEnabled{true};
 
@@ -105,6 +109,8 @@ public:
         bubbleCycles = 0;
         branchCount = 0;
         branchTakenCount = 0;
+        nextInstId = 1;
+        cycleHistory.clear();
     }
 
     void setProgramSize(Word sz) { programSize = sz; }
@@ -167,7 +173,9 @@ public:
 
             if (d.isLoad()) {
                 if (useMemoryHierarchy) {
-                    auto [data, lat] = memHierarchy.readWord(l_EX_MARW.aluResult, false, l_EX_MARW.pc, cycles);
+                    auto res = memHierarchy.readWord(l_EX_MARW.aluResult, false, l_EX_MARW.pc, cycles);
+                    Word data = std::get<0>(res);
+                    uint32_t lat = std::get<1>(res);
                     writebackData = data;
                     if (lat > 1) {
                         perfTracker.recordStall("DCACHE_MISS", lat - 1);
@@ -301,6 +309,7 @@ public:
             next_EX_MARW.op2 = storeData;
             next_EX_MARW.isBubble = false;
             next_EX_MARW.disassembly = l_OF_EX.disassembly;
+            next_EX_MARW.instId = l_OF_EX.instId;
         } else {
             next_EX_MARW.reset();
         }
@@ -372,6 +381,7 @@ public:
                 next_OF_EX.isImmediate = d.isImmediate;
                 next_OF_EX.isBubble = false;
                 next_OF_EX.disassembly = l_IF_OF.disassembly;
+                next_OF_EX.instId = l_IF_OF.instId;
             }
         } else {
             next_OF_EX.reset();
@@ -393,7 +403,9 @@ public:
         } else if (!stall_IF) {
             Word instWord = 0;
             if (useMemoryHierarchy) {
-                auto [w, lat] = memHierarchy.readWord(pc, true, pc, cycles);
+                auto res = memHierarchy.readWord(pc, true, pc, cycles);
+                Word w = std::get<0>(res);
+                uint32_t lat = std::get<1>(res);
                 instWord = w;
                 if (lat > 1) {
                     perfTracker.recordStall("ICACHE_MISS", lat - 1);
@@ -413,9 +425,64 @@ public:
             next_IF_OF.instruction = instWord;
             next_IF_OF.isBubble = false;
             next_IF_OF.disassembly = assembler::Disassembler::disassemble(instWord, pc);
+            next_IF_OF.instId = nextInstId++;
 
             pc += 4;
         }
+
+        // Record cycle snapshot for trace visualization
+        visualizer::CycleSnapshot snap;
+        snap.cycle = cycles;
+
+        // Stage 1: IF
+        visualizer::PipelineStageInfo ifStage;
+        ifStage.stageName = "IF";
+        if (stall_IF) {
+            ifStage.instructionText = next_IF_OF.disassembly;
+            ifStage.pc = next_IF_OF.pc;
+            ifStage.isBubble = next_IF_OF.isBubble;
+            ifStage.isStalled = true;
+            ifStage.instId = next_IF_OF.instId;
+        } else {
+            ifStage.instructionText = next_IF_OF.isBubble ? "" : next_IF_OF.disassembly;
+            ifStage.pc = next_IF_OF.pc;
+            ifStage.isBubble = next_IF_OF.isBubble;
+            ifStage.isStalled = false;
+            ifStage.instId = next_IF_OF.instId;
+        }
+        snap.stages.push_back(ifStage);
+
+        // Stage 2: OF
+        visualizer::PipelineStageInfo ofStage;
+        ofStage.stageName = "OF";
+        ofStage.instructionText = l_IF_OF.isBubble ? "" : l_IF_OF.disassembly;
+        ofStage.pc = l_IF_OF.pc;
+        ofStage.isBubble = l_IF_OF.isBubble;
+        ofStage.isStalled = stall_OF;
+        ofStage.instId = l_IF_OF.instId;
+        snap.stages.push_back(ofStage);
+
+        // Stage 3: EX
+        visualizer::PipelineStageInfo exStage;
+        exStage.stageName = "EX";
+        exStage.instructionText = l_OF_EX.isBubble ? "" : l_OF_EX.disassembly;
+        exStage.pc = l_OF_EX.pc;
+        exStage.isBubble = l_OF_EX.isBubble;
+        exStage.isStalled = bubble_EX;
+        exStage.instId = l_OF_EX.instId;
+        snap.stages.push_back(exStage);
+
+        // Stage 4: MA_RW
+        visualizer::PipelineStageInfo marwStage;
+        marwStage.stageName = "MA_RW";
+        marwStage.instructionText = l_EX_MARW.isBubble ? "" : l_EX_MARW.disassembly;
+        marwStage.pc = l_EX_MARW.pc;
+        marwStage.isBubble = l_EX_MARW.isBubble;
+        marwStage.isStalled = false;
+        marwStage.instId = l_EX_MARW.instId;
+        snap.stages.push_back(marwStage);
+
+        cycleHistory.push_back(snap);
 
         // Commit synchronous latch updates
         if (bubble_EX) {
@@ -446,11 +513,14 @@ public:
     }
 
     std::vector<visualizer::PipelineStageInfo> getStageInfo() const {
+        if (!cycleHistory.empty()) {
+            return cycleHistory.back().stages;
+        }
         std::vector<visualizer::PipelineStageInfo> info;
-        info.push_back({"IF", l_IF_OF.isBubble ? "" : l_IF_OF.disassembly, l_IF_OF.pc, l_IF_OF.isBubble, false});
-        info.push_back({"OF", l_OF_EX.isBubble ? "" : l_OF_EX.disassembly, l_OF_EX.pc, l_OF_EX.isBubble, false});
-        info.push_back({"EX", l_EX_MARW.isBubble ? "" : l_EX_MARW.disassembly, l_EX_MARW.pc, l_EX_MARW.isBubble, false});
-        info.push_back({"MA_RW", l_EX_MARW.isBubble ? "" : l_EX_MARW.disassembly, l_EX_MARW.pc, l_EX_MARW.isBubble, false});
+        info.push_back({"IF", l_IF_OF.isBubble ? "" : l_IF_OF.disassembly, l_IF_OF.pc, l_IF_OF.isBubble, false, l_IF_OF.instId});
+        info.push_back({"OF", l_OF_EX.isBubble ? "" : l_OF_EX.disassembly, l_OF_EX.pc, l_OF_EX.isBubble, false, l_OF_EX.instId});
+        info.push_back({"EX", l_EX_MARW.isBubble ? "" : l_EX_MARW.disassembly, l_EX_MARW.pc, l_EX_MARW.isBubble, false, l_EX_MARW.instId});
+        info.push_back({"MA_RW", l_EX_MARW.isBubble ? "" : l_EX_MARW.disassembly, l_EX_MARW.pc, l_EX_MARW.isBubble, false, l_EX_MARW.instId});
         return info;
     }
 

@@ -25,12 +25,14 @@ struct Latch_IF_ID {
     Word instruction{0};
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
         instruction = 0;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 
@@ -44,6 +46,7 @@ struct Latch_ID_RF {
     bool isImmediate{false};
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
@@ -53,6 +56,7 @@ struct Latch_ID_RF {
         isImmediate = false;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 
@@ -68,6 +72,7 @@ struct Latch_RF_EX {
     bool isImmediate{false};
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
@@ -77,6 +82,7 @@ struct Latch_RF_EX {
         isImmediate = false;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 
@@ -89,6 +95,7 @@ struct Latch_EX_MA {
     Word op2{0};           // Data to write into memory for stores
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
@@ -97,6 +104,7 @@ struct Latch_EX_MA {
         aluResult = op2 = 0;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 
@@ -109,6 +117,7 @@ struct Latch_MA_RW {
     Word ldResult{0};      // Data loaded from memory
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
@@ -117,6 +126,7 @@ struct Latch_MA_RW {
         aluResult = ldResult = 0;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 

@@ -11,7 +11,7 @@
 
 namespace risc201 {
 
-inline const std::vector<std::string> CANONICAL_STALL_REASONS = {
+static const std::vector<std::string> CANONICAL_STALL_REASONS = {
     "RAW_LOAD_USE",
     "RAW_NOFWD",
     "WAR_HAZARD",

@@ -335,16 +335,75 @@ public:
                   << "EAT  (Effective Access Time + VM) : " << std::fixed << std::setprecision(2) << memH.calculateEAT() << " cycles\n";
     }
 
+    void reloadProgram() {
+        if (!loadedProgramSource.empty()) {
+            loadAssemblyString(loadedProgramSource);
+        }
+    }
+
+    void showTrace() {
+        if (currentSimMode == SimMode::PIPELINE_4STAGE) {
+            if (p4.cycles == 0) {
+                std::cout << "Program has not run yet. Executing 4-stage pipeline...\n";
+                run();
+            }
+            std::cout << visualizer::PipelineVisualizer::renderTrace(p4.cycleHistory, "4-Stage");
+        } else if (currentSimMode == SimMode::PIPELINE_6STAGE) {
+            if (p6.cycles == 0) {
+                std::cout << "Program has not run yet. Executing 6-stage pipeline...\n";
+                run();
+            }
+            std::cout << visualizer::PipelineVisualizer::renderTrace(p6.cycleHistory, "6-Stage");
+        } else {
+            showMicroState();
+        }
+    }
+
+    bool promptStartupAssembly() {
+        std::cout << "\n========================================================================\n"
+                  << "                      RISC201 PROCESSOR SIMULATOR                       \n"
+                  << "========================================================================\n"
+                  << "Enter your SimpleRisc assembly code below.\n"
+                  << "(Type 'run', 'end', or press Enter on an empty line when finished):\n"
+                  << "(Press Enter directly without typing code to load default sample program)\n\n";
+
+        std::string fullCode = "";
+        std::string inputLine;
+        int lineNum = 1;
+        while (true) {
+            std::cout << "  " << lineNum << "> ";
+            if (!std::getline(std::cin, inputLine)) break;
+            std::string trimmed = assembler::MacroPreprocessor::trim(inputLine);
+            if (trimmed == "run" || trimmed == "end" || trimmed == "." || trimmed == "done" || (lineNum == 1 && trimmed.empty()) || (lineNum > 1 && trimmed.empty())) {
+                break;
+            }
+            fullCode += trimmed + "\n";
+            lineNum++;
+        }
+
+        if (fullCode.empty()) {
+            std::cout << "\nNo custom code entered. Loading default sample program (recursive factorial)...\n";
+            return false;
+        }
+
+        std::cout << "\nAssembling and loading custom assembly code...\n";
+        if (loadAssemblyString(fullCode)) {
+            std::cout << "\nRunning pipeline for your custom code...\n";
+            run();
+            showTrace();
+            return true;
+        }
+        return false;
+    }
+
     void printHelp() const {
         std::cout << "\n================= RISC201 DEBUGGER COMMANDS =================\n"
-                  << "  s, step                 : Step one clock cycle / micro-cycle\n"
-                  << "  si, step_inst           : Step one complete program instruction\n"
-                  << "  r, run                  : Run program to completion or breakpoint\n"
+                  << "  r, run                  : Run program to completion (or re-run from start)\n"
                   << "  c, continue             : Continue running from current state\n"
-                  << "  b, break <addr|label>   : Set breakpoint (e.g. b 0x10 or b .loop)\n"
-                  << "  db, delbreak <addr>     : Delete breakpoint at address\n"
+                  << "  trace                   : Display complete cycle-by-cycle pipeline trace & timing diagram\n"
+                  << "  asm, code               : Enter custom assembly code interactively to run pipeline\n"
                   << "  regs                    : Display register file (r0-r15, flags, PC)\n"
-                  << "  p, pipeline             : Display pipeline stage latches & hazards\n"
+                  << "  p, pipeline             : Display current pipeline stage latches & hazards\n"
                   << "  hazards                 : Display hazard detection telemetry\n"
                   << "  fwd                     : Display data forwarding bypass telemetry\n"
                   << "  cpi                     : Display ASCII CPI stack breakdown chart\n"
@@ -354,7 +413,7 @@ public:
                   << "  amat                    : Compute AMAT and EAT latencies\n"
                   << "  opcode                  : Display SimpleRisc ISA table\n"
                   << "  preset <name>           : Switch memory preset (ideal, simple, modern, etc.)\n"
-                  << "  bp_policy <pol>         : Switch branch predictor policy\n"
+                  << "  bp_policy <not_taken|1bit|2bit>: Select branch predictor (always not-taken, 1-bit, 2-bit)\n"
                   << "  stack                   : Render ASCII active stack memory visualizer\n"
                   << "  micro                   : Display microPC state & control bus signals\n"
                   << "  mode <4|6|micro>        : Switch core: 4-stage, 6-stage, or microcode\n"
@@ -362,9 +421,7 @@ public:
                   << "  forwarding <on|off>     : Enable/disable pipeline data forwarding\n"
                   << "  adder <rca|csla|cla>    : Select ALU adder algorithm\n"
                   << "  mul <iter|booth|wallace>: Select ALU multiplier algorithm\n"
-                  << "  div <rest|nonrest>      : Select ALU divider algorithm\n"
-                  << "  mem <start_hex> <count> : Dump memory words (e.g. mem 0x0 8)\n"
-                  << "  disasm <start> <count>  : Disassemble memory instructions\n"
+                  << "  div <rest|nonrest|newton>: Select ALU divider algorithm (Newton-Raphson, Restoring, Non-restoring)\n"
                   << "  set_n <n>, input <n>    : Set custom input number for r0 (e.g. set_n 7)\n"
                   << "  stats                   : Display performance & hazard counters\n"
                   << "  help                    : Show this command list\n"
@@ -377,9 +434,9 @@ public:
         std::string line;
         while (true) {
             std::cout << "RISC201["
-                      << (currentSimMode == SimMode::PIPELINE_4STAGE ? "4-Stage" :
-                          currentSimMode == SimMode::PIPELINE_6STAGE ? "6-Stage" : "Micro")
-                      << "]> ";
+              << (currentSimMode == SimMode::PIPELINE_4STAGE ? "4-Stage" :
+                  currentSimMode == SimMode::PIPELINE_6STAGE ? "6-Stage" : "Micro")
+              << "]> ";
             if (!std::getline(std::cin, line)) break;
             line = assembler::MacroPreprocessor::trim(line);
             if (line.empty()) continue;
@@ -397,8 +454,16 @@ public:
                 stepCycle();
             } else if (cmd == "si" || cmd == "step_inst") {
                 stepInstruction();
-            } else if (cmd == "r" || cmd == "run" || cmd == "c" || cmd == "continue") {
+            } else if (cmd == "r" || cmd == "run") {
+                if ((currentSimMode == SimMode::PIPELINE_4STAGE && (p4.halted || p4.isDrained())) ||
+                    (currentSimMode == SimMode::PIPELINE_6STAGE && (p6.halted || p6.isDrained()))) {
+                    reloadProgram();
+                }
                 run();
+            } else if (cmd == "c" || cmd == "continue") {
+                run();
+            } else if (cmd == "trace") {
+                showTrace();
             } else if (cmd == "regs") {
                 showRegisters();
             } else if (cmd == "p" || cmd == "pipeline") {
@@ -425,18 +490,70 @@ public:
                 showAMAT();
             } else if (cmd == "opcode") {
                 std::cout << printIsaTable();
+            } else if (cmd == "asm" || cmd == "code") {
+                std::string remainder;
+                std::getline(ss, remainder);
+                remainder = assembler::MacroPreprocessor::trim(remainder);
+                std::string fullCode = "";
+                if (!remainder.empty()) {
+                    for (char ch : remainder) {
+                        if (ch == ';') fullCode += "\n";
+                        else fullCode += ch;
+                    }
+                } else {
+                    std::cout << "\n=== Custom Assembly Pipeline Execution ===\n"
+                              << "Enter your SimpleRisc assembly instructions.\n"
+                              << "Type 'run', 'end', or 'done' on a new line when finished:\n";
+                    std::string inputLine;
+                    int lineNum = 1;
+                    while (true) {
+                        std::cout << "  " << lineNum << "> ";
+                        if (!std::getline(std::cin, inputLine)) break;
+                        std::string trimmed = assembler::MacroPreprocessor::trim(inputLine);
+                        if (trimmed == "run" || trimmed == "end" || trimmed == "." || trimmed == "done") {
+                            break;
+                        }
+                        if (!trimmed.empty()) {
+                            fullCode += trimmed + "\n";
+                            lineNum++;
+                        }
+                    }
+                }
+                if (fullCode.empty()) {
+                    std::cout << "No assembly instructions entered.\n";
+                } else {
+                    std::cout << "\nAssembling and loading custom assembly code...\n";
+                    if (loadAssemblyString(fullCode)) {
+                        std::cout << "\nRunning pipeline for your custom code...\n";
+                        run();
+                        showTrace();
+                    }
+                }
             } else if (cmd == "preset") {
                 std::string pr;
                 ss >> pr;
                 p4.setMemPreset(pr);
                 p6.setMemPreset(pr);
                 std::cout << "Configured memory preset: " << pr << "\n";
-            } else if (cmd == "bp_policy") {
+            } else if (cmd == "bp_policy" || cmd == "branch") {
                 std::string bp;
-                ss >> bp;
-                p4.setBranchPolicy(bp);
-                p6.setBranchPolicy(bp);
-                std::cout << "Configured branch policy: " << bp << "\n";
+                if (ss >> bp) {
+                    p4.setBranchPolicy(bp);
+                    p6.setBranchPolicy(bp);
+                    std::string label = "2-Bit Saturating Counter Predictor";
+                    if (bp == "not_taken" || bp == "not-taken" || bp == "flush" || bp == "always-not-taken" || bp == "nottaken") {
+                        label = "Always Not-Taken (Flush)";
+                    } else if (bp == "1bit" || bp == "bimodal-1bit") {
+                        label = "1-Bit Bimodal Predictor";
+                    }
+                    std::cout << "Branch predictor set to: " << label << " (" << bp << ")\n";
+                } else {
+                    std::cout << "\n=== Branch Predictor Options (Choose 1 of 3) ===\n"
+                              << "  1. not_taken  : Always Not-Taken (Flush)\n"
+                              << "  2. 1bit       : 1-Bit Bimodal Counter Table\n"
+                              << "  3. 2bit       : 2-Bit Saturating Counter Table\n"
+                              << "Usage: bp_policy <not_taken | 1bit | 2bit>\n";
+                }
             } else if (cmd == "b" || cmd == "break") {
                 std::string target;
                 ss >> target;
@@ -502,14 +619,31 @@ public:
                 std::cout << "Multiplier algorithm set to: " << algo << "\n";
             } else if (cmd == "div") {
                 std::string algo;
-                ss >> algo;
-                alu::AluConfig cfg = p4.aluUnit.getConfig();
-                if (algo == "rest") cfg.divAlgo = alu::DividerAlgorithm::RESTORING;
-                else if (algo == "nonrest") cfg.divAlgo = alu::DividerAlgorithm::NON_RESTORING;
-                else { std::cout << "Usage: div <rest|nonrest>\n"; continue; }
-                p4.aluUnit.setConfig(cfg);
-                p6.aluUnit.setConfig(cfg);
-                std::cout << "Divider algorithm set to: " << algo << "\n";
+                if (ss >> algo) {
+                    alu::AluConfig cfg = p4.aluUnit.getConfig();
+                    if (algo == "rest") cfg.divAlgo = alu::DividerAlgorithm::RESTORING;
+                    else if (algo == "nonrest") cfg.divAlgo = alu::DividerAlgorithm::NON_RESTORING;
+                    else if (algo == "newton" || algo == "nr" || algo == "newton_raphson" || algo == "newton-raphson") cfg.divAlgo = alu::DividerAlgorithm::NEWTON_RAPHSON;
+                    else {
+                        std::cout << "\n=== Division Algorithm Options (Choose 1 of 3) ===\n"
+                                  << "  1. rest    : Restoring Division\n"
+                                  << "  2. nonrest : Non-Restoring Division\n"
+                                  << "  3. newton  : Newton-Raphson Iterative Division\n"
+                                  << "Usage: div <rest | nonrest | newton>\n";
+                        continue;
+                    }
+                    p4.aluUnit.setConfig(cfg);
+                    p6.aluUnit.setConfig(cfg);
+                    std::cout << "Divider algorithm set to: "
+                              << (cfg.divAlgo == alu::DividerAlgorithm::RESTORING ? "Restoring" :
+                                 (cfg.divAlgo == alu::DividerAlgorithm::NON_RESTORING ? "Non-Restoring" : "Newton-Raphson")) << " (" << algo << ")\n";
+                } else {
+                    std::cout << "\n=== Division Algorithm Options (Choose 1 of 3) ===\n"
+                              << "  1. rest    : Restoring Division\n"
+                              << "  2. nonrest : Non-Restoring Division\n"
+                              << "  3. newton  : Newton-Raphson Iterative Division\n"
+                              << "Usage: div <rest | nonrest | newton>\n";
+                }
             } else if (cmd == "mem") {
                 std::string startStr;
                 Word count = 8;

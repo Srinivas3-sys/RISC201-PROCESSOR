@@ -14,8 +14,11 @@ void printUsage() {
               << "  --pipeline <4|6>            Select pipeline depth (default: 4)\n"
               << "  --mem-preset <preset>       Memory hierarchy preset: ideal, simple, modern, modern-ddr5, lecture\n"
               << "  --forwarding <mode>         Forwarding mode: none, basic, full, full+\n"
-              << "  --branch-policy <policy>    Branch prediction policy: stall, flush, predict-taken, static-btfn, 1bit, 2bit, gshare, perfect\n"
+              << "  --branch-policy <policy>    Branch prediction policy: not_taken, 1bit, 2bit (or stall, flush, etc.)\n"
+              << "  --div-algo <algorithm>      Divider algorithm: rest, nonrest, newton\n"
+              << "  --code, -c <assembly>       Inline assembly code string to execute (separate lines with ';')\n"
               << "  --diagram                   Render pipeline ASCII timing diagram\n"
+              << "  --trace                     Display complete cycle-by-cycle pipeline trace & timing diagram\n"
               << "  --report                    Print detailed performance & stall reason report\n"
               << "  --cpi-breakdown             Render ASCII CPI stack breakdown bar chart\n"
               << "  --check-forwarding          Verify data forwarding invariant correctness\n"
@@ -28,15 +31,18 @@ void printUsage() {
 
 int main(int argc, char* argv[]) {
     std::string asmFile = "";
+    std::string inlineCode = "";
     int pipelineDepth = 4;
     std::string memPreset = "ideal";
     std::string forwardingMode = "full";
     std::string branchPolicy = "2bit";
+    std::string divAlgo = "nonrest";
     bool showDiagram = false;
+    bool showTrace = false;
     bool showReport = false;
     bool showCpiBreakdown = false;
     bool checkForwarding = false;
-    bool interactive = false;
+    bool interactive = (argc == 1);
     std::string exportCsv = "";
     uint64_t maxCycles = 100000;
 
@@ -56,8 +62,14 @@ int main(int argc, char* argv[]) {
             forwardingMode = argv[++i];
         } else if (arg == "--branch-policy" && i + 1 < argc) {
             branchPolicy = argv[++i];
+        } else if (arg == "--div-algo" && i + 1 < argc) {
+            divAlgo = argv[++i];
+        } else if ((arg == "--code" || arg == "-c") && i + 1 < argc) {
+            inlineCode = argv[++i];
         } else if (arg == "--diagram") {
             showDiagram = true;
+        } else if (arg == "--trace") {
+            showTrace = true;
         } else if (arg == "--report") {
             showReport = true;
         } else if (arg == "--cpi-breakdown") {
@@ -110,7 +122,15 @@ int main(int argc, char* argv[]) {
 )";
 
     std::string programToLoad = sampleProgram;
-    if (!asmFile.empty()) {
+    if (!inlineCode.empty()) {
+        std::string formatted = "";
+        for (char ch : inlineCode) {
+            if (ch == ';') formatted += "\n";
+            else formatted += ch;
+        }
+        programToLoad = formatted;
+        std::cout << "Loaded custom inline assembly code.\n";
+    } else if (!asmFile.empty()) {
         std::ifstream file(asmFile);
         if (file.is_open()) {
             std::stringstream buffer;
@@ -120,6 +140,40 @@ int main(int argc, char* argv[]) {
         } else {
             std::cerr << "Could not open file: " << asmFile << ", using default sample program.\n";
         }
+    } else if (interactive) {
+        // Startup interface proactively asks for assembly code input!
+        if (pipelineDepth == 6) {
+            dbg.setSimMode(debugger::SimMode::PIPELINE_6STAGE);
+            dbg.p6.setMemPreset(memPreset);
+            dbg.p6.setForwardingMode(forwardingMode);
+            dbg.p6.setBranchPolicy(branchPolicy);
+        } else {
+            dbg.setSimMode(debugger::SimMode::PIPELINE_4STAGE);
+            dbg.p4.setMemPreset(memPreset);
+            dbg.p4.setForwardingMode(forwardingMode);
+            dbg.p4.setBranchPolicy(branchPolicy);
+        }
+
+        alu::AluConfig aluCfg = dbg.p4.aluUnit.getConfig();
+        if (divAlgo == "rest") aluCfg.divAlgo = alu::DividerAlgorithm::RESTORING;
+        else if (divAlgo == "newton" || divAlgo == "nr" || divAlgo == "newton_raphson") aluCfg.divAlgo = alu::DividerAlgorithm::NEWTON_RAPHSON;
+        else aluCfg.divAlgo = alu::DividerAlgorithm::NON_RESTORING;
+        dbg.p4.aluUnit.setConfig(aluCfg);
+        dbg.p6.aluUnit.setConfig(aluCfg);
+
+        std::cout << "=== Configuration: " << pipelineDepth << "-Stage Pipeline | MemPreset: "
+                  << memPreset << " | Forwarding: " << forwardingMode
+                  << " | BranchPolicy: " << branchPolicy
+                  << " | Divider: " << (aluCfg.divAlgo == alu::DividerAlgorithm::RESTORING ? "restoring" :
+                                       (aluCfg.divAlgo == alu::DividerAlgorithm::NON_RESTORING ? "non-restoring" : "newton-raphson"))
+                  << " ===\n";
+
+        bool userProvided = dbg.promptStartupAssembly();
+        if (!userProvided) {
+            dbg.loadAssemblyString(sampleProgram);
+        }
+        dbg.repl();
+        return 0;
     } else {
         std::cout << "No program file passed. Loaded default recursive factorial demonstration program.\n";
     }
@@ -141,16 +195,28 @@ int main(int argc, char* argv[]) {
         dbg.p4.setBranchPolicy(branchPolicy);
     }
 
+    alu::AluConfig aluCfg = dbg.p4.aluUnit.getConfig();
+    if (divAlgo == "rest") aluCfg.divAlgo = alu::DividerAlgorithm::RESTORING;
+    else if (divAlgo == "newton" || divAlgo == "nr" || divAlgo == "newton_raphson") aluCfg.divAlgo = alu::DividerAlgorithm::NEWTON_RAPHSON;
+    else aluCfg.divAlgo = alu::DividerAlgorithm::NON_RESTORING;
+    dbg.p4.aluUnit.setConfig(aluCfg);
+    dbg.p6.aluUnit.setConfig(aluCfg);
+
     std::cout << "=== Configuration: " << pipelineDepth << "-Stage Pipeline | MemPreset: "
               << memPreset << " | Forwarding: " << forwardingMode
-              << " | BranchPolicy: " << branchPolicy << " ===\n";
+              << " | BranchPolicy: " << branchPolicy
+              << " | Divider: " << (aluCfg.divAlgo == alu::DividerAlgorithm::RESTORING ? "restoring" :
+                                   (aluCfg.divAlgo == alu::DividerAlgorithm::NON_RESTORING ? "non-restoring" : "newton-raphson"))
+              << " ===\n";
 
     if (interactive) {
         dbg.repl();
     } else {
         dbg.run(maxCycles);
 
-        if (showDiagram) {
+        if (showTrace) {
+            dbg.showTrace();
+        } else if (showDiagram) {
             dbg.showPipeline();
         }
 

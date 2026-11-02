@@ -1,4 +1,5 @@
 # Compiled binaries
+*.exe
 risc201_sim
 risc201_as
 risc201_disasm

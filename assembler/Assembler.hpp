@@ -323,6 +323,23 @@ public:
                     code = encodeImm(OP_NOT, rd, 0, modifier, static_cast<int16_t>(val));
                 }
             }
+            // 7b. ABS: abs rd, (rs2/imm)
+            else if (baseMnemonic == "abs") {
+                if (tokens.size() < 3) throw std::runtime_error("Malformed abs: " + text);
+                RegId rd = parseRegister(tokens[1]);
+                std::string op2 = tokens[2];
+                bool isImm = false;
+                try {
+                    RegId rs2 = parseRegister(op2);
+                    code = encodeReg(OP_ABS, rd, 0, rs2);
+                } catch (...) {
+                    isImm = true;
+                }
+                if (isImm) {
+                    int32_t val = parseImmediate(op2);
+                    code = encodeImm(OP_ABS, rd, 0, modifier, static_cast<int16_t>(val));
+                }
+            }
             // 8. CMP: cmp rs1, (rs2/imm)
             else if (baseMnemonic == "cmp") {
                 if (tokens.size() < 3) throw std::runtime_error("Malformed cmp: " + text);
@@ -340,7 +357,7 @@ public:
                     code = encodeImm(OP_CMP, 0, rs1, modifier, static_cast<int16_t>(val));
                 }
             }
-            // 9. Standard 3-address ALU instructions: add, sub, mul, div, mod, and, or, lsl, lsr, asr
+            // 9. Standard 3-address ALU instructions: add, sub, mul, div, mod, and, or, xor, lsl, lsr, asr
             else {
                 Opcode op = OP_INVALID;
                 if (baseMnemonic == "add") op = OP_ADD;
@@ -350,6 +367,7 @@ public:
                 else if (baseMnemonic == "mod") op = OP_MOD;
                 else if (baseMnemonic == "and") op = OP_AND;
                 else if (baseMnemonic == "or")  op = OP_OR;
+                else if (baseMnemonic == "xor") op = OP_XOR;
                 else if (baseMnemonic == "lsl") op = OP_LSL;
                 else if (baseMnemonic == "lsr") op = OP_LSR;
                 else if (baseMnemonic == "asr") op = OP_ASR;

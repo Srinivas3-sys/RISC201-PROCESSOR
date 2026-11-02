@@ -22,12 +22,14 @@ struct Latch_IF_OF {
     Word instruction{0};
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
         instruction = 0;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 
@@ -43,6 +45,7 @@ struct Latch_OF_EX {
     bool isImmediate{false};
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
@@ -52,6 +55,7 @@ struct Latch_OF_EX {
         isImmediate = false;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 
@@ -64,6 +68,7 @@ struct Latch_EX_MARW {
     Word op2{0};           // Value to store into memory (for store instruction)
     bool isBubble{true};
     std::string disassembly{"nop"};
+    uint64_t instId{0};
 
     void reset() {
         pc = 0;
@@ -72,6 +77,7 @@ struct Latch_EX_MARW {
         aluResult = op2 = 0;
         isBubble = true;
         disassembly = "nop";
+        instId = 0;
     }
 };
 

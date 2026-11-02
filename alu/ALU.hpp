@@ -25,11 +25,6 @@ enum class MultiplierAlgorithm {
     WALLACE_TREE
 };
 
-enum class DividerAlgorithm {
-    RESTORING,
-    NON_RESTORING
-};
-
 struct AluConfig {
     AdderAlgorithm adderAlgo{AdderAlgorithm::CARRY_LOOKAHEAD};
     MultiplierAlgorithm mulAlgo{MultiplierAlgorithm::BOOTH};
@@ -104,7 +99,8 @@ public:
 
             case OP_CMP: {
                 // cmp performs subtraction (A - B) and sets flags.E and flags.GT (Sarangi Section 3.3.4 & 9.2.4)
-                auto [diff, cout, ovf] = subtract32(a, b);
+                auto subRes = subtract32(a, b);
+                Word diff = std::get<0>(subRes);
                 out.result = diff;
                 out.flags.E = (diff == 0);
                 // Signed comparison: A > B if (diff > 0) with respect to 2's complement
@@ -133,9 +129,7 @@ public:
                     out.exception.details = "Division by zero in ALU";
                     out.result = 0;
                 } else {
-                    bool useNonRestoring = (config.divAlgo == DividerAlgorithm::NON_RESTORING);
-                    auto [quot, rem, divZero] = divideSigned(a, b, useNonRestoring);
-                    out.result = quot;
+                    out.result = std::get<0>(divideSigned(a, b, config.divAlgo));
                 }
                 break;
             }
@@ -146,9 +140,7 @@ public:
                     out.exception.details = "Modulo by zero in ALU";
                     out.result = 0;
                 } else {
-                    bool useNonRestoring = (config.divAlgo == DividerAlgorithm::NON_RESTORING);
-                    auto [quot, rem, divZero] = divideSigned(a, b, useNonRestoring);
-                    out.result = rem;
+                    out.result = std::get<1>(divideSigned(a, b, config.divAlgo));
                 }
                 break;
             }
@@ -163,9 +155,21 @@ public:
                 break;
             }
 
+            case OP_XOR: {
+                out.result = gates::bitwise_xor(a, b);
+                break;
+            }
+
             case OP_NOT: {
                 // not takes single operand (rs2 or imm, provided as b)
                 out.result = gates::bitwise_not(b);
+                break;
+            }
+
+            case OP_ABS: {
+                // abs takes single operand (rs2 or imm, provided as b)
+                int32_t val = static_cast<int32_t>(b);
+                out.result = static_cast<Word>(val < 0 ? -val : val);
                 break;
             }
 

@@ -26,69 +26,73 @@ constexpr uint8_t REG_ID_ZERO = 0;
 constexpr uint8_t REG_ID_SP   = 14;
 constexpr uint8_t REG_ID_RA   = 15;
 
-inline const std::string REG_ZERO_BITS = "0000";
-inline const std::string REG_SP_BITS   = "1110"; // r14
-inline const std::string REG_RA_BITS   = "1111"; // r15
+static const std::string REG_ZERO_BITS = "0000";
+static const std::string REG_SP_BITS   = "1110"; // r14
+static const std::string REG_RA_BITS   = "1111"; // r15
 
 // Canonical 5-Bit Binary-String Opcodes
 namespace isa {
-inline const std::string OP_ADD     = "00000"; // 0:  add  rd, rs1, (rs2/imm)
-inline const std::string OP_SUB     = "00001"; // 1:  sub  rd, rs1, (rs2/imm)
-inline const std::string OP_MUL     = "00010"; // 2:  mul  rd, rs1, (rs2/imm)
-inline const std::string OP_DIV     = "00011"; // 3:  div  rd, rs1, (rs2/imm)
-inline const std::string OP_MOD     = "00100"; // 4:  mod  rd, rs1, (rs2/imm)
-inline const std::string OP_CMP     = "00101"; // 5:  cmp  rs1, (rs2/imm)
-inline const std::string OP_AND     = "00110"; // 6:  and  rd, rs1, (rs2/imm)
-inline const std::string OP_OR      = "00111"; // 7:  or   rd, rs1, (rs2/imm)
-inline const std::string OP_NOT     = "01000"; // 8:  not  rd, (rs2/imm)
-inline const std::string OP_MOV     = "01001"; // 9:  mov  rd, (rs2/imm)
-inline const std::string OP_LSL     = "01010"; // 10: lsl  rd, rs1, (rs2/imm)
-inline const std::string OP_LSR     = "01011"; // 11: lsr  rd, rs1, (rs2/imm)
-inline const std::string OP_ASR     = "01100"; // 12: asr  rd, rs1, (rs2/imm)
-inline const std::string OP_NOP     = "01101"; // 13: nop
-inline const std::string OP_LD      = "01110"; // 14: ld   rd, imm[rs1]
-inline const std::string OP_ST      = "01111"; // 15: st   rd, imm[rs1]
-inline const std::string OP_BEQ     = "10000"; // 16: beq  offset
-inline const std::string OP_BGT     = "10001"; // 17: bgt  offset
-inline const std::string OP_B       = "10010"; // 18: b    offset
-inline const std::string OP_CALL    = "10011"; // 19: call offset
-inline const std::string OP_RET     = "10100"; // 20: ret  (PC <- ra)
-inline const std::string OP_MOVZ    = "10101"; // 21: movz (transfer privileged <-> general)
-inline const std::string OP_RETZ    = "10110"; // 22: retz (PC <- oldPC, CPL <- 1)
-inline const std::string OP_MIN     = "10111"; // 23: min  rd, rs1, (rs2/imm)
-inline const std::string OP_MAX     = "11000"; // 24: max  rd, rs1, (rs2/imm)
-inline const std::string OP_ROTS    = "11001"; // 25: rots rd, rs1, (rs2/imm)
-inline const std::string OP_INVALID = "11111"; // 31: illegal / invalid opcode
-inline const std::string OP_BUBBLE  = OP_NOP;
+static const std::string OP_ADD     = "00000"; // 0:  add  rd, rs1, (rs2/imm)
+static const std::string OP_SUB     = "00001"; // 1:  sub  rd, rs1, (rs2/imm)
+static const std::string OP_MUL     = "00010"; // 2:  mul  rd, rs1, (rs2/imm)
+static const std::string OP_DIV     = "00011"; // 3:  div  rd, rs1, (rs2/imm)
+static const std::string OP_MOD     = "00100"; // 4:  mod  rd, rs1, (rs2/imm)
+static const std::string OP_CMP     = "00101"; // 5:  cmp  rs1, (rs2/imm)
+static const std::string OP_AND     = "00110"; // 6:  and  rd, rs1, (rs2/imm)
+static const std::string OP_OR      = "00111"; // 7:  or   rd, rs1, (rs2/imm)
+static const std::string OP_NOT     = "01000"; // 8:  not  rd, (rs2/imm)
+static const std::string OP_MOV     = "01001"; // 9:  mov  rd, (rs2/imm)
+static const std::string OP_LSL     = "01010"; // 10: lsl  rd, rs1, (rs2/imm)
+static const std::string OP_LSR     = "01011"; // 11: lsr  rd, rs1, (rs2/imm)
+static const std::string OP_ASR     = "01100"; // 12: asr  rd, rs1, (rs2/imm)
+static const std::string OP_NOP     = "01101"; // 13: nop
+static const std::string OP_LD      = "01110"; // 14: ld   rd, imm[rs1]
+static const std::string OP_ST      = "01111"; // 15: st   rd, imm[rs1]
+static const std::string OP_BEQ     = "10000"; // 16: beq  offset
+static const std::string OP_BGT     = "10001"; // 17: bgt  offset
+static const std::string OP_B       = "10010"; // 18: b    offset
+static const std::string OP_CALL    = "10011"; // 19: call offset
+static const std::string OP_RET     = "10100"; // 20: ret  (PC <- ra)
+static const std::string OP_MOVZ    = "10101"; // 21: movz (transfer privileged <-> general)
+static const std::string OP_RETZ    = "10110"; // 22: retz (PC <- oldPC, CPL <- 1)
+static const std::string OP_MIN     = "10111"; // 23: min  rd, rs1, (rs2/imm)
+static const std::string OP_MAX     = "11000"; // 24: max  rd, rs1, (rs2/imm)
+static const std::string OP_ROTS    = "11001"; // 25: rots rd, rs1, (rs2/imm)
+static const std::string OP_XOR     = "11010"; // 26: xor  rd, rs1, (rs2/imm)
+static const std::string OP_ABS     = "11011"; // 27: abs  rd, (rs2/imm)
+static const std::string OP_INVALID = "11111"; // 31: illegal / invalid opcode
+static const std::string OP_BUBBLE  = OP_NOP;
 } // namespace isa
 
-inline const std::string BIN_OP_ADD = isa::OP_ADD;
-inline const std::string BIN_OP_SUB = isa::OP_SUB;
-inline const std::string BIN_OP_MUL = isa::OP_MUL;
-inline const std::string BIN_OP_DIV = isa::OP_DIV;
-inline const std::string BIN_OP_MOD = isa::OP_MOD;
-inline const std::string BIN_OP_CMP = isa::OP_CMP;
-inline const std::string BIN_OP_AND = isa::OP_AND;
-inline const std::string BIN_OP_OR  = isa::OP_OR;
-inline const std::string BIN_OP_NOT = isa::OP_NOT;
-inline const std::string BIN_OP_MOV = isa::OP_MOV;
-inline const std::string BIN_OP_LSL = isa::OP_LSL;
-inline const std::string BIN_OP_LSR = isa::OP_LSR;
-inline const std::string BIN_OP_ASR = isa::OP_ASR;
-inline const std::string BIN_OP_NOP = isa::OP_NOP;
-inline const std::string BIN_OP_LD  = isa::OP_LD;
-inline const std::string BIN_OP_ST  = isa::OP_ST;
-inline const std::string BIN_OP_BEQ = isa::OP_BEQ;
-inline const std::string BIN_OP_BGT = isa::OP_BGT;
-inline const std::string BIN_OP_B   = isa::OP_B;
-inline const std::string BIN_OP_CALL= isa::OP_CALL;
-inline const std::string BIN_OP_RET = isa::OP_RET;
-inline const std::string BIN_OP_MOVZ= isa::OP_MOVZ;
-inline const std::string BIN_OP_RETZ= isa::OP_RETZ;
-inline const std::string BIN_OP_MIN = isa::OP_MIN;
-inline const std::string BIN_OP_MAX = isa::OP_MAX;
-inline const std::string BIN_OP_ROTS= isa::OP_ROTS;
-inline const std::string BIN_OP_INVALID = isa::OP_INVALID;
+static const std::string BIN_OP_ADD = isa::OP_ADD;
+static const std::string BIN_OP_SUB = isa::OP_SUB;
+static const std::string BIN_OP_MUL = isa::OP_MUL;
+static const std::string BIN_OP_DIV = isa::OP_DIV;
+static const std::string BIN_OP_MOD = isa::OP_MOD;
+static const std::string BIN_OP_CMP = isa::OP_CMP;
+static const std::string BIN_OP_AND = isa::OP_AND;
+static const std::string BIN_OP_OR  = isa::OP_OR;
+static const std::string BIN_OP_NOT = isa::OP_NOT;
+static const std::string BIN_OP_MOV = isa::OP_MOV;
+static const std::string BIN_OP_LSL = isa::OP_LSL;
+static const std::string BIN_OP_LSR = isa::OP_LSR;
+static const std::string BIN_OP_ASR = isa::OP_ASR;
+static const std::string BIN_OP_NOP = isa::OP_NOP;
+static const std::string BIN_OP_LD  = isa::OP_LD;
+static const std::string BIN_OP_ST  = isa::OP_ST;
+static const std::string BIN_OP_BEQ = isa::OP_BEQ;
+static const std::string BIN_OP_BGT = isa::OP_BGT;
+static const std::string BIN_OP_B   = isa::OP_B;
+static const std::string BIN_OP_CALL= isa::OP_CALL;
+static const std::string BIN_OP_RET = isa::OP_RET;
+static const std::string BIN_OP_MOVZ= isa::OP_MOVZ;
+static const std::string BIN_OP_RETZ= isa::OP_RETZ;
+static const std::string BIN_OP_MIN = isa::OP_MIN;
+static const std::string BIN_OP_MAX = isa::OP_MAX;
+static const std::string BIN_OP_ROTS= isa::OP_ROTS;
+static const std::string BIN_OP_XOR = isa::OP_XOR;
+static const std::string BIN_OP_ABS = isa::OP_ABS;
+static const std::string BIN_OP_INVALID = isa::OP_INVALID;
 
 // Bit-String Conversion & Slicing Helper Utilities
 inline std::string intToBits(uint64_t value, size_t width) {
@@ -208,6 +212,8 @@ inline const std::unordered_map<std::string, InstructionInfo>& getInstructionTab
         {isa::OP_MIN,  {"min",  isa::OP_MIN,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "10111", "MIN",    1, "ALU",    false, "EX"}},
         {isa::OP_MAX,  {"max",  isa::OP_MAX,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11000", "MAX",    1, "ALU",    false, "EX"}},
         {isa::OP_ROTS, {"rots", isa::OP_ROTS, "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11001", "ROTS",   1, "ALU",    false, "EX"}},
+        {isa::OP_XOR,  {"xor",  isa::OP_XOR,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11010", "XOR",    1, "ALU",    false, "EX"}},
+        {isa::OP_ABS,  {"abs",  isa::OP_ABS,  "R", "rd, (rs2/imm)",      false, true,  true,  true,  false, false, false, false, false, false, true,  "11011", "ABS",    1, "ALU",    false, "EX"}},
     };
     return table;
 }
@@ -355,7 +361,7 @@ inline Instruction decode(uint32_t word, uint32_t pc = 0) {
         oss << "retz";
     } else if (inst.info.isBranch) {
         oss << inst.info.mnemonic << " 0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(8) << inst.branchTarget;
-    } else if (opBits == isa::OP_MOV || opBits == isa::OP_NOT) {
+    } else if (opBits == isa::OP_MOV || opBits == isa::OP_NOT || opBits == isa::OP_ABS) {
         oss << inst.info.mnemonic << " r" << (int)inst.rd << ", ";
         if (inst.isImmediate) oss << "#" << std::dec << inst.imm16;
         else oss << "r" << (int)inst.rs2;
@@ -398,7 +404,7 @@ inline std::string printIsaTable() {
     std::vector<std::string> orderedOps = {
         isa::OP_ADD, isa::OP_SUB, isa::OP_MUL, isa::OP_DIV, isa::OP_MOD, isa::OP_CMP, isa::OP_AND, isa::OP_OR, isa::OP_NOT, isa::OP_MOV,
         isa::OP_LSL, isa::OP_LSR, isa::OP_ASR, isa::OP_NOP, isa::OP_LD,  isa::OP_ST,  isa::OP_BEQ, isa::OP_BGT, isa::OP_B,   isa::OP_CALL,
-        isa::OP_RET, isa::OP_MOVZ, isa::OP_RETZ, isa::OP_MIN, isa::OP_MAX, isa::OP_ROTS
+        isa::OP_RET, isa::OP_MOVZ, isa::OP_RETZ, isa::OP_MIN, isa::OP_MAX, isa::OP_ROTS, isa::OP_XOR, isa::OP_ABS
     };
 
     const auto& tbl = getInstructionTable();

@@ -60,6 +60,11 @@ enum Opcode : uint8_t {
     // Privileged extension opcodes
     OP_MOVZ = 0b10101, // 21: movz (transfer privileged <-> general registers)
     OP_RETZ = 0b10110, // 22: retz (PC <- oldPC, CPL <- 1)
+    OP_MIN  = 0b10111, // 23: min  rd, rs1, (rs2/imm)
+    OP_MAX  = 0b11000, // 24: max  rd, rs1, (rs2/imm)
+    OP_ROTS = 0b11001, // 25: rots rd, rs1, (rs2/imm)
+    OP_XOR  = 0b11010, // 26: xor  rd, rs1, (rs2/imm)
+    OP_ABS  = 0b11011, // 27: abs  rd, (rs2/imm)
     OP_INVALID = 0b11111
 };
 
@@ -146,7 +151,7 @@ struct DecodedInst {
     // Does instruction read rs1? (Not used for NOT, MOV, or branch formats except RET)
     bool readsRs1() const {
         if (opcode == OP_NOP || opcode == OP_B || opcode == OP_BEQ ||
-            opcode == OP_BGT || opcode == OP_CALL || opcode == OP_NOT || opcode == OP_MOV) {
+            opcode == OP_BGT || opcode == OP_CALL || opcode == OP_NOT || opcode == OP_MOV || opcode == OP_ABS) {
             return false;
         }
         // RET reads ra (REG_RA = 15)

@@ -162,8 +162,7 @@ inline std::tuple<Word, uint8_t, bool> carryLookaheadAdd(Word a, Word b, uint8_t
 inline std::tuple<Word, uint8_t, bool> subtract32(Word a, Word b) {
     Word notB = gates::bitwise_not(b);
     // Adding ~B with cin = 1 achieves 2's complement subtraction
-    auto [diff, cout, overflow] = carryLookaheadAdd(a, notB, 1);
-    return {diff, cout, overflow};
+    return carryLookaheadAdd(a, notB, 1);
 }
 
 } // namespace alu
