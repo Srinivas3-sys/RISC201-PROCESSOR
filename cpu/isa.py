@@ -1,220 +1,71 @@
 """
-cpu/isa.py: Architectural types, opcodes, instruction formats, and decoders
-for the RISC201 / SimpleRisc processor.
+cpu/isa.py: Compatibility shim and re-export of common/isa.py.
+Maintains backward compatibility for modules importing from cpu.isa.
 """
 
 from __future__ import annotations
-from enum import IntEnum
-from dataclasses import dataclass
-from typing import Optional
+from common.isa import (
+    WORD_BITS, OPCODE_BITS, I_BITS, REG_BITS, MOD_BITS, IMM16_BITS,
+    OFFSET27_BITS, UNUSED_R_BITS, ALU_OP_BITS, FWD_SEL_BITS,
+    NUM_REGISTERS, REG_ZERO, REG_SP, REG_RA,
+    REG_ZERO_BITS, REG_SP_BITS, REG_RA_BITS,
+    MOD_DEFAULT_BITS, MOD_UNSIGNED_BITS, MOD_HIGH_BITS, MOD_RESERVED_BITS,
+    FWD_SEL_REG, FWD_SEL_EXMEM, FWD_SEL_MEMWB, FWD_SEL_WBID,
+    OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_MOD, OP_CMP, OP_AND, OP_OR,
+    OP_NOT, OP_MOV, OP_LSL, OP_LSR, OP_ASR, OP_NOP, OP_LD, OP_ST,
+    OP_BEQ, OP_BGT, OP_B, OP_CALL, OP_RET, OP_MOVZ, OP_RETZ,
+    OP_MIN, OP_MAX, OP_ROTS, OP_INVALID, OP_BUBBLE,
+    ALU_OP_ADD, ALU_OP_SUB, ALU_OP_MUL, ALU_OP_DIV, ALU_OP_MOD,
+    ALU_OP_CMP, ALU_OP_AND, ALU_OP_OR, ALU_OP_NOT, ALU_OP_MOV,
+    ALU_OP_LSL, ALU_OP_LSR, ALU_OP_ASR, ALU_OP_MIN, ALU_OP_MAX,
+    ALU_OP_ROTS, ALU_OP_PASS,
+    int_to_bits, bits_to_int, word_to_bits, bits_to_word, slice_field,
+    IllegalInstructionError, InstructionInfo, INSTRUCTION_TABLE,
+    MNEMONIC_TO_OPCODE, validate_opcode_bits, mnemonic_of, opcode_of,
+    Instruction, BUBBLE_INSTRUCTION, decode, encode, print_isa_table
+)
 
 
-class Opcode(IntEnum):
-    OP_ADD  = 0b00000 # 0
-    OP_SUB  = 0b00001 # 1
-    OP_MUL  = 0b00010 # 2
-    OP_DIV  = 0b00011 # 3
-    OP_MOD  = 0b00100 # 4
-    OP_CMP  = 0b00101 # 5
-    OP_AND  = 0b00110 # 6
-    OP_OR   = 0b00111 # 7
-    OP_NOT  = 0b01000 # 8
-    OP_MOV  = 0b01001 # 9
-    OP_LSL  = 0b01010 # 10
-    OP_LSR  = 0b01011 # 11
-    OP_ASR  = 0b01100 # 12
-    OP_NOP  = 0b01101 # 13
-    OP_LD   = 0b01110 # 14
-    OP_ST   = 0b01111 # 15
-    OP_BEQ  = 0b10000 # 16
-    OP_BGT  = 0b10001 # 17
-    OP_B    = 0b10010 # 18
-    OP_CALL = 0b10011 # 19
-    OP_RET  = 0b10100 # 20
-    OP_MOVZ = 0b10101 # 21
-    OP_RETZ = 0b10110 # 22
-    # Extensions
-    OP_MIN  = 0b10111 # 23
-    OP_MAX  = 0b11000 # 24
-    OP_ROTS = 0b11001 # 25
-    OP_INVALID = 0b11111
+class Opcode:
+    """Namespace providing binary-string opcode constants."""
+    OP_ADD     = OP_ADD
+    OP_SUB     = OP_SUB
+    OP_MUL     = OP_MUL
+    OP_DIV     = OP_DIV
+    OP_MOD     = OP_MOD
+    OP_CMP     = OP_CMP
+    OP_AND     = OP_AND
+    OP_OR      = OP_OR
+    OP_NOT     = OP_NOT
+    OP_MOV     = OP_MOV
+    OP_LSL     = OP_LSL
+    OP_LSR     = OP_LSR
+    OP_ASR     = OP_ASR
+    OP_NOP     = OP_NOP
+    OP_LD      = OP_LD
+    OP_ST      = OP_ST
+    OP_BEQ     = OP_BEQ
+    OP_BGT     = OP_BGT
+    OP_B       = OP_B
+    OP_CALL    = OP_CALL
+    OP_RET     = OP_RET
+    OP_MOVZ    = OP_MOVZ
+    OP_RETZ    = OP_RETZ
+    OP_MIN     = OP_MIN
+    OP_MAX     = OP_MAX
+    OP_ROTS    = OP_ROTS
+    OP_INVALID = OP_INVALID
 
 
-REG_ZERO = 0
-REG_SP = 14
-REG_RA = 15
-NUM_REGISTERS = 16
-
-
-@dataclass
-class DecodedInst:
-    raw_word: int = 0
-    opcode: Opcode = Opcode.OP_NOP
-    is_immediate: bool = False
-    rd: int = 0
-    rs1: int = 0
-    rs2: int = 0
-    imm_modifier: int = 0                  # 0: default signed, 1: unsigned 'u', 2: high 'h'
-    imm16: int = 0
-    immx: int = 0                          # Expanded 32-bit immediate
-    branch_offset: int = 0                 # Signed 27-bit word offset
-    branch_target: int = 0                 # Target address = PC + (offset << 2)
-
-    def is_branch(self) -> bool:
-        return self.opcode in (
-            Opcode.OP_B, Opcode.OP_BEQ, Opcode.OP_BGT,
-            Opcode.OP_CALL, Opcode.OP_RET, Opcode.OP_RETZ
-        )
-
-    def is_conditional_branch(self) -> bool:
-        return self.opcode in (Opcode.OP_BEQ, Opcode.OP_BGT)
-
-    def is_call(self) -> bool:
-        return self.opcode == Opcode.OP_CALL
-
-    def is_ret(self) -> bool:
-        return self.opcode in (Opcode.OP_RET, Opcode.OP_RETZ)
-
-    def is_load(self) -> bool:
-        return self.opcode == Opcode.OP_LD
-
-    def is_store(self) -> bool:
-        return self.opcode == Opcode.OP_ST
-
-    def is_nop(self) -> bool:
-        return self.opcode == Opcode.OP_NOP
-
-    def writes_register(self) -> bool:
-        if self.opcode in (
-            Opcode.OP_NOP, Opcode.OP_ST, Opcode.OP_CMP,
-            Opcode.OP_B, Opcode.OP_BEQ, Opcode.OP_BGT,
-            Opcode.OP_RET, Opcode.OP_RETZ
-        ):
-            return False
-        return True
-
-    def get_dest_reg(self) -> int:
-        if self.opcode == Opcode.OP_CALL:
-            return REG_RA
-        return self.rd
-
-    def reads_rs1(self) -> bool:
-        if self.opcode in (
-            Opcode.OP_NOP, Opcode.OP_B, Opcode.OP_BEQ,
-            Opcode.OP_BGT, Opcode.OP_CALL, Opcode.OP_NOT, Opcode.OP_MOV
-        ):
-            return False
-        return True
-
-    def reads_rs2(self) -> bool:
-        if self.is_immediate:
-            return False
-        if self.opcode in (
-            Opcode.OP_NOP, Opcode.OP_B, Opcode.OP_BEQ,
-            Opcode.OP_BGT, Opcode.OP_CALL, Opcode.OP_RET, Opcode.OP_RETZ,
-            Opcode.OP_LD
-        ):
-            return False
-        return True
-
-    def reads_rd(self) -> bool:
-        return self.opcode == Opcode.OP_ST
-
-
-def decode_instruction(word: int, pc: int = 0) -> DecodedInst:
-    """Decodes a 32-bit machine word into a DecodedInst."""
-    op_val = (word >> 27) & 0x1F
-    try:
-        opcode = Opcode(op_val)
-    except ValueError:
-        opcode = Opcode.OP_INVALID
-
-    i_bit = bool((word >> 26) & 1)
-    rd = (word >> 22) & 0xF
-    rs1 = (word >> 18) & 0xF
-    rs2 = (word >> 14) & 0xF
-    mod = (word >> 16) & 0x3
-    imm16 = word & 0xFFFF
-    if imm16 & 0x8000:
-        signed_imm16 = imm16 - 0x10000
-    else:
-        signed_imm16 = imm16
-
-    # Immediate Expansion
-    if mod == 0b01:      # unsigned 'u'
-        immx = imm16 & 0xFFFF
-    elif mod == 0b10:    # high 'h'
-        immx = (imm16 & 0xFFFF) << 16
-    else:                # default sign extended
-        immx = signed_imm16 & 0xFFFFFFFF
-
-    # Branch Offset Expansion (27-bit signed)
-    offset27 = word & 0x07FFFFFF
-    if offset27 & 0x04000000:
-        offset27 -= 0x08000000 # Sign extend 27-bit
-    branch_target = (pc + (offset27 << 2)) & 0xFFFFFFFF
-
-    if opcode == Opcode.OP_RET:
-        rs1 = REG_RA
-
-    return DecodedInst(
-        raw_word=word,
-        opcode=opcode,
-        is_immediate=i_bit,
-        rd=rd,
-        rs1=rs1,
-        rs2=rs2,
-        imm_modifier=mod,
-        imm16=signed_imm16,
-        immx=immx,
-        branch_offset=offset27,
-        branch_target=branch_target
-    )
+# Backward-compatibility aliases
+decode_instruction = decode
+DecodedInst = Instruction
 
 
 def disassemble_instruction(word: int, pc: int = 0) -> str:
     """Disassembles 32-bit machine word into SimpleRisc assembly string."""
-    d = decode_instruction(word, pc)
-    op = d.opcode
-
-    if op == Opcode.OP_NOP:
-        return "nop"
-    if op == Opcode.OP_RET:
-        return "ret"
-    if op == Opcode.OP_RETZ:
-        return "retz"
-
-    if op in (Opcode.OP_B, Opcode.OP_BEQ, Opcode.OP_BGT, Opcode.OP_CALL):
-        name = {Opcode.OP_B: "b", Opcode.OP_BEQ: "beq", Opcode.OP_BGT: "bgt", Opcode.OP_CALL: "call"}[op]
-        return f"{name} 0x{d.branch_target:08X}"
-
-    op_names = {
-        Opcode.OP_ADD: "add", Opcode.OP_SUB: "sub", Opcode.OP_MUL: "mul",
-        Opcode.OP_DIV: "div", Opcode.OP_MOD: "mod", Opcode.OP_CMP: "cmp",
-        Opcode.OP_AND: "and", Opcode.OP_OR: "or", Opcode.OP_NOT: "not",
-        Opcode.OP_MOV: "mov", Opcode.OP_LSL: "lsl", Opcode.OP_LSR: "lsr",
-        Opcode.OP_ASR: "asr", Opcode.OP_LD: "ld", Opcode.OP_ST: "st",
-        Opcode.OP_MIN: "min", Opcode.OP_MAX: "max", Opcode.OP_ROTS: "rots",
-    }
-    name = op_names.get(op, "unknown")
-
-    if op == Opcode.OP_MOV:
-        arg2 = f"{d.imm16}" if d.is_immediate else f"r{d.rs2}"
-        return f"mov r{d.rd}, {arg2}"
-
-    if op == Opcode.OP_NOT:
-        arg2 = f"{d.imm16}" if d.is_immediate else f"r{d.rs2}"
-        return f"not r{d.rd}, {arg2}"
-
-    if op == Opcode.OP_CMP:
-        arg2 = f"{d.imm16}" if d.is_immediate else f"r{d.rs2}"
-        return f"cmp r{d.rs1}, {arg2}"
-
-    if op == Opcode.OP_LD:
-        return f"ld r{d.rd}, {d.imm16}[r{d.rs1}]"
-
-    if op == Opcode.OP_ST:
-        return f"st r{d.rd}, {d.imm16}[r{d.rs1}]"
-
-    arg2 = f"{d.imm16}" if d.is_immediate else f"r{d.rs2}"
-    return f"{name} r{d.rd}, r{d.rs1}, {arg2}"
+    try:
+        inst = decode(word, pc)
+        return inst.disassembly
+    except IllegalInstructionError:
+        return f"illegal (0x{word:08X})"

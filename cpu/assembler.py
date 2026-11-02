@@ -1,13 +1,15 @@
 """
 cpu/assembler.py: Two-pass SimpleRisc assembler and macro preprocessor.
-Assembles SimpleRisc assembly (.s) into 32-bit machine code words.
-Fully compatible with existing benchmark files.
+Assembles SimpleRisc assembly (.s) into 32-bit machine code words
+using binary-string opcodes and field bit concatenation.
 """
 
 from __future__ import annotations
 import re
 from typing import List, Dict, Tuple
-from cpu.isa import Opcode, REG_SP, REG_RA
+from common.isa import (
+    REG_SP, REG_RA, encode, opcode_of, MNEMONIC_TO_OPCODE
+)
 
 
 class Assembler:
@@ -18,7 +20,6 @@ class Assembler:
 
     @staticmethod
     def _strip_comments(line: str) -> str:
-        # Strip comments starting with ';' or '@' or '/*'
         out = []
         in_block = False
         i = 0
@@ -147,7 +148,7 @@ class Assembler:
             code_lines.append((current_pc, line))
             current_pc += 4
 
-        # PASS 2: Instruction Encoding
+        # PASS 2: Instruction Encoding via binary-string opcode table
         for pc, line in code_lines:
             if line.startswith(".word"):
                 val = int(line.split()[1])
@@ -169,12 +170,8 @@ class Assembler:
                     m = raw_m[:-1]
 
             word = 0
-            if m == "nop":
-                word = (Opcode.OP_NOP << 27)
-            elif m == "ret":
-                word = (Opcode.OP_RET << 27)
-            elif m == "retz":
-                word = (Opcode.OP_RETZ << 27)
+            if m in ("nop", "ret", "retz"):
+                word = encode(m)
 
             elif m in ("b", "beq", "bgt", "call"):
                 target_str = tokens[1]
@@ -183,8 +180,7 @@ class Assembler:
                 else:
                     target_pc = self._parse_imm(target_str)
                 word_offset = (target_pc - pc) >> 2
-                op_map = {"b": Opcode.OP_B, "beq": Opcode.OP_BEQ, "bgt": Opcode.OP_BGT, "call": Opcode.OP_CALL}
-                word = (op_map[m] << 27) | (word_offset & 0x07FFFFFF)
+                word = encode(m, branch_offset=word_offset)
 
             elif m in ("ld", "st"):
                 rd = self._parse_reg(tokens[1])
@@ -196,61 +192,42 @@ class Assembler:
                     rs1 = self._parse_reg(base_str)
                 else:
                     raise ValueError(f"Malformed memory operand: {mem_spec}")
-                op = Opcode.OP_LD if m == "ld" else Opcode.OP_ST
-                word = (op << 27) | (1 << 26) | (rd << 22) | (rs1 << 18) | ((modifier & 3) << 16) | (offset & 0xFFFF)
+                word = encode(m, rd=rd, rs1=rs1, imm=offset, imm_modifier=modifier)
 
-            elif m == "mov":
+            elif m in ("mov", "not"):
                 rd = self._parse_reg(tokens[1])
                 arg2 = tokens[2]
                 if arg2.lower() in [f"r{i}" for i in range(16)] + ["sp", "ra"]:
                     rs2 = self._parse_reg(arg2)
-                    word = (Opcode.OP_MOV << 27) | (0 << 26) | (rd << 22) | (rs2 << 14)
+                    word = encode(m, rd=rd, rs1=0, rs2=rs2)
                 else:
                     imm = self._parse_imm(arg2)
-                    word = (Opcode.OP_MOV << 27) | (1 << 26) | (rd << 22) | ((modifier & 3) << 16) | (imm & 0xFFFF)
-
-            elif m == "not":
-                rd = self._parse_reg(tokens[1])
-                arg2 = tokens[2]
-                if arg2.lower() in [f"r{i}" for i in range(16)] + ["sp", "ra"]:
-                    rs2 = self._parse_reg(arg2)
-                    word = (Opcode.OP_NOT << 27) | (0 << 26) | (rd << 22) | (rs2 << 14)
-                else:
-                    imm = self._parse_imm(arg2)
-                    word = (Opcode.OP_NOT << 27) | (1 << 26) | (rd << 22) | ((modifier & 3) << 16) | (imm & 0xFFFF)
+                    word = encode(m, rd=rd, rs1=0, imm=imm, imm_modifier=modifier)
 
             elif m == "cmp":
                 rs1 = self._parse_reg(tokens[1])
                 arg2 = tokens[2]
                 if arg2.lower() in [f"r{i}" for i in range(16)] + ["sp", "ra"]:
                     rs2 = self._parse_reg(arg2)
-                    word = (Opcode.OP_CMP << 27) | (0 << 26) | (rs1 << 18) | (rs2 << 14)
+                    word = encode(m, rd=0, rs1=rs1, rs2=rs2)
                 else:
                     imm = self._parse_imm(arg2)
-                    word = (Opcode.OP_CMP << 27) | (1 << 26) | (rs1 << 18) | ((modifier & 3) << 16) | (imm & 0xFFFF)
+                    word = encode(m, rd=0, rs1=rs1, imm=imm, imm_modifier=modifier)
 
             else:
                 # 3-operand instructions: add, sub, mul, div, mod, and, or, lsl, lsr, asr, min, max, rots
-                op_map = {
-                    "add": Opcode.OP_ADD, "sub": Opcode.OP_SUB, "mul": Opcode.OP_MUL,
-                    "div": Opcode.OP_DIV, "mod": Opcode.OP_MOD, "and": Opcode.OP_AND,
-                    "or": Opcode.OP_OR, "lsl": Opcode.OP_LSL, "lsr": Opcode.OP_LSR,
-                    "asr": Opcode.OP_ASR, "min": Opcode.OP_MIN, "max": Opcode.OP_MAX,
-                    "rots": Opcode.OP_ROTS,
-                }
-                if m not in op_map:
+                if m not in MNEMONIC_TO_OPCODE:
                     raise ValueError(f"Unknown mnemonic: '{m}' in line: {line}")
-                op = op_map[m]
                 rd = self._parse_reg(tokens[1])
                 rs1 = self._parse_reg(tokens[2])
                 arg3 = tokens[3]
 
                 if arg3.lower() in [f"r{i}" for i in range(16)] + ["sp", "ra"]:
                     rs2 = self._parse_reg(arg3)
-                    word = (op << 27) | (0 << 26) | (rd << 22) | (rs1 << 18) | (rs2 << 14)
+                    word = encode(m, rd=rd, rs1=rs1, rs2=rs2)
                 else:
                     imm = self._parse_imm(arg3)
-                    word = (op << 27) | (1 << 26) | (rd << 22) | (rs1 << 18) | ((modifier & 3) << 16) | (imm & 0xFFFF)
+                    word = encode(m, rd=rd, rs1=rs1, imm=imm, imm_modifier=modifier)
 
             self.machine_words.append(word)
             self.assembled_lines.append((pc, word, line))
