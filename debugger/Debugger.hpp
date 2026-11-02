@@ -11,6 +11,8 @@
 #include "../assembler/Disassembler.hpp"
 #include "../visualizer/StackVisualizer.hpp"
 #include "../visualizer/PipelineVisualizer.hpp"
+#include "../visualizer/MemoryVisualizer.hpp"
+#include "../common/ISA.hpp"
 #include "../processor_4stage/Pipeline4Stage.hpp"
 #include "../processor_6stage/Pipeline6Stage.hpp"
 
@@ -70,10 +72,12 @@ public:
         p4.reset();
         p4.setProgramSize(progSize);
         p4.memory.loadProgram(0, words);
+        p4.memHierarchy.loadProgram(0, words);
 
         p6.reset();
         p6.setProgramSize(progSize);
         p6.memory.loadProgram(0, words);
+        p6.memHierarchy.loadProgram(0, words);
 
         mcu.reset();
         mcu.setPC(0);
@@ -272,6 +276,65 @@ public:
                       "MICROPROGRAMMED CONTROLLER") << "\n";
     }
 
+    void showCache() const {
+        if (currentSimMode == SimMode::PIPELINE_6STAGE) {
+            std::cout << visualizer::MemoryVisualizer::renderCache(p6.memHierarchy.l1d);
+        } else {
+            std::cout << visualizer::MemoryVisualizer::renderCache(p4.memHierarchy.l1d);
+        }
+    }
+
+    void showDRAM() const {
+        if (currentSimMode == SimMode::PIPELINE_6STAGE) {
+            std::cout << visualizer::MemoryVisualizer::renderDRAM(p6.memHierarchy.dram);
+        } else {
+            std::cout << visualizer::MemoryVisualizer::renderDRAM(p4.memHierarchy.dram);
+        }
+    }
+
+    void showTLB() const {
+        if (currentSimMode == SimMode::PIPELINE_6STAGE) {
+            std::cout << visualizer::MemoryVisualizer::renderTLB(p6.memHierarchy.vm.dtlb);
+        } else {
+            std::cout << visualizer::MemoryVisualizer::renderTLB(p4.memHierarchy.vm.dtlb);
+        }
+    }
+
+    void showCPI() const {
+        if (currentSimMode == SimMode::PIPELINE_6STAGE) {
+            std::cout << visualizer::MemoryVisualizer::renderCPIStack(p6.perfTracker);
+        } else {
+            std::cout << visualizer::MemoryVisualizer::renderCPIStack(p4.perfTracker);
+        }
+    }
+
+    void showHazards() const {
+        const auto& hz = (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.hazardUnit : p4.hazardUnit;
+        std::cout << "=== Hazard Unit Telemetry ===\n"
+                  << "Load-Use Stalls     : " << hz.loadUseStalls << "\n"
+                  << "RAW No-Fwd Stalls   : " << hz.rawNoFwdStalls << "\n"
+                  << "Structural Stalls   : " << hz.structuralMemStalls << "\n"
+                  << "Branch Flushes      : " << hz.branchFlushCount << "\n";
+    }
+
+    void showForwarding() const {
+        const auto& fw = (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.fwdUnit : p4.fwdUnit;
+        std::cout << "=== Forwarding Unit Telemetry ===\n"
+                  << "Forwarding Mode     : " << forwardingModeToString(fw.mode) << "\n"
+                  << "EX-to-EX Forwards   : " << fw.exToExForwards << "\n"
+                  << "MEM-to-EX Forwards  : " << fw.memToExForwards << "\n"
+                  << "WB-to-EX Forwards   : " << fw.wbToExForwards << "\n"
+                  << "Store Data Forwards : " << fw.storeDataForwards << "\n"
+                  << "StoreBuffer Hits    : " << fw.storeBuffer.forwardHits << "\n";
+    }
+
+    void showAMAT() const {
+        const auto& memH = (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.memHierarchy : p4.memHierarchy;
+        std::cout << "=== Memory Hierarchy Latency Analysis ===\n"
+                  << "AMAT (Average Memory Access Time) : " << std::fixed << std::setprecision(2) << memH.calculateAMAT() << " cycles\n"
+                  << "EAT  (Effective Access Time + VM) : " << std::fixed << std::setprecision(2) << memH.calculateEAT() << " cycles\n";
+    }
+
     void printHelp() const {
         std::cout << "\n================= RISC201 DEBUGGER COMMANDS =================\n"
                   << "  s, step                 : Step one clock cycle / micro-cycle\n"
@@ -282,6 +345,16 @@ public:
                   << "  db, delbreak <addr>     : Delete breakpoint at address\n"
                   << "  regs                    : Display register file (r0-r15, flags, PC)\n"
                   << "  p, pipeline             : Display pipeline stage latches & hazards\n"
+                  << "  hazards                 : Display hazard detection telemetry\n"
+                  << "  fwd                     : Display data forwarding bypass telemetry\n"
+                  << "  cpi                     : Display ASCII CPI stack breakdown chart\n"
+                  << "  cache                   : Render cache sets/ways visualizer\n"
+                  << "  dram                    : Render DRAM banks and row buffer status\n"
+                  << "  tlb                     : Render TLB translation entries\n"
+                  << "  amat                    : Compute AMAT and EAT latencies\n"
+                  << "  opcode                  : Display SimpleRisc ISA table\n"
+                  << "  preset <name>           : Switch memory preset (ideal, simple, modern, etc.)\n"
+                  << "  bp_policy <pol>         : Switch branch predictor policy\n"
                   << "  stack                   : Render ASCII active stack memory visualizer\n"
                   << "  micro                   : Display microPC state & control bus signals\n"
                   << "  mode <4|6|micro>        : Switch core: 4-stage, 6-stage, or microcode\n"
@@ -336,6 +409,34 @@ public:
                 showMicroState();
             } else if (cmd == "stats") {
                 showStats();
+            } else if (cmd == "hazards") {
+                showHazards();
+            } else if (cmd == "fwd") {
+                showForwarding();
+            } else if (cmd == "cpi") {
+                showCPI();
+            } else if (cmd == "cache") {
+                showCache();
+            } else if (cmd == "dram") {
+                showDRAM();
+            } else if (cmd == "tlb") {
+                showTLB();
+            } else if (cmd == "amat") {
+                showAMAT();
+            } else if (cmd == "opcode") {
+                std::cout << printIsaTable();
+            } else if (cmd == "preset") {
+                std::string pr;
+                ss >> pr;
+                p4.setMemPreset(pr);
+                p6.setMemPreset(pr);
+                std::cout << "Configured memory preset: " << pr << "\n";
+            } else if (cmd == "bp_policy") {
+                std::string bp;
+                ss >> bp;
+                p4.setBranchPolicy(bp);
+                p6.setBranchPolicy(bp);
+                std::cout << "Configured branch policy: " << bp << "\n";
             } else if (cmd == "b" || cmd == "break") {
                 std::string target;
                 ss >> target;

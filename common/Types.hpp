@@ -176,6 +176,8 @@ struct Flags {
     bool GT{false}; // Greater-Than flag
 
     void clear() { E = false; GT = false; }
+    bool isEqual() const { return E; }
+    bool isGreater() const { return GT; }
 
     Word toWord() const {
         return (E ? 1u : 0u) | (GT ? 2u : 0u);

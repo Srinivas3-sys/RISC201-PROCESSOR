@@ -3,6 +3,9 @@ risc201_sim
 risc201_as
 risc201_disasm
 risc201_eval
+risc201_test
+exp_memory
+exp_pipeline
 
 # Generated output files
 benchmarks/*.hex

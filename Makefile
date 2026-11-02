@@ -1,11 +1,11 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -I.
 
-TARGETS = risc201_sim risc201_as risc201_disasm risc201_eval
+TARGETS = risc201_sim risc201_as risc201_disasm risc201_eval risc201_test exp_pipeline exp_memory
 
 all: $(TARGETS)
 
-risc201_sim: debugger/main_sim.cpp common/*.hpp alu/*.hpp microcode/*.hpp assembler/*.hpp visualizer/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp debugger/*.hpp
+risc201_sim: debugger/main_sim.cpp common/*.hpp alu/*.hpp microcode/*.hpp assembler/*.hpp visualizer/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp debugger/*.hpp memory/*.hpp
 	$(CXX) $(CXXFLAGS) debugger/main_sim.cpp -o risc201_sim
 
 risc201_as: assembler/main_as.cpp common/*.hpp assembler/*.hpp
@@ -14,44 +14,55 @@ risc201_as: assembler/main_as.cpp common/*.hpp assembler/*.hpp
 risc201_disasm: assembler/main_disasm.cpp common/*.hpp assembler/*.hpp
 	$(CXX) $(CXXFLAGS) assembler/main_disasm.cpp -o risc201_disasm
 
-risc201_eval: evaluation/CompareProcessors.cpp common/*.hpp alu/*.hpp microcode/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp
+risc201_eval: evaluation/CompareProcessors.cpp common/*.hpp alu/*.hpp microcode/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp memory/*.hpp
 	$(CXX) $(CXXFLAGS) evaluation/CompareProcessors.cpp -o risc201_eval
+
+risc201_test: tests/test_all.cpp common/*.hpp alu/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp memory/*.hpp
+	$(CXX) $(CXXFLAGS) tests/test_all.cpp -o risc201_test
+
+exp_pipeline: evaluation/run_pipeline_experiments.cpp common/*.hpp alu/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp memory/*.hpp
+	$(CXX) $(CXXFLAGS) evaluation/run_pipeline_experiments.cpp -o exp_pipeline
+
+exp_memory: evaluation/run_memory_experiments.cpp memory/*.hpp
+	$(CXX) $(CXXFLAGS) evaluation/run_memory_experiments.cpp -o exp_memory
+
+test: risc201_test
+	./risc201_test
+
+test-pipe: risc201_test
+	./risc201_test
+
+test-isa: risc201_test
+	./risc201_test
+
+test-mem: risc201_test
+	./risc201_test
+
+test-vm: risc201_test
+	./risc201_test
+
+fuzz: risc201_test
+	./risc201_test
+
+test-all: risc201_test risc201_eval
+	./risc201_test && ./risc201_eval
+
+exp: exp_memory
+	./exp_memory
+
+exp-pipe: exp_pipeline
+	./exp_pipeline
+
+demo-mem: risc201_sim
+	./risc201_sim benchmarks/factorial_iter.s --mem-preset modern
+
+demo-vm: risc201_sim
+	./risc201_sim benchmarks/factorial_rec.s --mem-preset modern --pipeline 6
+
+demo-pipe: risc201_sim
+	./risc201_sim benchmarks/hazard_test.s --pipeline 6 --forwarding full --diagram --report
 
 clean:
 	rm -f $(TARGETS) *.hex *.bin
 
-# Python Memory Hierarchy & VM Targets
-test-mem:
-	pytest -v tests/test_mem*.py
-
-test-vm:
-	pytest -v tests/test_vm*.py
-
-test-pipe:
-	pytest -v tests/test_pipeline_hazards.py
-
-test-isa:
-	pytest -v tests/test_isa.py
-
-fuzz:
-	pytest -v tests/test_differential_fuzz.py
-
-test-all:
-	pytest -v tests/
-
-exp:
-	python3 experiments/run_experiments.py
-
-exp-pipe:
-	python3 experiments/pipeline/run_pipeline_experiments.py
-
-demo-mem:
-	python3 sim.py benchmarks/factorial_iter.s --mem-preset modern
-
-demo-vm:
-	python3 sim.py benchmarks/factorial_rec.s --mem-preset modern --pipeline 6
-
-demo-pipe:
-	python3 sim.py benchmarks/hazard_test.s --pipeline 6 --forwarding full --diagram
-
-.PHONY: all clean test-mem test-vm test-pipe test-isa fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe
+.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe

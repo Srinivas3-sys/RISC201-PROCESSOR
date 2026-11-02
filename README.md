@@ -95,7 +95,7 @@ A cycle-accurate, deeply parameterized modern computer systems simulator extendi
 
 ## 2. Key Features
 
-- **Virtual Memory & Multi-Level Translation (`memory/vm.py`)**:
+- **Virtual Memory & Multi-Level Translation (`memory/VirtualMemory.hpp`)**:
   - Configurable 32-bit and 48-bit address spaces (4-level x86-64 radix tree).
   - 4 KB standard and 2 MB huge page support.
   - Separate L1 ITLB, L1 DTLB, and unified L2 STLB.
@@ -103,24 +103,24 @@ A cycle-accurate, deeply parameterized modern computer systems simulator extendi
   - Demand paging with frame allocator and page replacement (FIFO, LRU, Clock, Belady Optimal).
   - Minor faults (zero-fill free frames) and major faults (NVMe SSD swap backing).
   - Precise page fault exceptions and stack guard page boundary enforcement.
-- **Cache Subsystem (`memory/cache.py`)**:
+- **Cache Subsystem (`memory/Cache.hpp`)**:
   - Arbitrary capacity, line sizes (32, 64, 128 B), and associativity ($N$-way, direct-mapped, fully-associative).
   - Multiple replacement policies: LRU, FIFO, Random, Tree-PLRU, SRRIP.
   - Write-Back + Write-Allocate and Write-Through + No-Write-Allocate.
   - Indexing: PIPT, VIPT (with automatic page-offset aliasing check), and VIVT.
   - 3C Miss classification: Compulsory, Capacity, Conflict.
   - Non-blocking MSHRs with request merging and memory-level parallelism (MLP) tracking.
-- **Hardware Data Prefetchers (`memory/prefetch.py`)**:
+- **Hardware Data Prefetchers (`memory/Prefetcher.hpp`)**:
   - Next-line, Stride (Reference Prediction Table with 4-state automaton), and Stream prefetchers.
   - Page boundary guard preventing prefetches across 4 KB boundaries.
-- **Cycle-Accurate DRAM Model (`memory/dram.py`, `memory/mapping.py`)**:
+- **Cycle-Accurate DRAM Model (`memory/DRAM.hpp`, `memory/AddressMapping.hpp`)**:
   - Channel $\rightarrow$ Rank $\rightarrow$ Chip $\rightarrow$ Bank Group $\rightarrow$ Bank $\rightarrow$ Row Buffer.
   - Timings: $t_{\text{RCD}}, t_{\text{RP}}, t_{\text{CL}}, t_{\text{RAS}}, t_{\text{RC}}, t_{\text{WR}}, t_{\text{FAW}}, t_{\text{RRD\_S/L}}, t_{\text{CCD\_S/L}}$.
   - Open-page and closed-page row-buffer management policies.
   - Periodic refresh stalls ($t_{\text{RFC}}$ injected every $t_{\text{REFI}}$).
   - FCFS and FR-FCFS (row-hit-first) memory controller request schedulers.
   - Bit-field address mapping and XOR-hash bank interleaving.
-- **Dual Pipeline Integration (`cpu/pipeline4.py`, `cpu/pipeline6.py`)**:
+- **Dual Pipeline Integration (`processor_4stage/Pipeline4Stage.hpp`, `processor_6stage/Pipeline6Stage.hpp`)**:
   - Direct integration into 4-stage (IF $\rightarrow$ OF $\rightarrow$ EX $\rightarrow$ MA_RW) and 6-stage (IF $\rightarrow$ ID $\rightarrow$ RF $\rightarrow$ EX $\rightarrow$ MA $\rightarrow$ RW) pipelines.
   - Precise multi-cycle bubble insertion for IF and MA cache/DRAM misses.
 
@@ -142,26 +142,32 @@ Configurations can be passed via command line flags or selected via `--mem-prese
 
 ## 4. Quick Start & CLI Usage
 
-### Running the Python Cycle-Accurate Simulator
+### Running the C++ Cycle-Accurate Simulator
 ```bash
-# Run a SimpleRisc assembly benchmark with modern memory hierarchy
-./sim.py benchmarks/factorial_iter.s --mem-preset modern
+# Build all simulator binaries
+make all
 
-# Run with 6-stage pipeline and custom cache geometry
-./sim.py benchmarks/prime_test.s --pipeline 6 --l1-size 65536 --assoc 4 --replacement plru
+# Run a SimpleRisc assembly benchmark with modern memory hierarchy
+./risc201_sim benchmarks/factorial_iter.s --mem-preset modern
+
+# Run with 6-stage pipeline, full data forwarding, and 2-bit branch prediction
+./risc201_sim benchmarks/prime_test.s --pipeline 6 --forwarding full --branch-policy 2bit
 
 # Run in interactive debugger REPL mode
-./sim.py benchmarks/factorial_iter.s --interactive
+./risc201_sim benchmarks/factorial_iter.s -i
 ```
 
 ### Interactive REPL Commands
-When launched with `--interactive`, the simulator provides an architectural debugging console:
+When launched with `-i` (or `--interactive`), the simulator provides an architectural debugging console:
 - `step [N]` / `s [N]`: Advance pipeline by $N$ clock cycles.
 - `run` / `r`: Run to program completion.
+- `pipe`: Display current pipeline stages and latched instructions.
+- `hazards`: Show active pipeline hazards, stalls, and bubble injections.
+- `fwd`: Inspect active data forwarding paths and operand bypasses.
+- `cpi`: Print cycle count, instruction count, and CPI stack breakdown.
 - `cache`: Display ASCII set-way grid and line status for L1I, L1D, L2, and L3.
 - `dram`: Display DRAM channel, bank group, and bank buffer states.
 - `tlb`: View ITLB, DTLB, and STLB cached virtual-to-physical translations.
-- `pagetable [va]`: Perform a walk of the radix page table for a virtual address.
 - `amat`: Show recursive AMAT and Effective Access Time (EAT) breakdown.
 - `stats`: Print comprehensive pipeline and memory hierarchy telemetry.
 
@@ -169,35 +175,25 @@ When launched with `--interactive`, the simulator provides an architectural debu
 
 ## 5. Build & Makefile Targets
 
-The Makefile supports both the original C++ processor evaluation suite and the new Python pipeline, hazard, and memory hierarchy subsystems:
+The entire repository is built with **100% pure modern C++17** (`g++ -std=c++17 -O2`):
 
 ```bash
-# Compile and run legacy C++ simulator and all 30 benchmarks
+# Compile all binaries (simulator, assembler, disassembler, test suite, evaluation)
 make all
+
+# Run comprehensive verification test suite (44/44 unit & differential tests)
+make test
+
+# Run comparison evaluation across 30 architectural configurations
 ./risc201_eval
 
-# Run Pipeline & Hazard Unit Tests (15 tests)
-make test-pipe
-
-# Run ISA 5-Bit Binary-String Opcode Tests (7 tests)
-make test-isa
-
-# Run Differential ISS & Randomized Hazard Fuzzer Tests (18 tests)
-make fuzz
-
-# Run Memory Subsystem Unit Tests (pytest)
-make test-mem
-
-# Run Virtual Memory & TLB Unit Tests (pytest)
-make test-vm
-
-# Run All Python Unit Tests (75 tests)
+# Run both verification and benchmark evaluations
 make test-all
 
-# Execute All 10 Pipeline Hazard Experiments (generates CSVs and PIPELINE_RESULTS.md)
+# Execute all 10 pipeline hazard experiments (generates CSVs)
 make exp-pipe
 
-# Execute All 20 Memory Hierarchy Experiments (generates CSVs and EXPERIMENT_RESULTS.md)
+# Execute all 20 memory hierarchy experiments (generates CSVs)
 make exp
 
 # Run Pipeline Hazard & Timing Diagram Demo

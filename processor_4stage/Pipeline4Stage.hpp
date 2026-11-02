@@ -9,6 +9,11 @@
 #include "../alu/ALU.hpp"
 #include "../assembler/Disassembler.hpp"
 #include "../visualizer/PipelineVisualizer.hpp"
+#include "../memory/MemoryHierarchy.hpp"
+#include "../common/ForwardingUnit.hpp"
+#include "../common/HazardUnit.hpp"
+#include "../common/BranchPredictor.hpp"
+#include "../common/PerformanceTracker.hpp"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -60,15 +65,28 @@ public:
     // Forwarding Enable toggle (for evaluation comparison)
     bool forwardingEnabled{true};
 
+    // Advanced Subsystem Extensions
+    memory::MemoryHierarchy memHierarchy;
+    bool useMemoryHierarchy{false};
+    ForwardingUnit fwdUnit{ForwardingMode::FULL};
+    HazardUnit hazardUnit{4, ForwardingMode::FULL};
+    BranchPredictor branchPredictor{BranchPolicy::BIMODAL_2BIT};
+    PerformanceTracker perfTracker{4};
+
 public:
     explicit Pipeline4Stage(size_t memSize = 1024 * 1024)
-        : memory(memSize) {
+        : memory(memSize), memHierarchy(memory::getPreset("ideal")) {
         reset();
     }
 
     void reset() {
         regFile.reset();
         memory.reset();
+        if (useMemoryHierarchy) memHierarchy.reset();
+        fwdUnit.reset();
+        hazardUnit.reset();
+        branchPredictor.reset();
+        perfTracker.reset();
         pc = 0;
         programSize = 0;
         halted = false;
@@ -90,8 +108,35 @@ public:
     }
 
     void setProgramSize(Word sz) { programSize = sz; }
-    void setForwarding(bool enable) { forwardingEnabled = enable; }
+    void setForwarding(bool enable) {
+        forwardingEnabled = enable;
+        fwdUnit.mode = enable ? ForwardingMode::FULL : ForwardingMode::NONE;
+        hazardUnit.forwardingMode = fwdUnit.mode;
+    }
     bool isForwardingEnabled() const { return forwardingEnabled; }
+
+    void setMemPreset(const std::string& preset) {
+        memHierarchy = memory::MemoryHierarchy(memory::getPreset(preset));
+        useMemoryHierarchy = (preset != "ideal");
+    }
+
+    void setBranchPolicy(const std::string& pol) {
+        branchPredictor.policy = parseBranchPolicy(pol);
+    }
+
+    void setForwardingMode(const std::string& mode) {
+        fwdUnit.mode = parseForwardingMode(mode);
+        forwardingEnabled = (fwdUnit.mode != ForwardingMode::NONE);
+        hazardUnit.forwardingMode = fwdUnit.mode;
+    }
+
+    void loadProgram(Word base, const std::vector<Word>& words) {
+        memory.loadProgram(base, words);
+        if (useMemoryHierarchy) {
+            memHierarchy.loadProgram(base, words);
+        }
+        setProgramSize(static_cast<Word>(words.size() * 4));
+    }
 
     // Check if pipeline has completely drained (no valid instructions in flight)
     bool isDrained() const {
@@ -121,11 +166,30 @@ public:
             Word writebackData = l_EX_MARW.aluResult;
 
             if (d.isLoad()) {
-                // Read word from memory
-                writebackData = memory.readWord(l_EX_MARW.aluResult, &currentException);
+                if (useMemoryHierarchy) {
+                    auto [data, lat] = memHierarchy.readWord(l_EX_MARW.aluResult, false, l_EX_MARW.pc, cycles);
+                    writebackData = data;
+                    if (lat > 1) {
+                        perfTracker.recordStall("DCACHE_MISS", lat - 1);
+                        stallCycles += (lat - 1);
+                        cycles += (lat - 1);
+                    }
+                } else {
+                    // Read word from memory
+                    writebackData = memory.readWord(l_EX_MARW.aluResult, &currentException);
+                }
             } else if (d.isStore()) {
-                // Store op2 into memory at aluResult
-                memory.writeWord(l_EX_MARW.aluResult, l_EX_MARW.op2, &currentException);
+                if (useMemoryHierarchy) {
+                    uint32_t lat = memHierarchy.writeWord(l_EX_MARW.aluResult, l_EX_MARW.op2, l_EX_MARW.pc, cycles);
+                    if (lat > 1) {
+                        perfTracker.recordStall("DCACHE_MISS", lat - 1);
+                        stallCycles += (lat - 1);
+                        cycles += (lat - 1);
+                    }
+                } else {
+                    // Store op2 into memory at aluResult
+                    memory.writeWord(l_EX_MARW.aluResult, l_EX_MARW.op2, &currentException);
+                }
             } else if (d.isCall()) {
                 // Call writes return address (PC + 4)
                 writebackData = l_EX_MARW.pc + 4;
@@ -278,6 +342,7 @@ public:
                 stall_OF = true;
                 bubble_EX = true;
                 stallCycles++;
+                perfTracker.recordStall(loadUseHazard ? "RAW_LOAD_USE" : "RAW_NOFWD");
             } else {
                 // Read register operands
                 Word op1 = regFile.readPort1(d.isRet() ? REG_RA : d.rs1);
@@ -322,14 +387,26 @@ public:
             next_IF_OF.reset(); // Flush IF
             next_OF_EX.reset(); // Flush OF
             bubbleCycles += 2;
+            perfTracker.recordBranchBubble(2);
         } else if (programSize > 0 && pc >= programSize) {
             next_IF_OF.reset(); // Program completed, drain pipeline with bubbles
         } else if (!stall_IF) {
-            Word instWord = memory.readWord(pc, &currentException);
-            if (currentException.hasOccurred()) {
-                currentException.faultingPC = pc;
-                halted = true;
-                return;
+            Word instWord = 0;
+            if (useMemoryHierarchy) {
+                auto [w, lat] = memHierarchy.readWord(pc, true, pc, cycles);
+                instWord = w;
+                if (lat > 1) {
+                    perfTracker.recordStall("ICACHE_MISS", lat - 1);
+                    stallCycles += (lat - 1);
+                    cycles += (lat - 1);
+                }
+            } else {
+                instWord = memory.readWord(pc, &currentException);
+                if (currentException.hasOccurred()) {
+                    currentException.faultingPC = pc;
+                    halted = true;
+                    return;
+                }
             }
 
             next_IF_OF.pc = pc;
@@ -351,6 +428,9 @@ public:
             l_IF_OF = next_IF_OF;
         }
         l_EX_MARW = next_EX_MARW;
+
+        perfTracker.totalCycles = cycles;
+        perfTracker.retiredInstructions = retiredInstructions;
     }
 
     // Run until drained or breakpoint or max cycles
@@ -361,6 +441,8 @@ public:
                 break;
             }
         }
+        perfTracker.totalCycles = cycles;
+        perfTracker.retiredInstructions = retiredInstructions;
     }
 
     std::vector<visualizer::PipelineStageInfo> getStageInfo() const {

@@ -59,6 +59,14 @@ public:
     void setConfig(const AluConfig& cfg) { config = cfg; }
     const AluConfig& getConfig() const { return config; }
 
+    AluOutput execute(const std::string& opcodeBits, Word a, Word b, const Flags& currentFlags = {}) {
+        uint32_t val = 0;
+        for (char c : opcodeBits) {
+            val = (val << 1) | (c == '1' ? 1 : 0);
+        }
+        return execute(static_cast<Opcode>(val), a, b, currentFlags);
+    }
+
     /**
      * Execute an ALU operation given inputs A, B, and the instruction Opcode.
      * Note: flags are only updated if opcode == OP_CMP.

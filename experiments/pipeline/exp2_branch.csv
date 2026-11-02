@@ -1,0 +1,43 @@
+Benchmark,Policy,TotalBranches,Mispredicts,Accuracy
+Factorial (Iterative),stall,5,1,100.00
+Factorial (Iterative),flush,5,1,100.00
+Factorial (Iterative),predict-taken,5,1,100.00
+Factorial (Iterative),static-btfn,5,1,100.00
+Factorial (Iterative),1bit,5,1,100.00
+Factorial (Iterative),2bit,5,1,100.00
+Factorial (Iterative),gshare,5,1,100.00
+Factorial (Recursive),stall,40,9,100.00
+Factorial (Recursive),flush,40,9,100.00
+Factorial (Recursive),predict-taken,40,9,100.00
+Factorial (Recursive),static-btfn,40,9,100.00
+Factorial (Recursive),1bit,40,9,100.00
+Factorial (Recursive),2bit,40,9,100.00
+Factorial (Recursive),gshare,40,9,100.00
+Prime Test (29),stall,55,28,100.00
+Prime Test (29),flush,55,28,100.00
+Prime Test (29),predict-taken,55,28,100.00
+Prime Test (29),static-btfn,55,28,100.00
+Prime Test (29),1bit,55,28,100.00
+Prime Test (29),2bit,55,28,100.00
+Prime Test (29),gshare,55,28,100.00
+Array Sum (5 elements),stall,11,5,100.00
+Array Sum (5 elements),flush,11,5,100.00
+Array Sum (5 elements),predict-taken,11,5,100.00
+Array Sum (5 elements),static-btfn,11,5,100.00
+Array Sum (5 elements),1bit,11,5,100.00
+Array Sum (5 elements),2bit,11,5,100.00
+Array Sum (5 elements),gshare,11,5,100.00
+Hazard Stress Test,stall,1,0,100.00
+Hazard Stress Test,flush,1,0,100.00
+Hazard Stress Test,predict-taken,1,0,100.00
+Hazard Stress Test,static-btfn,1,0,100.00
+Hazard Stress Test,1bit,1,0,100.00
+Hazard Stress Test,2bit,1,0,100.00
+Hazard Stress Test,gshare,1,0,100.00
+Stack Macro Test,stall,0,0,100.00
+Stack Macro Test,flush,0,0,100.00
+Stack Macro Test,predict-taken,0,0,100.00
+Stack Macro Test,static-btfn,0,0,100.00
+Stack Macro Test,1bit,0,0,100.00
+Stack Macro Test,2bit,0,0,100.00
+Stack Macro Test,gshare,0,0,100.00

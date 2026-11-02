@@ -71,11 +71,15 @@ public:
         return 0;
     }
 
+    Word read(RegId id) const { return get(id); }
+
     void set(RegId id, Word value) {
         if (id < NUM_REGISTERS) {
             regs[id] = value;
         }
     }
+
+    void write(RegId id, Word value) { set(id, value); }
 
     // Stack pointer helper
     Word getSP() const { return regs[REG_SP]; }

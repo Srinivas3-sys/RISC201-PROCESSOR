@@ -9,6 +9,11 @@
 #include "../alu/ALU.hpp"
 #include "../assembler/Disassembler.hpp"
 #include "../visualizer/PipelineVisualizer.hpp"
+#include "../memory/MemoryHierarchy.hpp"
+#include "../common/ForwardingUnit.hpp"
+#include "../common/HazardUnit.hpp"
+#include "../common/BranchPredictor.hpp"
+#include "../common/PerformanceTracker.hpp"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -63,15 +68,28 @@ public:
 
     bool forwardingEnabled{true};
 
+    // Advanced Subsystem Extensions
+    memory::MemoryHierarchy memHierarchy;
+    bool useMemoryHierarchy{false};
+    ForwardingUnit fwdUnit{ForwardingMode::FULL};
+    HazardUnit hazardUnit{6, ForwardingMode::FULL};
+    BranchPredictor branchPredictor{BranchPolicy::BIMODAL_2BIT};
+    PerformanceTracker perfTracker{6};
+
 public:
     explicit Pipeline6Stage(size_t memSize = 1024 * 1024)
-        : memory(memSize) {
+        : memory(memSize), memHierarchy(memory::getPreset("ideal")) {
         reset();
     }
 
     void reset() {
         regFile.reset();
         memory.reset();
+        if (useMemoryHierarchy) memHierarchy.reset();
+        fwdUnit.reset();
+        hazardUnit.reset();
+        branchPredictor.reset();
+        perfTracker.reset();
         pc = 0;
         programSize = 0;
         halted = false;
@@ -98,8 +116,35 @@ public:
     }
 
     void setProgramSize(Word sz) { programSize = sz; }
-    void setForwarding(bool enable) { forwardingEnabled = enable; }
+    void setForwarding(bool enable) {
+        forwardingEnabled = enable;
+        fwdUnit.mode = enable ? ForwardingMode::FULL : ForwardingMode::NONE;
+        hazardUnit.forwardingMode = fwdUnit.mode;
+    }
     bool isForwardingEnabled() const { return forwardingEnabled; }
+
+    void setMemPreset(const std::string& preset) {
+        memHierarchy = memory::MemoryHierarchy(memory::getPreset(preset));
+        useMemoryHierarchy = (preset != "ideal");
+    }
+
+    void setBranchPolicy(const std::string& pol) {
+        branchPredictor.policy = parseBranchPolicy(pol);
+    }
+
+    void setForwardingMode(const std::string& mode) {
+        fwdUnit.mode = parseForwardingMode(mode);
+        forwardingEnabled = (fwdUnit.mode != ForwardingMode::NONE);
+        hazardUnit.forwardingMode = fwdUnit.mode;
+    }
+
+    void loadProgram(Word base, const std::vector<Word>& words) {
+        memory.loadProgram(base, words);
+        if (useMemoryHierarchy) {
+            memHierarchy.loadProgram(base, words);
+        }
+        setProgramSize(static_cast<Word>(words.size() * 4));
+    }
 
     bool isDrained() const {
         return (programSize > 0 && pc >= programSize) &&
@@ -155,9 +200,28 @@ public:
             }
 
             if (d.isLoad()) {
-                ldData = memory.readWord(l_EX_MA.aluResult, &currentException);
+                if (useMemoryHierarchy) {
+                    auto [data, lat] = memHierarchy.readWord(l_EX_MA.aluResult, false, l_EX_MA.pc, cycles);
+                    ldData = data;
+                    if (lat > 1) {
+                        perfTracker.recordStall("DCACHE_MISS", lat - 1);
+                        stallCycles += (lat - 1);
+                        cycles += (lat - 1);
+                    }
+                } else {
+                    ldData = memory.readWord(l_EX_MA.aluResult, &currentException);
+                }
             } else if (d.isStore()) {
-                memory.writeWord(l_EX_MA.aluResult, storeData, &currentException);
+                if (useMemoryHierarchy) {
+                    uint32_t lat = memHierarchy.writeWord(l_EX_MA.aluResult, storeData, l_EX_MA.pc, cycles);
+                    if (lat > 1) {
+                        perfTracker.recordStall("DCACHE_MISS", lat - 1);
+                        stallCycles += (lat - 1);
+                        cycles += (lat - 1);
+                    }
+                } else {
+                    memory.writeWord(l_EX_MA.aluResult, storeData, &currentException);
+                }
             }
 
             next_MA_RW.pc = l_EX_MA.pc;
@@ -301,6 +365,7 @@ public:
                 stall_RF = true;
                 bubble_EX = true;
                 stallCycles++;
+                perfTracker.recordStall(loadUse ? "RAW_LOAD_USE" : "RAW_NOFWD");
             } else {
                 // Fetch register operands
                 Word op1 = regFile.readPort1(d.isRet() ? REG_RA : d.rs1);
@@ -361,14 +426,26 @@ public:
             next_ID_RF.reset();
             next_RF_EX.reset();
             bubbleCycles += 3;
+            perfTracker.recordBranchBubble(3);
         } else if (programSize > 0 && pc >= programSize) {
             next_IF_ID.reset(); // Program completed, drain pipeline with bubbles
         } else if (!stall_IF) {
-            Word instWord = memory.readWord(pc, &currentException);
-            if (currentException.hasOccurred()) {
-                currentException.faultingPC = pc;
-                halted = true;
-                return;
+            Word instWord = 0;
+            if (useMemoryHierarchy) {
+                auto [w, lat] = memHierarchy.readWord(pc, true, pc, cycles);
+                instWord = w;
+                if (lat > 1) {
+                    perfTracker.recordStall("ICACHE_MISS", lat - 1);
+                    stallCycles += (lat - 1);
+                    cycles += (lat - 1);
+                }
+            } else {
+                instWord = memory.readWord(pc, &currentException);
+                if (currentException.hasOccurred()) {
+                    currentException.faultingPC = pc;
+                    halted = true;
+                    return;
+                }
             }
 
             next_IF_ID.pc = pc;
@@ -390,6 +467,9 @@ public:
         if (!stall_IF) l_IF_ID = next_IF_ID;
         l_EX_MA = next_EX_MA;
         l_MA_RW = next_MA_RW;
+
+        perfTracker.totalCycles = cycles;
+        perfTracker.retiredInstructions = retiredInstructions;
     }
 
     void run(uint64_t maxCycles = 100000) {
@@ -399,6 +479,8 @@ public:
                 break;
             }
         }
+        perfTracker.totalCycles = cycles;
+        perfTracker.retiredInstructions = retiredInstructions;
     }
 
     std::vector<visualizer::PipelineStageInfo> getStageInfo() const {
