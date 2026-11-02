@@ -1,0 +1,13 @@
+Pipeline,Benchmark,Simulated_CPI,Analytic_CPI,Absolute_Error,Error_Pct
+4-Stage,array_sum.s,1.172,1.121,0.052,4.41%
+4-Stage,factorial_iter.s,1.292,1.167,0.125,9.68%
+4-Stage,factorial_rec.s,1.063,1.042,0.021,1.97%
+4-Stage,hazard_test.s,1.353,1.176,0.176,13.04%
+4-Stage,prime_test.s,1.042,1.024,0.018,1.72%
+4-Stage,stack_test.s,1.158,1.000,0.158,13.64%
+6-Stage,array_sum.s,1.224,1.121,0.103,8.45%
+6-Stage,factorial_iter.s,1.458,1.167,0.292,20.00%
+6-Stage,factorial_rec.s,1.098,1.042,0.056,5.10%
+6-Stage,hazard_test.s,1.529,1.176,0.353,23.08%
+6-Stage,prime_test.s,1.066,1.024,0.042,3.93%
+6-Stage,stack_test.s,1.263,1.000,0.263,20.83%

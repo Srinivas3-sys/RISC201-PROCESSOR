@@ -452,8 +452,12 @@ def opcode_of(mnemonic: str) -> str:
 # 7. DECODED INSTRUCTION STRUCTURE
 # =====================================================================
 
+_GLOBAL_INST_COUNTER: int = 0
+
+
 @dataclass
 class Instruction:
+    inst_id: int = 0
     raw_word: int = 0x68000000
     opcode: str = OP_NOP
     mnemonic: str = "nop"
@@ -474,10 +478,16 @@ class Instruction:
     info: InstructionInfo = field(default_factory=lambda: INSTRUCTION_TABLE[OP_NOP])
     is_bubble: bool = False
     disassembly: str = "nop"
+    has_trap: bool = False
+    trap_type: int = 0
+    trap_details: str = ""
 
     # Convenience Query Methods driven by table metadata
     def is_branch(self) -> bool:
         return self.info.is_branch
+
+    def is_jump(self) -> bool:
+        return self.info.is_jump
 
     def is_conditional_branch(self) -> bool:
         return self.opcode in (OP_BEQ, OP_BGT)
@@ -620,7 +630,11 @@ def decode(word: int, pc: int = 0) -> Instruction:
         arg2 = f"#{imm16_val}" if is_imm else f"r{rs2}"
         disasm = f"{info.mnemonic} r{rd}, r{rs1}, {arg2}"
 
+    global _GLOBAL_INST_COUNTER
+    _GLOBAL_INST_COUNTER += 1
+
     return Instruction(
+        inst_id=_GLOBAL_INST_COUNTER,
         raw_word=word,
         opcode=op_bits,
         mnemonic=info.mnemonic,
@@ -642,6 +656,14 @@ def decode(word: int, pc: int = 0) -> Instruction:
         is_bubble=False,
         disassembly=disasm
     )
+
+
+def disassemble_instruction(word: int, pc: int = 0) -> str:
+    """Disassembles a 32-bit machine word into SimpleRisc assembly text."""
+    try:
+        return decode(word, pc).disassembly
+    except IllegalInstructionError:
+        return f".word 0x{word:08X}"
 
 
 def encode(

@@ -231,3 +231,159 @@ class MemoryVisualizer:
             out.append(f"  [{name:6s}] : {status}")
         out.append(f"+--------------------------------------------------------------------------+")
         return "\n".join(out)
+
+    @staticmethod
+    def render_ascii_timing_diagram(trace: List[Dict[str, Any]], max_cycles: int = 25) -> str:
+        """
+        Renders a textbook-style ASCII Pipeline Timing Diagram:
+        Cycle along the top, stages per cycle, with forwarding event annotations.
+        """
+        if not trace:
+            return "No pipeline trace history available."
+        recent = trace[-max_cycles:]
+        start_cyc = recent[0]["cycle"]
+        end_cyc = recent[-1]["cycle"]
+
+        out = [
+            f"+--------------------------------------------------------------------------+",
+            f"| ASCII PIPELINE TIMING DIAGRAM (Cycles {start_cyc} .. {end_cyc})                     |",
+            f"+--------------------------------------------------------------------------+",
+        ]
+
+        # Header with cycle numbers
+        cyc_header = " Stage  |" + "".join([f" {c % 100:2d} " for c in range(start_cyc, end_cyc + 1)])
+        out.append(cyc_header)
+        out.append(" -------+" + "----" * (end_cyc - start_cyc + 1))
+
+        # Distinct stages in trace
+        sample_stages = list(recent[0].get("stages", {}).keys())
+        for stage in sample_stages:
+            row = f" {stage:<6s} |"
+            for t in recent:
+                st_info = t.get("stages", {}).get(stage, {})
+                inst_text = st_info.get("inst", " ")
+                is_stall = st_info.get("stall", False)
+                is_bubble = st_info.get("bubble", False)
+
+                if is_stall:
+                    cell = " *  "
+                elif is_bubble:
+                    cell = " -  "
+                elif inst_text and inst_text != "nop":
+                    short_op = inst_text.split()[0][:3]
+                    cell = f"{short_op:3s} "
+                else:
+                    cell = " .  "
+                row += cell
+            out.append(row)
+
+        out.append(" -------+" + "----" * (end_cyc - start_cyc + 1))
+        # Forwarding & Stall Events in recent cycles
+        fwd_events_found = []
+        for t in recent:
+            cyc = t["cycle"]
+            fwd = t.get("forwarding", [])
+            stall_code = t.get("stall_reason")
+            if fwd:
+                fwd_events_found.append(f"  Cyc {cyc:3d}: Bypass -> {', '.join(fwd)}")
+            if stall_code:
+                fwd_events_found.append(f"  Cyc {cyc:3d}: Stall  -> [{stall_code}]")
+
+        if fwd_events_found:
+            out.append(" Live Pipeline Telemetry Events:")
+            out.extend(fwd_events_found[-10:])
+        out.append(f"+--------------------------------------------------------------------------+")
+        return "\n".join(out)
+
+    @staticmethod
+    def render_hazard_summary(perf: Any) -> str:
+        """Renders comprehensive hazard and stall breakdown table."""
+        out = [
+            f"+--------------------------------------------------------------------------+",
+            f"|                     HAZARD & STALL ACCOUNTING SUMMARY                    |",
+            f"+--------------------------------------------------------------------------+",
+            f"  RAW Hazards Detected   : {perf.raw_detected_count:5d} | Hazards Bypassed (FWD) : {perf.hazards_avoided_by_forwarding:5d}",
+            f"  WAR Hazards Detected   : {perf.war_detected_count:5d} | WAW Hazards Detected  : {perf.waw_detected_count:5d}",
+            f"+--------------------------------------------------------------------------+",
+            "  Stall Reason Code         | Cycles Stalled | % of Total Stalls",
+            "  --------------------------+----------------+------------------"
+        ]
+        total = perf.total_stalls()
+        for reason, count in sorted(perf.stall_cycles.items(), key=lambda x: x[1], reverse=True):
+            if count > 0:
+                pct = (count / total * 100.0) if total > 0 else 0.0
+                out.append(f"  {reason:<25s} | {count:14d} | {pct:>6.1f}%")
+        out.append("  --------------------------+----------------+------------------")
+        out.append(f"  TOTAL STALL CYCLES        | {total:14d} | 100.0%")
+        out.append(f"+--------------------------------------------------------------------------+")
+        return "\n".join(out)
+
+    @staticmethod
+    def render_forwarding_network_state(fwd_unit: Any, perf: Any) -> str:
+        """Renders the bypass multiplexer topology and active usage."""
+        out = [
+            f"+--------------------------------------------------------------------------+",
+            f"|          DATA FORWARDING NETWORK CONFIGURATION & UTILIZATION             |",
+            f"+--------------------------------------------------------------------------+",
+            f"  Active Forwarding Mode   : {fwd_unit.mode.upper()}",
+            "  -------------------------------------------------------------------------",
+            "  Bypass Path Identifier   | Status | Usage Count | Source -> Destination",
+            "  -------------------------+--------+-------------+------------------------"
+        ]
+        descriptions = {
+            "EX_TO_EX_RS1": "EX stage ALU result -> Next inst EX operand A (rs1)",
+            "EX_TO_EX_RS2": "EX stage ALU result -> Next inst EX operand B (rs2)",
+            "MEM_TO_EX_RS1": "MEM/WB stage result -> EX operand A (rs1)",
+            "MEM_TO_EX_RS2": "MEM/WB stage result -> EX operand B (rs2)",
+            "MEM_TO_MEM": "WB stage result -> MEM stage store-data",
+            "STORE_DATA_FWD": "EX/MEM result -> Store data register input",
+            "STORE_TO_LOAD": "StoreBuffer (Full+) -> Load data without DRAM/cache access"
+        }
+        for path, enabled in fwd_unit.path_enables.items():
+            status = "ON " if enabled else "OFF"
+            count = perf.forwarding_path_usage.get(path, 0)
+            desc = descriptions.get(path, "Custom bypass path")
+            out.append(f"  {path:<24s} |  {status:3s}   | {count:11d} | {desc}")
+        out.append(f"+--------------------------------------------------------------------------+")
+        return "\n".join(out)
+
+    @staticmethod
+    def render_instruction_binary_view(raw_word: int, pc: int = 0) -> str:
+        """
+        Displays 32-bit instruction with exact binary string opcode and sliced bitfields.
+        """
+        from common.isa import word_to_bits, slice_field, decode, INSTRUCTION_TABLE, OPCODE_BITS
+        word_bits = word_to_bits(raw_word, 32)
+        op_bits  = slice_field(word_bits, 31, 27)
+        i_bit    = slice_field(word_bits, 26, 26)
+        rd_bits  = slice_field(word_bits, 25, 22)
+        rs1_bits = slice_field(word_bits, 21, 18)
+        rs2_bits = slice_field(word_bits, 17, 14)
+        mod_bits = slice_field(word_bits, 17, 16)
+        imm_bits = slice_field(word_bits, 15, 0)
+
+        info = INSTRUCTION_TABLE.get(op_bits)
+        mn = info.mnemonic if info else "UNKNOWN"
+        try:
+            inst = decode(raw_word, pc)
+            disasm = inst.disassembly
+        except Exception:
+            disasm = f"<illegal: {op_bits}>"
+
+        out = [
+            f"+--------------------------------------------------------------------------+",
+            f"| INSTRUCTION BINARY ENCODING VIEW (PC: 0x{pc:08X} | Word: 0x{raw_word:08X})       |",
+            f"+--------------------------------------------------------------------------+",
+            f"  Full 32-bit Binary : {word_bits[0:8]} {word_bits[8:16]} {word_bits[16:24]} {word_bits[24:32]}",
+            f"  Sliced Bitfields   :",
+            f"    - [31:27] Opcode   (5b) : '{op_bits}' -> Mnemonic: {mn.upper()}",
+            f"    - [26:26] Imm Flag (1b) : '{i_bit}'   -> {'Immediate Operand' if i_bit=='1' else 'Register Operand'}",
+            f"    - [25:22] Rd Reg   (4b) : '{rd_bits}' -> r{int(rd_bits, 2)}",
+            f"    - [21:18] Rs1 Reg  (4b) : '{rs1_bits}' -> r{int(rs1_bits, 2)}",
+            f"    - [17:14] Rs2 Reg  (4b) : '{rs2_bits}' -> r{int(rs2_bits, 2)} (when I=0)",
+            f"    - [17:16] Mod Flag (2b) : '{mod_bits}' -> Modifier {int(mod_bits, 2)}",
+            f"    - [15:00] Imm16    (16b): '{imm_bits}' -> #{int(imm_bits, 2)} (when I=1)",
+            f"  Disassembly Output : {disasm}",
+            f"+--------------------------------------------------------------------------+"
+        ]
+        return "\n".join(out)

@@ -27,11 +27,23 @@ test-mem:
 test-vm:
 	pytest -v tests/test_vm*.py
 
+test-pipe:
+	pytest -v tests/test_pipeline_hazards.py
+
+test-isa:
+	pytest -v tests/test_isa.py
+
+fuzz:
+	pytest -v tests/test_differential_fuzz.py
+
 test-all:
 	pytest -v tests/
 
 exp:
 	python3 experiments/run_experiments.py
+
+exp-pipe:
+	python3 experiments/pipeline/run_pipeline_experiments.py
 
 demo-mem:
 	python3 sim.py benchmarks/factorial_iter.s --mem-preset modern
@@ -39,4 +51,7 @@ demo-mem:
 demo-vm:
 	python3 sim.py benchmarks/factorial_rec.s --mem-preset modern --pipeline 6
 
-.PHONY: all clean test-mem test-vm test-all exp demo-mem demo-vm
+demo-pipe:
+	python3 sim.py benchmarks/hazard_test.s --pipeline 6 --forwarding full --diagram
+
+.PHONY: all clean test-mem test-vm test-pipe test-isa fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe

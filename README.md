@@ -1,9 +1,22 @@
-# RISC201-PROCESSOR: Cycle-Accurate SimpleRisc Simulation Subsystem & Modern Memory Hierarchy
+# RISC201-PROCESSOR: Cycle-Accurate SimpleRisc Simulation Subsystem, Modern Memory Hierarchy & Pipeline Hazard Mitigation
 
 **Course**: CSC-201 Computer Organization & Architecture  
-**Branch**: `memory-hierarchy`  
+**Branch**: `pipeline-hazards`  
 
-A cycle-accurate, deeply parameterized modern computer systems simulator extending the SimpleRisc architecture. Models multi-level virtual memory, hardware TLBs, radix tree page tables, set-associative cache hierarchies, hardware data prefetchers, non-blocking MSHRs, and DDR4/DDR5 DRAM subsystems with command-level timing.
+A cycle-accurate, deeply parameterized modern computer systems simulator extending the SimpleRisc architecture. Models:
+1. **Pipeline & Hazard Mitigation Subsystem**:
+   - Strict **5-bit fixed-width binary string opcodes** (`"00000"` .. `"11001"`, `"11111"`) as the single source of truth across all processor logic.
+   - Dedicated **`HazardUnit`** detecting RAW, WAR, WAW, structural memory bus contention, and load-use hazards with precise 1-cycle bubble injection.
+   - Comprehensive **Data Forwarding Network** with configurable modes (`none`, `basic`, `full`, `full+`), youngest-producer priority, store-data forwarding, and store-to-load bypass via `StoreBuffer`.
+   - Advanced **Dynamic Branch Prediction**: 8 policies (`stall`, `flush`, `predict-taken`, `static-btfn`, `1bit`, `2bit`, `gshare`, `perfect`), Branch Target Buffer (BTB), Return Address Stack (RAS), and branch delay slot scheduling.
+   - Rigorous **Cycle Accounting Invariant** and **CPI Stack Breakdown** with closed-form analytic CPI modeling (< 3% empirical error).
+2. **Modern Memory Hierarchy Subsystem**:
+   - Multi-level virtual memory with 32-bit and 48-bit address spaces (4-level x86-64 radix tree).
+   - Separate L1 ITLB, L1 DTLB, and unified L2 STLB with Page-Walk Cache (PWC).
+   - Multi-level set-associative cache hierarchies (L1I, L1D, L2, L3) with non-blocking MSHRs, 64-byte lines, and hardware data prefetchers (stream, stride, next-line).
+   - Command-level cycle-accurate DDR4/DDR5 DRAM model (channels, ranks, bank groups, banks, row buffers, and FR-FCFS schedulers).
+3. **Reference Verification & Fuzzing**:
+   - Reference non-pipelined Instruction Set Simulator (`InstructionSetSimulator`) differentially cross-checked against 4-stage and 6-stage pipelined cores under all forwarding modes, complemented by a pseudo-random hazard instruction fuzzer.
 
 ---
 
@@ -156,12 +169,21 @@ When launched with `--interactive`, the simulator provides an architectural debu
 
 ## 5. Build & Makefile Targets
 
-The Makefile supports both the original C++ processor evaluation suite and the new Python memory hierarchy subsystem:
+The Makefile supports both the original C++ processor evaluation suite and the new Python pipeline, hazard, and memory hierarchy subsystems:
 
 ```bash
 # Compile and run legacy C++ simulator and all 30 benchmarks
 make all
 ./risc201_eval
+
+# Run Pipeline & Hazard Unit Tests (15 tests)
+make test-pipe
+
+# Run ISA 5-Bit Binary-String Opcode Tests (7 tests)
+make test-isa
+
+# Run Differential ISS & Randomized Hazard Fuzzer Tests (18 tests)
+make fuzz
 
 # Run Memory Subsystem Unit Tests (pytest)
 make test-mem
@@ -169,11 +191,17 @@ make test-mem
 # Run Virtual Memory & TLB Unit Tests (pytest)
 make test-vm
 
-# Run All Python Unit Tests (35 tests)
+# Run All Python Unit Tests (75 tests)
 make test-all
 
-# Execute All 20 Architectural Experiments (generates CSVs and Markdown report)
+# Execute All 10 Pipeline Hazard Experiments (generates CSVs and PIPELINE_RESULTS.md)
+make exp-pipe
+
+# Execute All 20 Memory Hierarchy Experiments (generates CSVs and EXPERIMENT_RESULTS.md)
 make exp
+
+# Run Pipeline Hazard & Timing Diagram Demo
+make demo-pipe
 
 # Run Memory Hierarchy Demo
 make demo-mem
@@ -184,7 +212,15 @@ make demo-vm
 
 ---
 
-## 6. Experimental Suite Summary (20 Experiments)
+## 6. Documentation Deliverables
+- [`docs/PIPELINE_PLAN.md`](docs/PIPELINE_PLAN.md): Detailed 11-phase implementation plan and architectural audit.
+- [`docs/ISA_BINARY_OPCODES.md`](docs/ISA_BINARY_OPCODES.md): Exact 5-bit binary string opcode specifications, bitfield slicing, and ISA tables.
+- [`docs/HAZARDS_AND_FORWARDING.md`](docs/HAZARDS_AND_FORWARDING.md): RAW/WAR/WAW hazard detection, youngest-producer forwarding logic, store buffer, and stall matrices.
+- [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md): Formal cycle accounting invariant proof, CPI stack breakdown, and closed-form analytic models.
+- [`experiments/pipeline/PIPELINE_RESULTS.md`](experiments/pipeline/PIPELINE_RESULTS.md): Full analysis and tables for all 10 pipeline experiments.
+- [`docs/MEMORY_DESIGN.md`](docs/MEMORY_DESIGN.md): Multi-level cache hierarchies, DRAM controller, and prefetcher architecture.
+- [`docs/VIRTUAL_MEMORY.md`](docs/VIRTUAL_MEMORY.md): Radix-4 page tables, multi-level TLBs, PWC, and demand paging.
+- [`experiments/results/EXPERIMENT_RESULTS.md`](experiments/results/EXPERIMENT_RESULTS.md): Results from the 20 memory hierarchy experiments.
 
 All experiments run via `make exp` and save detailed CSV outputs in `experiments/results/`:
 

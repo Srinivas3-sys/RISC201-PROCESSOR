@@ -20,15 +20,37 @@ from cpu.assembler import Assembler
 from cpu.pipeline4 import Pipeline4Stage
 from cpu.pipeline6 import Pipeline6Stage
 from cpu.microcode import MicroController
-from cpu.isa import decode_instruction, disassemble_instruction
+from cpu.iss import InstructionSetSimulator
+from common.isa import decode, disassemble_instruction, print_isa_table, word_to_bits
 from visualizer import MemoryVisualizer
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="RISC201 Memory Hierarchy & Processor Simulator")
     p.add_argument("source", nargs="?", default="benchmarks/factorial_iter.s", help="Assembly file to run")
-    p.add_argument("--pipeline", choices=["4", "6", "micro"], default="4", help="Pipeline engine (4, 6, micro)")
+    p.add_argument("--pipeline", choices=["4", "6", "iss", "micro"], default="4", help="Pipeline engine (4, 6, iss, micro)")
     p.add_argument("--interactive", action="store_true", help="Launch interactive CLI debugger REPL")
+
+    # Pipeline & Hazard Simulation Flags
+    p.add_argument("--forwarding", choices=["none", "basic", "full", "full+"], default="full", help="Data forwarding mode")
+    p.add_argument("--fwd-path", action="append", default=[], help="Toggle individual bypass paths: <name>={on|off}")
+    p.add_argument("--branch-policy", choices=["stall", "flush", "predict-taken", "static-btfn", "1bit", "2bit", "gshare", "perfect"], default="2bit", help="Branch prediction policy")
+    p.add_argument("--predictor-size", type=int, default=1024, help="BHT counter table entries")
+    p.add_argument("--history-bits", type=int, default=8, help="Global branch history register (GHR) bits for gshare")
+    p.add_argument("--btb-entries", type=int, default=256, help="Branch Target Buffer (BTB) entries")
+    p.add_argument("--ras-entries", type=int, default=16, help="Return Address Stack (RAS) entries")
+    p.add_argument("--delay-slots", type=int, choices=[0, 1, 2], default=0, help="Branch delay slots count")
+    p.add_argument("--unified-mem", action="store_true", help="Model unified single-port Harvard memory bus")
+    p.add_argument("--split-mem", action="store_true", help="Model split Harvard I/D memory buses")
+    p.add_argument("--regfile-write-ports", type=int, default=2, help="Register file write ports")
+    p.add_argument("--clock-mhz-4stage", type=float, default=500.0, help="4-stage core clock frequency in MHz")
+    p.add_argument("--clock-mhz-6stage", type=float, default=800.0, help="6-stage core clock frequency in MHz")
+    p.add_argument("--check-forwarding", action="store_true", help="Assert forwarded values match architectural state at retirement")
+    p.add_argument("--report", choices=["summary", "cpi-stack", "full", "csv", "json"], default="summary", help="Performance report format")
+    p.add_argument("--isa-table", action="store_true", help="Print complete ISA specification table and exit")
+    p.add_argument("--opcode-style", choices=["bin", "hex", "mnemonic"], default="bin", help="Display style for opcodes")
+    p.add_argument("--trace-hazards", action="store_true", help="Trace hazards and bypass events cycle by cycle")
+    p.add_argument("--diagram", action="store_true", help="Render ASCII pipeline timing diagram after execution")
 
     # Memory Presets & Config File
     p.add_argument("--mem-preset", choices=["ideal", "simple", "modern", "modern-ddr5", "lecture"], default="modern", help="Memory preset")
@@ -147,7 +169,7 @@ def apply_args_to_config(cfg: MemorySystemConfig, args: argparse.Namespace) -> N
 
 
 class InteractiveDebugger:
-    def __init__(self, hier: MemoryHierarchy, words: List[int], mode: str = "4"):
+    def __init__(self, hier: MemoryHierarchy, words: List[int], mode: str = "4", **kwargs):
         self.hier = hier
         self.words = words
         self.mode = mode
@@ -155,14 +177,18 @@ class InteractiveDebugger:
 
         # Instantiate core
         if mode == "6":
-            self.p6 = Pipeline6Stage(hier)
+            self.p6 = Pipeline6Stage(hier, **kwargs)
             self.p6.program_size = len(words) * 4
             self.core = self.p6
+        elif mode == "iss":
+            self.iss = InstructionSetSimulator(hier)
+            self.iss.program_size = len(words) * 4
+            self.core = self.iss
         elif mode == "micro":
             self.mcu = MicroController(hier)
             self.core = self.mcu
         else:
-            self.p4 = Pipeline4Stage(hier)
+            self.p4 = Pipeline4Stage(hier, **kwargs)
             self.p4.program_size = len(words) * 4
             self.core = self.p4
 
@@ -179,6 +205,15 @@ class InteractiveDebugger:
   regs                    : Display register file (r0-r15, flags, PC)
   p, pipeline             : Display cycle-by-cycle pipeline diagram and latches
   stats                   : Display performance, hazard, and stall counters
+
+--- PIPELINE, HAZARD & ISA COMMANDS ---
+  hazards                 : Display detailed hazard detection & stall reason breakdown
+  fwd                     : Display data forwarding multiplexer states & path usage
+  stalls                  : Display cycle stall breakdown by canonical reason code
+  pipe                    : Display ASCII pipeline timing diagram with bypass events
+  bp                      : Display branch predictor, BTB hit rates & RAS depth
+  cpi                     : Display CPI stack breakdown and analytic vs simulated comparison
+  opcode                  : Display 32-bit binary string opcode view of current instruction
 
 --- MEMORY & CACHE COMMANDS ---
   cache [l1i|l1d|l2|l3]   : Dump sets x ways cache grid
@@ -232,6 +267,9 @@ class InteractiveDebugger:
                 if self.mode == "micro":
                     done = self.mcu.step_micro_cycle()
                     print(f"MicroCycle {self.mcu.total_micro_cycles} | uPC={self.mcu.upc} | Waiting on: {self.mcu.waiting_on}")
+                elif self.mode == "iss":
+                    self.iss.step()
+                    print(f"Cycle {self.iss.cycles} completed. (Retired: {self.iss.retired_instructions})")
                 else:
                     self.core.step_cycle()
                     print(f"Cycle {self.core.cycles} completed. (Retired: {self.core.retired_instructions})")
@@ -240,6 +278,9 @@ class InteractiveDebugger:
                     while not self.mcu.step_micro_cycle():
                         pass
                     print(f"Microcode instruction completed at PC=0x{self.mcu.pc:08X}")
+                elif self.mode == "iss":
+                    self.iss.step()
+                    print(f"Instruction stepped. PC=0x{self.iss.pc:08X}")
                 else:
                     prev = self.core.retired_instructions
                     while not self.core.halted and self.core.retired_instructions == prev and not self.core.is_drained():
@@ -265,6 +306,44 @@ class InteractiveDebugger:
                     insts = [self.p6.l_if_id.disassembly, self.p6.l_id_rf.disassembly, self.p6.l_rf_ex.disassembly, self.p6.l_ex_ma.disassembly, self.p6.l_ma_rw.disassembly, self.p6.l_ma_rw.disassembly]
                     stalls = ["" for _ in range(6)]
                     print(MemoryVisualizer.render_pipeline_stalls(stages, insts, stalls, self.p6.cycles))
+                else:
+                    print(f"Pipeline inspection not available for '{self.mode}' core.")
+            elif cmd == "hazards":
+                if hasattr(self.core, "perf"):
+                    print(MemoryVisualizer.render_hazard_summary(self.core.perf))
+                else:
+                    print("Hazard summary not active on this core.")
+            elif cmd == "fwd":
+                if hasattr(self.core, "forwarding_unit") and hasattr(self.core, "perf"):
+                    print(MemoryVisualizer.render_forwarding_network_state(self.core.forwarding_unit, self.core.perf))
+                else:
+                    print("Forwarding unit not active on this core.")
+            elif cmd == "stalls":
+                if hasattr(self.core, "perf"):
+                    print(self.core.perf.generate_report("table"))
+                else:
+                    print("Stall accounting not active on this core.")
+            elif cmd == "pipe":
+                if hasattr(self.core, "pipeline_trace"):
+                    print(MemoryVisualizer.render_ascii_timing_diagram(self.core.pipeline_trace))
+                else:
+                    print("Pipeline timing diagram trace not available on this core.")
+            elif cmd == "bp":
+                if hasattr(self.core, "branch_predictor"):
+                    print(self.core.branch_predictor.stats())
+                else:
+                    print("Branch predictor not active on this core.")
+            elif cmd == "cpi":
+                if hasattr(self.core, "perf"):
+                    stack = self.core.perf.get_cpi_stack()
+                    print(f"Total Cycles: {self.core.perf.total_cycles} | Retired: {self.core.perf.retired_instructions} | CPI: {self.core.perf.get_cpi():.3f}")
+                    for k, v in stack.items():
+                        print(f"  {k:<24s} : {v:>6.3f} | {'#' * int(min(30, v*10))}")
+                else:
+                    print("CPI accounting not active on this core.")
+            elif cmd == "opcode":
+                raw_word, _ = self.hier.read_word(self.core.pc, is_fetch=True)
+                print(MemoryVisualizer.render_instruction_binary_view(raw_word, self.core.pc))
             elif cmd == "stats":
                 print(self.core.print_stats())
             elif cmd == "cache":
@@ -324,6 +403,10 @@ def main():
     parser = build_arg_parser()
     args = parser.parse_args()
 
+    if args.isa_table:
+        print(print_isa_table())
+        return
+
     cfg = get_preset(args.mem_preset)
     apply_args_to_config(cfg, args)
 
@@ -349,25 +432,91 @@ def main():
 
     hier.load_binary(base_vaddr=0, data=bytes(data), asid=0)
 
+    # Parse forward path overrides
+    fwd_path_enables: Dict[str, bool] = {}
+    for item in args.fwd_path:
+        if "=" in item:
+            k, v = item.split("=", 1)
+            fwd_path_enables[k.strip().upper()] = (v.strip().lower() in ("on", "1", "true", "yes"))
+
+    unified_mem = False
+    if args.unified_mem:
+        unified_mem = True
+    elif args.split_mem:
+        unified_mem = False
+
+    clock_mhz = args.clock_mhz_6stage if args.pipeline == "6" else args.clock_mhz_4stage
+
+    core_kwargs = {
+        "forwarding_mode": args.forwarding,
+        "fwd_path_enables": fwd_path_enables,
+        "branch_policy": args.branch_policy,
+        "predictor_size": args.predictor_size,
+        "history_bits": args.history_bits,
+        "btb_entries": args.btb_entries,
+        "ras_entries": args.ras_entries,
+        "delay_slots": args.delay_slots,
+        "unified_mem": unified_mem,
+        "regfile_write_ports": args.regfile_write_ports,
+        "clock_mhz": clock_mhz,
+        "check_forwarding": args.check_forwarding,
+    }
+
     if args.interactive:
-        dbg = InteractiveDebugger(hier, words, mode=args.pipeline)
+        dbg = InteractiveDebugger(hier, words, mode=args.pipeline, **core_kwargs)
         dbg.repl()
     else:
         # Non-interactive batch execution
         if args.pipeline == "6":
-            core = Pipeline6Stage(hier)
+            core = Pipeline6Stage(hier, **core_kwargs)
+            core.program_size = len(words) * 4
+        elif args.pipeline == "iss":
+            core = InstructionSetSimulator(hier)
             core.program_size = len(words) * 4
         elif args.pipeline == "micro":
             core = MicroController(hier)
         else:
-            core = Pipeline4Stage(hier)
+            core = Pipeline4Stage(hier, **core_kwargs)
             core.program_size = len(words) * 4
 
-        print(f"Running '{args.source}' on {args.pipeline}-Stage core (Preset: {cfg.preset_name.upper()})...")
+        print(f"Running '{args.source}' on {args.pipeline}-Stage core (Preset: {cfg.preset_name.upper()}, FWD: {args.forwarding.upper()}, BP: {args.branch_policy.upper()})...")
         core.run()
-        print(core.print_stats())
-        print()
-        print(hier.print_summary())
+
+        # Output requested report format
+        if args.report == "json":
+            if hasattr(core, "perf"):
+                print(core.perf.generate_report("json"))
+            else:
+                print(f'{{"error": "PerformanceTracker not available on {args.pipeline} core"}}')
+        elif args.report == "csv":
+            if hasattr(core, "perf"):
+                print(core.perf.generate_report("csv"))
+            else:
+                print(f"Error,PerformanceTracker not available on {args.pipeline} core")
+        elif args.report == "cpi-stack":
+            if hasattr(core, "perf"):
+                print(f"=== CPI Stack Breakdown ({args.pipeline}-Stage, Mode: {args.forwarding.upper()}) ===")
+                stack = core.perf.get_cpi_stack()
+                for k, v in stack.items():
+                    bar = "#" * int(min(30, v * 10))
+                    print(f"  {k:<25s} : {v:>6.3f} | {bar}")
+            else:
+                print(f"CPI stack not available on {args.pipeline} core.")
+        elif args.report == "full":
+            print(core.print_stats())
+            print()
+            if hasattr(core, "perf"):
+                print(core.perf.generate_report("table"))
+                print()
+            print(hier.print_summary())
+        else: # summary
+            print(core.print_stats())
+            print()
+            print(hier.print_summary())
+
+        if args.diagram and hasattr(core, "render_timing_diagram"):
+            print()
+            print(core.render_timing_diagram())
 
 
 if __name__ == "__main__":
