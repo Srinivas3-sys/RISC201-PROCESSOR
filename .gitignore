@@ -9,6 +9,8 @@ benchmarks/*.hex
 benchmarks/*.bin
 *.hex
 *.bin
+!tests/golden/*.hex
+!tests/golden/*.bin
 
 # Object files
 *.o
