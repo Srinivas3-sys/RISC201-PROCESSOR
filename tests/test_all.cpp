@@ -64,6 +64,23 @@ void test_isa_binary_strings() {
     TEST_ASSERT(movInst.opcode == isa::OP_MOV, "mov opcode match");
     TEST_ASSERT(movInst.isImmediate, "mov isImmediate match");
     TEST_ASSERT(movInst.immx == 5, "mov immx match");
+
+    // Single source of truth verification
+    TEST_ASSERT(isa::verifyIsaTable(), "ISA table verifies exactly 28 opcodes and rejects illegal patterns");
+    TEST_ASSERT(isa::isValidOpcode(isa::OP_ADD), "OP_ADD is valid");
+    TEST_ASSERT(isa::isValidOpcode(isa::OP_ABS), "OP_ABS is valid");
+    TEST_ASSERT(!isa::isValidOpcode("11100"), "Pattern 11100 is unassigned/illegal");
+    TEST_ASSERT(!isa::isValidOpcode("11101"), "Pattern 11101 is unassigned/illegal");
+    TEST_ASSERT(!isa::isValidOpcode("11110"), "Pattern 11110 is unassigned/illegal");
+    TEST_ASSERT(!isa::isValidOpcode(isa::OP_INVALID), "OP_INVALID is illegal");
+    TEST_ASSERT(isa::mnemonicOf(isa::OP_ADD) == "add", "mnemonicOf OP_ADD");
+    TEST_ASSERT(isa::mnemonicOf(isa::OP_ABS) == "abs", "mnemonicOf OP_ABS");
+    TEST_ASSERT(isa::opcodeOf("add") == isa::OP_ADD, "opcodeOf add");
+    TEST_ASSERT(isa::opcodeOf("abs") == isa::OP_ABS, "opcodeOf abs");
+    TEST_ASSERT(isa::wordToOpcode(addWord) == isa::OP_ADD, "wordToOpcode addWord");
+    TEST_ASSERT(isa::wordToOpcode(movWord) == isa::OP_MOV, "wordToOpcode movWord");
+    TEST_ASSERT(isa::opcodeToWordBits(isa::OP_ADD) == 0, "opcodeToWordBits OP_ADD");
+    TEST_ASSERT(isa::opcodeToWordBits(isa::OP_MOV) == (9u << 27), "opcodeToWordBits OP_MOV");
 }
 
 // -------------------------------------------------------------

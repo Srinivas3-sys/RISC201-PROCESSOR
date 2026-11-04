@@ -68,36 +68,6 @@ inline const std::string OP_INVALID = "11111"; // 31: illegal / invalid opcode
 inline const std::string OP_BUBBLE  = OP_NOP;
 } // namespace isa
 
-inline const std::string& BIN_OP_ADD = isa::OP_ADD;
-inline const std::string& BIN_OP_SUB = isa::OP_SUB;
-inline const std::string& BIN_OP_MUL = isa::OP_MUL;
-inline const std::string& BIN_OP_DIV = isa::OP_DIV;
-inline const std::string& BIN_OP_MOD = isa::OP_MOD;
-inline const std::string& BIN_OP_CMP = isa::OP_CMP;
-inline const std::string& BIN_OP_AND = isa::OP_AND;
-inline const std::string& BIN_OP_OR  = isa::OP_OR;
-inline const std::string& BIN_OP_NOT = isa::OP_NOT;
-inline const std::string& BIN_OP_MOV = isa::OP_MOV;
-inline const std::string& BIN_OP_LSL = isa::OP_LSL;
-inline const std::string& BIN_OP_LSR = isa::OP_LSR;
-inline const std::string& BIN_OP_ASR = isa::OP_ASR;
-inline const std::string& BIN_OP_NOP = isa::OP_NOP;
-inline const std::string& BIN_OP_LD  = isa::OP_LD;
-inline const std::string& BIN_OP_ST  = isa::OP_ST;
-inline const std::string& BIN_OP_BEQ = isa::OP_BEQ;
-inline const std::string& BIN_OP_BGT = isa::OP_BGT;
-inline const std::string& BIN_OP_B   = isa::OP_B;
-inline const std::string& BIN_OP_CALL= isa::OP_CALL;
-inline const std::string& BIN_OP_RET = isa::OP_RET;
-inline const std::string& BIN_OP_MOVZ= isa::OP_MOVZ;
-inline const std::string& BIN_OP_RETZ= isa::OP_RETZ;
-inline const std::string& BIN_OP_MIN = isa::OP_MIN;
-inline const std::string& BIN_OP_MAX = isa::OP_MAX;
-inline const std::string& BIN_OP_ROTS= isa::OP_ROTS;
-inline const std::string& BIN_OP_XOR = isa::OP_XOR;
-inline const std::string& BIN_OP_ABS = isa::OP_ABS;
-inline const std::string& BIN_OP_INVALID = isa::OP_INVALID;
-
 // Bit-String Conversion & Slicing Helper Utilities
 inline std::string intToBits(uint64_t value, size_t width) {
     std::string s(width, '0');

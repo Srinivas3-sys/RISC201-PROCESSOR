@@ -205,9 +205,9 @@ public:
 
             // Helper to encode register format (Figure 3.14):
             // [31:27] opcode, [26] I=0, [25:22] rd, [21:18] rs1, [17:14] rs2
-            auto encodeReg = [](Opcode op, RegId rd, RegId rs1, RegId rs2) -> Word {
+            auto encodeReg = [](const std::string& op, RegId rd, RegId rs1, RegId rs2) -> Word {
                 Word w = 0;
-                w |= (static_cast<Word>(op) & 0x1F) << 27;
+                w |= isa::opcodeToWordBits(op);
                 w |= (0u) << 26; // I = 0
                 w |= (static_cast<Word>(rd) & 0xF) << 22;
                 w |= (static_cast<Word>(rs1) & 0xF) << 18;
@@ -217,9 +217,9 @@ public:
 
             // Helper to encode immediate format (Figure 3.15):
             // [31:27] opcode, [26] I=1, [25:22] rd, [21:18] rs1, [17:16] mod, [15:0] imm16
-            auto encodeImm = [](Opcode op, RegId rd, RegId rs1, ImmModifier mod, int16_t imm) -> Word {
+            auto encodeImm = [](const std::string& op, RegId rd, RegId rs1, ImmModifier mod, int16_t imm) -> Word {
                 Word w = 0;
-                w |= (static_cast<Word>(op) & 0x1F) << 27;
+                w |= isa::opcodeToWordBits(op);
                 w |= (1u) << 26; // I = 1
                 w |= (static_cast<Word>(rd) & 0xF) << 22;
                 w |= (static_cast<Word>(rs1) & 0xF) << 18;
@@ -230,24 +230,24 @@ public:
 
             // Helper to encode branch format (Figure 3.13):
             // [31:27] opcode, [26:0] offset27
-            auto encodeBranch = [](Opcode op, int32_t wordOffset) -> Word {
+            auto encodeBranch = [](const std::string& op, int32_t wordOffset) -> Word {
                 Word w = 0;
-                w |= (static_cast<Word>(op) & 0x1F) << 27;
+                w |= isa::opcodeToWordBits(op);
                 w |= (static_cast<Word>(wordOffset) & 0x07FFFFFF);
                 return w;
             };
 
             // 1. NOP
             if (baseMnemonic == "nop") {
-                code = encodeBranch(OP_NOP, 0);
+                code = encodeBranch(isa::OP_NOP, 0);
             }
             // 2. RET
             else if (baseMnemonic == "ret") {
-                code = encodeBranch(OP_RET, 0);
+                code = encodeBranch(isa::OP_RET, 0);
             }
             // 3. RETZ (privileged return)
             else if (baseMnemonic == "retz") {
-                code = encodeBranch(OP_RETZ, 0);
+                code = encodeBranch(isa::OP_RETZ, 0);
             }
             // 4. Branch instructions: b, beq, bgt, call
             else if (baseMnemonic == "b" || baseMnemonic == "beq" ||
@@ -262,10 +262,10 @@ public:
                 int32_t byteOffset = static_cast<int32_t>(targetPC) - static_cast<int32_t>(pc);
                 int32_t wordOffset = byteOffset >> 2;
 
-                Opcode op = OP_B;
-                if (baseMnemonic == "beq") op = OP_BEQ;
-                else if (baseMnemonic == "bgt") op = OP_BGT;
-                else if (baseMnemonic == "call") op = OP_CALL;
+                std::string op = isa::OP_B;
+                if (baseMnemonic == "beq") op = isa::OP_BEQ;
+                else if (baseMnemonic == "bgt") op = isa::OP_BGT;
+                else if (baseMnemonic == "call") op = isa::OP_CALL;
 
                 code = encodeBranch(op, wordOffset);
             }
@@ -288,7 +288,7 @@ public:
                     throw std::runtime_error("Invalid memory operand format: " + memSpec);
                 }
 
-                Opcode op = (baseMnemonic == "ld") ? OP_LD : OP_ST;
+                std::string op = (baseMnemonic == "ld") ? isa::OP_LD : isa::OP_ST;
                 code = encodeImm(op, rd, rs1, ImmModifier::DEFAULT, offset);
             }
             // 6. MOV: mov rd, (rs2/imm)
@@ -299,13 +299,13 @@ public:
                 bool isImm = false;
                 try {
                     RegId rs2 = parseRegister(op2);
-                    code = encodeReg(OP_MOV, rd, 0, rs2);
+                    code = encodeReg(isa::OP_MOV, rd, 0, rs2);
                 } catch (...) {
                     isImm = true;
                 }
                 if (isImm) {
                     int32_t val = parseImmediate(op2);
-                    code = encodeImm(OP_MOV, rd, 0, modifier, static_cast<int16_t>(val));
+                    code = encodeImm(isa::OP_MOV, rd, 0, modifier, static_cast<int16_t>(val));
                 }
             }
             // 7. NOT: not rd, (rs2/imm)
@@ -316,13 +316,13 @@ public:
                 bool isImm = false;
                 try {
                     RegId rs2 = parseRegister(op2);
-                    code = encodeReg(OP_NOT, rd, 0, rs2);
+                    code = encodeReg(isa::OP_NOT, rd, 0, rs2);
                 } catch (...) {
                     isImm = true;
                 }
                 if (isImm) {
                     int32_t val = parseImmediate(op2);
-                    code = encodeImm(OP_NOT, rd, 0, modifier, static_cast<int16_t>(val));
+                    code = encodeImm(isa::OP_NOT, rd, 0, modifier, static_cast<int16_t>(val));
                 }
             }
             // 7b. ABS: abs rd, (rs2/imm)
@@ -333,13 +333,13 @@ public:
                 bool isImm = false;
                 try {
                     RegId rs2 = parseRegister(op2);
-                    code = encodeReg(OP_ABS, rd, 0, rs2);
+                    code = encodeReg(isa::OP_ABS, rd, 0, rs2);
                 } catch (...) {
                     isImm = true;
                 }
                 if (isImm) {
                     int32_t val = parseImmediate(op2);
-                    code = encodeImm(OP_ABS, rd, 0, modifier, static_cast<int16_t>(val));
+                    code = encodeImm(isa::OP_ABS, rd, 0, modifier, static_cast<int16_t>(val));
                 }
             }
             // 8. CMP: cmp rs1, (rs2/imm)
@@ -350,30 +350,19 @@ public:
                 bool isImm = false;
                 try {
                     RegId rs2 = parseRegister(op2);
-                    code = encodeReg(OP_CMP, 0, rs1, rs2);
+                    code = encodeReg(isa::OP_CMP, 0, rs1, rs2);
                 } catch (...) {
                     isImm = true;
                 }
                 if (isImm) {
                     int32_t val = parseImmediate(op2);
-                    code = encodeImm(OP_CMP, 0, rs1, modifier, static_cast<int16_t>(val));
+                    code = encodeImm(isa::OP_CMP, 0, rs1, modifier, static_cast<int16_t>(val));
                 }
             }
             // 9. Standard 3-address ALU instructions: add, sub, mul, div, mod, and, or, xor, lsl, lsr, asr
             else {
-                Opcode op = OP_INVALID;
-                if (baseMnemonic == "add") op = OP_ADD;
-                else if (baseMnemonic == "sub") op = OP_SUB;
-                else if (baseMnemonic == "mul") op = OP_MUL;
-                else if (baseMnemonic == "div") op = OP_DIV;
-                else if (baseMnemonic == "mod") op = OP_MOD;
-                else if (baseMnemonic == "and") op = OP_AND;
-                else if (baseMnemonic == "or")  op = OP_OR;
-                else if (baseMnemonic == "xor") op = OP_XOR;
-                else if (baseMnemonic == "lsl") op = OP_LSL;
-                else if (baseMnemonic == "lsr") op = OP_LSR;
-                else if (baseMnemonic == "asr") op = OP_ASR;
-                else {
+                std::string op = isa::opcodeOf(baseMnemonic);
+                if (op == isa::OP_INVALID || !isa::isValidOpcode(op)) {
                     throw std::runtime_error("Unknown mnemonic: " + baseMnemonic);
                 }
 

@@ -34,41 +34,6 @@ enum class PrivRegId : uint8_t {
     SP       = 5   // r14 / sp
 };
 
-// SimpleRisc Opcode Definitions (5 bits, 0-31)
-// As specified in Sarangi Chapter 3 & 9, Table 3.10 / 9.2
-enum Opcode : uint8_t {
-    OP_ADD  = 0b00000, // 0:  add  rd, rs1, (rs2/imm)
-    OP_SUB  = 0b00001, // 1:  sub  rd, rs1, (rs2/imm)
-    OP_MUL  = 0b00010, // 2:  mul  rd, rs1, (rs2/imm)
-    OP_DIV  = 0b00011, // 3:  div  rd, rs1, (rs2/imm)
-    OP_MOD  = 0b00100, // 4:  mod  rd, rs1, (rs2/imm)
-    OP_CMP  = 0b00101, // 5:  cmp  rs1, (rs2/imm)
-    OP_AND  = 0b00110, // 6:  and  rd, rs1, (rs2/imm)
-    OP_OR   = 0b00111, // 7:  or   rd, rs1, (rs2/imm)
-    OP_NOT  = 0b01000, // 8:  not  rd, (rs2/imm)
-    OP_MOV  = 0b01001, // 9:  mov  rd, (rs2/imm)
-    OP_LSL  = 0b01010, // 10: lsl  rd, rs1, (rs2/imm)
-    OP_LSR  = 0b01011, // 11: lsr  rd, rs1, (rs2/imm)
-    OP_ASR  = 0b01100, // 12: asr  rd, rs1, (rs2/imm)
-    OP_NOP  = 0b01101, // 13: nop
-    OP_LD   = 0b01110, // 14: ld   rd, imm[rs1]
-    OP_ST   = 0b01111, // 15: st   rd, imm[rs1] (stores rd into [rs1+imm])
-    OP_BEQ  = 0b10000, // 16: beq  offset (branch if flags.E == 1)
-    OP_BGT  = 0b10001, // 17: bgt  offset (branch if flags.GT == 1)
-    OP_B    = 0b10010, // 18: b    offset (unconditional branch)
-    OP_CALL = 0b10011, // 19: call offset (ra <- PC + 4; PC <- target)
-    OP_RET  = 0b10100, // 20: ret  (PC <- ra)
-    // Privileged extension opcodes
-    OP_MOVZ = 0b10101, // 21: movz (transfer privileged <-> general registers)
-    OP_RETZ = 0b10110, // 22: retz (PC <- oldPC, CPL <- 1)
-    OP_MIN  = 0b10111, // 23: min  rd, rs1, (rs2/imm)
-    OP_MAX  = 0b11000, // 24: max  rd, rs1, (rs2/imm)
-    OP_ROTS = 0b11001, // 25: rots rd, rs1, (rs2/imm)
-    OP_XOR  = 0b11010, // 26: xor  rd, rs1, (rs2/imm)
-    OP_ABS  = 0b11011, // 27: abs  rd, (rs2/imm)
-    OP_INVALID = 0b11111
-};
-
 // Immediate Modifier (2 bits, bits 17..16 of immediate field)
 // Sarangi Section 3.3.13:
 // 00: default sign-extended 16-bit
