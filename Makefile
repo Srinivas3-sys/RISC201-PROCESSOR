@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -I.
 
-TARGETS = risc201_sim risc201_as risc201_disasm risc201_eval risc201_test exp_pipeline exp_memory
+TARGETS = risc201_sim risc201_as risc201_disasm risc201_eval risc201_test exp_pipeline exp_memory audit_cpi
 
 all: $(TARGETS)
 
@@ -53,6 +53,12 @@ exp: exp_memory
 exp-pipe: exp_pipeline
 	./exp_pipeline
 
+audit_cpi: evaluation/audit_cpi.cpp common/*.hpp alu/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp memory/*.hpp
+	$(CXX) $(CXXFLAGS) evaluation/audit_cpi.cpp -o audit_cpi
+
+audit-cpi: audit_cpi
+	./audit_cpi
+
 demo-mem: risc201_sim
 	./risc201_sim benchmarks/factorial_iter.s --mem-preset modern
 
@@ -65,4 +71,4 @@ demo-pipe: risc201_sim
 clean:
 	rm -f $(TARGETS) *.hex *.bin
 
-.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe
+.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi
