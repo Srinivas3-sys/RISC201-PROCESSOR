@@ -1,24 +1,24 @@
 Benchmark,Pipeline,Forwarding,Cycles,Retired,CPI,Stalls
-Factorial (Iterative),4,FULL,35,24,1.458,0
-Factorial (Iterative),4,NONE,41,24,1.708,6
-Factorial (Iterative),6,FULL,41,24,1.708,0
-Factorial (Iterative),6,NONE,54,24,2.250,13
-Factorial (Recursive),4,FULL,208,143,1.455,0
-Factorial (Recursive),4,NONE,235,143,1.643,27
-Factorial (Recursive),6,FULL,241,143,1.685,0
-Factorial (Recursive),6,NONE,304,143,2.126,63
-Prime Test (29),4,FULL,224,167,1.341,0
-Prime Test (29),4,NONE,279,167,1.671,55
-Prime Test (29),6,FULL,253,167,1.515,0
-Prime Test (29),6,NONE,363,167,2.174,110
-Array Sum (5 elements),4,FULL,78,58,1.345,5
-Array Sum (5 elements),4,NONE,95,58,1.638,22
-Array Sum (5 elements),6,FULL,86,58,1.483,5
-Array Sum (5 elements),6,NONE,125,58,2.155,44
-Hazard Stress Test,4,FULL,24,17,1.412,2
-Hazard Stress Test,4,NONE,28,17,1.647,6
-Hazard Stress Test,6,FULL,27,17,1.588,2
-Hazard Stress Test,6,NONE,38,17,2.235,13
+Factorial (Iterative),4,FULL,29,24,1.208,0
+Factorial (Iterative),4,NONE,35,24,1.458,6
+Factorial (Iterative),6,FULL,33,24,1.375,0
+Factorial (Iterative),6,NONE,46,24,1.917,13
+Factorial (Recursive),4,FULL,154,143,1.077,0
+Factorial (Recursive),4,NONE,181,143,1.266,27
+Factorial (Recursive),6,FULL,164,143,1.147,0
+Factorial (Recursive),6,NONE,235,143,1.643,71
+Prime Test (29),4,FULL,173,167,1.036,0
+Prime Test (29),4,NONE,228,167,1.365,55
+Prime Test (29),6,FULL,178,167,1.066,0
+Prime Test (29),6,NONE,288,167,1.725,110
+Array Sum (5 elements),4,FULL,68,58,1.172,5
+Array Sum (5 elements),4,NONE,85,58,1.466,22
+Array Sum (5 elements),6,FULL,72,58,1.241,5
+Array Sum (5 elements),6,NONE,115,58,1.983,48
+Hazard Stress Test,4,FULL,22,17,1.294,1
+Hazard Stress Test,4,NONE,27,17,1.588,6
+Hazard Stress Test,6,FULL,25,17,1.471,1
+Hazard Stress Test,6,NONE,37,17,2.176,13
 Stack Macro Test,4,FULL,22,19,1.158,0
 Stack Macro Test,4,NONE,23,19,1.211,1
 Stack Macro Test,6,FULL,24,19,1.263,0
