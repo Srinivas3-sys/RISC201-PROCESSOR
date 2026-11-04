@@ -1,0 +1,8 @@
+Benchmark | Pipeline | Instructions | ElapsedTime (ms) | Speed (Instructions/sec)
+----------+----------+--------------+------------------+------------------------
+factorial_iter_long |  4-Stage |       130002 |           169.79 | 765643
+factorial_iter_long |  6-Stage |       130002 |           211.80 | 613802
+    array_sum_long |  4-Stage |       168044 |           203.78 | 824626
+    array_sum_long |  6-Stage |       168044 |           266.50 | 630569
+   prime_test_long |  4-Stage |       135202 |           171.66 | 787599
+   prime_test_long |  6-Stage |       135202 |           209.66 | 644849
