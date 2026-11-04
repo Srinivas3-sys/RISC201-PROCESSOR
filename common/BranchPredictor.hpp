@@ -2,6 +2,7 @@
 #define RISC201_COMMON_BRANCH_PREDICTOR_HPP
 
 #include "ISA.hpp"
+#include "Types.hpp"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -264,6 +265,72 @@ public:
         }
 
         return pred;
+    }
+
+    bool predictAtFetch(uint32_t pc, uint32_t& outTarget) {
+        uint32_t target = 0;
+        if (btb.lookup(pc, target)) {
+            bool taken = false;
+            if (policy == BranchPolicy::FLUSH || policy == BranchPolicy::STALL) taken = false;
+            else if (policy == BranchPolicy::PREDICT_TAKEN) taken = true;
+            else if (policy == BranchPolicy::STATIC_BTFN) taken = (target < pc);
+            else if (policy == BranchPolicy::BIMODAL_1BIT) {
+                size_t idx = (pc >> 2) % bimodal1Bit.size();
+                taken = (bimodal1Bit[idx] == 1);
+            } else if (policy == BranchPolicy::BIMODAL_2BIT) {
+                size_t idx = (pc >> 2) % bimodal2Bit.size();
+                taken = (bimodal2Bit[idx] >= 2);
+            } else if (policy == BranchPolicy::GSHARE) {
+                size_t idx = ((pc >> 2) ^ ghr) % gshareTable.size();
+                taken = (gshareTable[idx] >= 2);
+            } else {
+                taken = true;
+            }
+            if (taken) {
+                outTarget = target;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void update(uint32_t pc, const DecodedInst& d, bool actuallyTaken, uint32_t actualTarget, bool wasPredictedTaken) {
+        if (!d.isBranch()) return;
+
+        bool mispredicted = (actuallyTaken != wasPredictedTaken);
+        if (mispredicted) mispredictions++;
+        else correctPredictions++;
+
+        // Update BTB on taken branches
+        if (actuallyTaken) {
+            btb.update(pc, actualTarget);
+        }
+
+        // Update pattern history tables for conditional branches
+        if (d.isConditionalBranch()) {
+            if (policy == BranchPolicy::BIMODAL_1BIT) {
+                size_t idx = (pc >> 2) % bimodal1Bit.size();
+                bimodal1Bit[idx] = actuallyTaken ? 1 : 0;
+            } else if (policy == BranchPolicy::BIMODAL_2BIT) {
+                size_t idx = (pc >> 2) % bimodal2Bit.size();
+                uint8_t c = bimodal2Bit[idx];
+                if (actuallyTaken) {
+                    if (c < 3) bimodal2Bit[idx] = c + 1;
+                } else {
+                    if (c > 0) bimodal2Bit[idx] = c - 1;
+                }
+            } else if (policy == BranchPolicy::GSHARE) {
+                size_t idx = ((pc >> 2) ^ ghr) % gshareTable.size();
+                uint8_t c = gshareTable[idx];
+                if (actuallyTaken) {
+                    if (c < 3) gshareTable[idx] = c + 1;
+                } else {
+                    if (c > 0) gshareTable[idx] = c - 1;
+                }
+                // Shift GHR
+                ghr = ((ghr << 1) | (actuallyTaken ? 1 : 0)) & 0x3FF;
+            }
+        }
     }
 
     void update(uint32_t pc, const Instruction& inst, bool actuallyTaken, uint32_t actualTarget, bool wasPredictedTaken) {

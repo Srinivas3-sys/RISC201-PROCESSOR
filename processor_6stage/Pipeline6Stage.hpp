@@ -130,7 +130,9 @@ public:
     bool isForwardingEnabled() const { return forwardingEnabled; }
 
     void setMemPreset(const std::string& preset) {
-        memHierarchy = memory::MemoryHierarchy(memory::getPreset(preset));
+        auto cfg = memory::getPreset(preset);
+        cfg.cpuFreqGhz = 0.8; // 800 MHz for 6-Stage Pipeline
+        memHierarchy = memory::MemoryHierarchy(cfg);
         useMemoryHierarchy = (preset != "ideal");
     }
 
@@ -171,6 +173,8 @@ public:
         bool bubble_EX = false;
         bool isBranchTaken = false;
         Word branchPC = 0;
+        bool isBranchMispredict = false;
+        Word redirectPC = 0;
 
         // =========================================================================
         // STAGE 6: RW (Register Writeback Stage)
@@ -323,6 +327,17 @@ public:
                 if (isBranchTaken) {
                     branchTakenCount++;
                 }
+
+                bool wasPredTaken = l_RF_EX.predictedTaken;
+                Word wasPredTgt = l_RF_EX.predictedTarget;
+                branchPredictor.update(l_RF_EX.pc, d, isBranchTaken, branchPC, wasPredTaken);
+
+                // Branch misprediction detection
+                bool mispredicted = (isBranchTaken != wasPredTaken) || (isBranchTaken && branchPC != wasPredTgt);
+                if (mispredicted) {
+                    isBranchMispredict = true;
+                    redirectPC = isBranchTaken ? branchPC : (l_RF_EX.pc + 4);
+                }
             }
 
             next_EX_MA.pc = l_RF_EX.pc;
@@ -349,8 +364,7 @@ public:
             if (!l_RF_EX.isBubble && l_RF_EX.decoded.isLoad()) {
                 RegId loadDest = l_RF_EX.decoded.rd;
                 if ((d.readsRs1() && d.rs1 == loadDest) ||
-                    (d.readsRs2() && d.rs2 == loadDest) ||
-                    (d.isStore() && d.rd == loadDest)) {
+                    (d.readsRs2() && d.rs2 == loadDest)) {
                     loadUse = true;
                 }
             }
@@ -403,6 +417,8 @@ public:
                 next_RF_EX.isBubble = false;
                 next_RF_EX.disassembly = l_ID_RF.disassembly;
                 next_RF_EX.instId = l_ID_RF.instId;
+                next_RF_EX.predictedTaken = l_ID_RF.predictedTaken;
+                next_RF_EX.predictedTarget = l_ID_RF.predictedTarget;
             }
         } else {
             next_RF_EX.reset();
@@ -423,6 +439,8 @@ public:
                 next_ID_RF.isBubble = false;
                 next_ID_RF.disassembly = l_IF_ID.disassembly;
                 next_ID_RF.instId = l_IF_ID.instId;
+                next_ID_RF.predictedTaken = l_IF_ID.predictedTaken;
+                next_ID_RF.predictedTarget = l_IF_ID.predictedTarget;
             }
         } else {
             next_ID_RF.reset();
@@ -431,14 +449,56 @@ public:
         // =========================================================================
         // STAGE 1: IF (Instruction Fetch Stage)
         // =========================================================================
-        if (isBranchTaken) {
-            // Flush wrong path instructions in IF_ID, ID_RF, RF_EX (3 cycles branch penalty)
-            pc = branchPC;
-            next_IF_ID.reset();
+        if (isBranchMispredict) {
+            // Flush wrong path instructions in ID_RF and RF_EX (2 cycles branch penalty for 6-stage)
+            stall_IF = false;
+            stall_ID = false;
+            stall_RF = false;
+            bubble_EX = false;
+
+            pc = redirectPC;
             next_ID_RF.reset();
             next_RF_EX.reset();
-            bubbleCycles += 3;
-            perfTracker.recordBranchBubble(3);
+            bubbleCycles += 2;
+            perfTracker.recordBranchBubble(2);
+            perfTracker.recordStall("BRANCH_MISPREDICT", 2);
+
+            Word instWord = 0;
+            if (useMemoryHierarchy) {
+                auto res = memHierarchy.readWord(pc, true, pc, cycles);
+                Word w = std::get<0>(res);
+                uint32_t lat = std::get<1>(res);
+                instWord = w;
+                if (lat > 1) {
+                    perfTracker.recordStall("ICACHE_MISS", lat - 1);
+                    stallCycles += (lat - 1);
+                    cycles += (lat - 1);
+                }
+            } else {
+                instWord = memory.readWord(pc, &currentException);
+                if (currentException.hasOccurred()) {
+                    currentException.faultingPC = pc;
+                    halted = true;
+                    return;
+                }
+            }
+
+            uint32_t predTgt = 0;
+            bool predTaken = branchPredictor.predictAtFetch(pc, predTgt);
+
+            next_IF_ID.pc = pc;
+            next_IF_ID.instruction = instWord;
+            next_IF_ID.isBubble = false;
+            next_IF_ID.disassembly = assembler::Disassembler::disassemble(instWord, pc);
+            next_IF_ID.instId = nextInstId++;
+            next_IF_ID.predictedTaken = predTaken;
+            next_IF_ID.predictedTarget = predTgt;
+
+            if (predTaken) {
+                pc = predTgt;
+            } else {
+                pc += 4;
+            }
         } else if (programSize > 0 && pc >= programSize) {
             next_IF_ID.reset(); // Program completed, drain pipeline with bubbles
         } else if (!stall_IF) {
@@ -462,13 +522,22 @@ public:
                 }
             }
 
+            uint32_t predTgt = 0;
+            bool predTaken = branchPredictor.predictAtFetch(pc, predTgt);
+
             next_IF_ID.pc = pc;
             next_IF_ID.instruction = instWord;
             next_IF_ID.isBubble = false;
             next_IF_ID.disassembly = assembler::Disassembler::disassemble(instWord, pc);
             next_IF_ID.instId = nextInstId++;
+            next_IF_ID.predictedTaken = predTaken;
+            next_IF_ID.predictedTarget = predTgt;
 
-            pc += 4;
+            if (predTaken) {
+                pc = predTgt;
+            } else {
+                pc += 4;
+            }
         }
 
         // Record cycle snapshot for trace visualization

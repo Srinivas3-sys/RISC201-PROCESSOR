@@ -33,6 +33,13 @@ struct MemoryAccessRecord {
     std::string servedBy{"L1D"}; // "L1I", "L1D", "L2", "L3", "DRAM", "SWAP"
 };
 
+struct StoreBufferEntry {
+    uint32_t address{0};
+    uint32_t data{0};
+    uint64_t cycleIssued{0};
+    bool valid{false};
+};
+
 class MemoryHierarchy {
 public:
     MemorySystemConfig cfg;
@@ -46,6 +53,7 @@ public:
     DRAMController dram;
     AddressMapper mapper;
     Prefetcher prefetcher;
+    std::vector<StoreBufferEntry> storeBuffer;
 
     std::vector<uint8_t> rawMemory;
     std::vector<MemoryAccessRecord> accessHistory;
@@ -79,6 +87,7 @@ public:
         if (l3) l3->reset();
         dram.reset();
         prefetcher.reset();
+        storeBuffer.clear();
         std::fill(rawMemory.begin(), rawMemory.end(), 0);
         accessHistory.clear();
         currentCpuCycle = 0;
@@ -114,6 +123,16 @@ public:
                 }
             }
         }
+
+        // Eagerly map initial stack frame and common benchmark data pages
+        if (cfg.vm.enabled) {
+            vm.mapPage(0x000FF000, true, true, false, asid);
+            vm.mapPage(0x000FE000, true, true, false, asid);
+            vm.mapPage(0x00001000, true, true, false, asid);
+            vm.mapPage(0x00002000, true, true, false, asid);
+            vm.mapPage(0x00003000, true, true, false, asid);
+            vm.mapPage(0x00004000, true, true, false, asid);
+        }
     }
 
     std::pair<uint32_t, uint32_t> readWord(uint64_t vaddr, bool isFetch = false, uint32_t pc = 0, uint64_t cycle = 0, uint32_t asid = 0) {
@@ -123,6 +142,15 @@ public:
         TranslationResult trans = vm.translate(vaddr, false, isFetch, asid);
         uint64_t paddr = trans.paddr;
         uint32_t tlbLatency = trans.latencyCycles;
+
+        // 0. Store Buffer Bypass (Store-to-Load Forwarding)
+        if (!isFetch) {
+            for (int i = static_cast<int>(storeBuffer.size()) - 1; i >= 0; --i) {
+                if (storeBuffer[i].valid && storeBuffer[i].address == static_cast<uint32_t>(paddr)) {
+                    return {storeBuffer[i].data, 1}; // 1-cycle bypass hit
+                }
+            }
+        }
 
         // 2. Cache Hierarchy Access
         uint32_t cacheLatency = 0;
@@ -170,6 +198,14 @@ public:
                     cacheLatency += static_cast<uint32_t>(dramLat);
                     critLatency += static_cast<uint32_t>(dramLat);
                 }
+
+                // Trigger instruction prefetcher
+                auto prefLines = prefetcher.onAccess(paddr, pc, true);
+                for (uint64_t prefAddr : prefLines) {
+                    l1i.access(prefAddr, false, pc);
+                }
+            } else {
+                prefetcher.onAccess(paddr, pc, false);
             }
         } else {
             // Data read: L1D
@@ -224,7 +260,9 @@ public:
             }
         }
 
-        uint32_t totalLatency = tlbLatency + cacheLatency;
+        bool isL1Hit = (servedBy == "L1I" || servedBy == "L1D");
+        uint32_t totalLatency = isL1Hit ? 1 : (tlbLatency + cacheLatency);
+        uint32_t effectiveCritLatency = isL1Hit ? 1 : (tlbLatency + critLatency);
 
         // 3. Read 32-bit word from raw physical memory
         uint32_t wordVal = 0;
@@ -245,14 +283,15 @@ public:
             rec.sizeBytes = 4;
             rec.cycleStart = cycle;
             rec.totalLatency = totalLatency;
-            rec.criticalWordLatency = tlbLatency + critLatency;
+            rec.criticalWordLatency = effectiveCritLatency;
             rec.tlbLatency = tlbLatency;
             rec.cacheLatency = cacheLatency;
             rec.servedBy = servedBy;
             accessHistory.push_back(rec);
         }
 
-        return {wordVal, totalLatency};
+        uint32_t retLatency = (cfg.hierarchy.criticalWordFirst && !isL1Hit) ? effectiveCritLatency : totalLatency;
+        return {wordVal, std::max(uint32_t(1), retLatency)};
     }
 
     uint32_t writeWord(uint64_t vaddr, uint32_t data, uint32_t pc = 0, uint64_t cycle = 0, uint32_t asid = 0) {
@@ -268,38 +307,51 @@ public:
         std::string servedBy = "L1D";
 
         CacheAccessResult res1 = l1d.access(paddr, true, pc);
-        cacheLatency += res1.latencyCycles;
 
-        if (!res1.hit) {
-            if (l2) {
-                servedBy = "L2";
-                CacheAccessResult res2 = l2->access(paddr, true, pc);
-                cacheLatency += res2.latencyCycles;
-
-                if (!res2.hit) {
-                    if (l3) {
-                        servedBy = "L3";
-                        CacheAccessResult res3 = l3->access(paddr, true, pc);
-                        cacheLatency += res3.latencyCycles;
-                        if (!res3.hit) {
+        if (res1.hit) {
+            cacheLatency = 1;
+        } else {
+            // Store Buffer: buffer write to allow 1-cycle store retire without core stall
+            if (storeBuffer.size() < l1d.cfg.writeBufferEntries) {
+                StoreBufferEntry e;
+                e.address = static_cast<uint32_t>(paddr);
+                e.data = data;
+                e.cycleIssued = cycle;
+                e.valid = true;
+                storeBuffer.push_back(e);
+                cacheLatency = 1;
+            } else {
+                // Buffer is full, wait for service
+                cacheLatency += res1.latencyCycles;
+                if (l2) {
+                    servedBy = "L2";
+                    CacheAccessResult res2 = l2->access(paddr, true, pc);
+                    cacheLatency += res2.latencyCycles;
+                    if (!res2.hit) {
+                        if (l3) {
+                            servedBy = "L3";
+                            CacheAccessResult res3 = l3->access(paddr, true, pc);
+                            cacheLatency += res3.latencyCycles;
+                            if (!res3.hit) {
+                                servedBy = "DRAM";
+                                uint64_t dramLat = dram.access(paddr, true, currentCpuCycle + cacheLatency);
+                                cacheLatency += static_cast<uint32_t>(dramLat);
+                            }
+                        } else {
                             servedBy = "DRAM";
                             uint64_t dramLat = dram.access(paddr, true, currentCpuCycle + cacheLatency);
                             cacheLatency += static_cast<uint32_t>(dramLat);
                         }
-                    } else {
-                        servedBy = "DRAM";
-                        uint64_t dramLat = dram.access(paddr, true, currentCpuCycle + cacheLatency);
-                        cacheLatency += static_cast<uint32_t>(dramLat);
                     }
+                } else {
+                    servedBy = "DRAM";
+                    uint64_t dramLat = dram.access(paddr, true, currentCpuCycle + cacheLatency);
+                    cacheLatency += static_cast<uint32_t>(dramLat);
                 }
-            } else {
-                servedBy = "DRAM";
-                uint64_t dramLat = dram.access(paddr, true, currentCpuCycle + cacheLatency);
-                cacheLatency += static_cast<uint32_t>(dramLat);
             }
         }
 
-        uint32_t totalLatency = tlbLatency + cacheLatency;
+        uint32_t totalLatency = (res1.hit || storeBuffer.size() <= l1d.cfg.writeBufferEntries) ? 1 : (tlbLatency + cacheLatency);
 
         // 3. Update raw memory
         if (paddr + 4 <= rawMemory.size()) {

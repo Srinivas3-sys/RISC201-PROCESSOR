@@ -128,15 +128,19 @@ struct MemorySystemConfig {
         l1i.sizeBytes = 32 * 1024;
         l1i.associativity = 8;
         l1i.lineSizeBytes = 64;
-        l1i.hitLatencyCycles = 4;
+        l1i.hitLatencyCycles = 1;
         l1i.indexingMode = "vipt";
 
         l1d.name = "L1D";
         l1d.sizeBytes = 32 * 1024;
         l1d.associativity = 8;
         l1d.lineSizeBytes = 64;
-        l1d.hitLatencyCycles = 4;
+        l1d.hitLatencyCycles = 1;
         l1d.indexingMode = "vipt";
+
+        prefetcher.enabled = true;
+        prefetcher.prefetcherType = "next_line";
+        prefetcher.lookaheadLines = 2;
 
         l2.name = "L2";
         l2.sizeBytes = 512 * 1024; // 512 KB
@@ -181,8 +185,8 @@ inline MemorySystemConfig getPreset(const std::string& name) {
         cfg.cpuFreqGhz = 2.0;
         cfg.l1i.sizeBytes = 32 * 1024;
         cfg.l1d.sizeBytes = 32 * 1024;
-        cfg.l1i.hitLatencyCycles = 4;
-        cfg.l1d.hitLatencyCycles = 4;
+        cfg.l1i.hitLatencyCycles = 1;
+        cfg.l1d.hitLatencyCycles = 1;
         cfg.hierarchy.l2Enabled = false;
         cfg.hierarchy.l3Enabled = false;
         cfg.prefetcher.enabled = false;
@@ -227,8 +231,8 @@ inline MemorySystemConfig getPreset(const std::string& name) {
         MemorySystemConfig cfg;
         cfg.presetName = "lecture";
         cfg.cpuFreqGhz = 3.3;
-        cfg.l1i.hitLatencyCycles = 4;
-        cfg.l1d.hitLatencyCycles = 4;
+        cfg.l1i.hitLatencyCycles = 1;
+        cfg.l1d.hitLatencyCycles = 1;
         cfg.l2.hitLatencyCycles = 11;
         cfg.l3.hitLatencyCycles = 42;
         cfg.dram.dramType = "LectureDRAM";

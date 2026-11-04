@@ -283,6 +283,16 @@ public:
             }
         }
 
+        if (!res.mshrHit) {
+            for (auto& m : mshrs) {
+                if (!m.valid) {
+                    m.valid = true;
+                    m.lineAddress = lineAddr;
+                    break;
+                }
+            }
+        }
+
         // 3C Miss Categorization
         if (globalSeenLines.find(lineAddr) == globalSeenLines.end()) {
             compulsoryMisses++;
@@ -330,6 +340,14 @@ public:
         victim.tag = tag;
         victim.dirty = (isWrite && cfg.writePolicy == "wb_wa");
         victim.fifoSeq = accessSequence;
+
+        // Release MSHR entry for this line
+        for (auto& m : mshrs) {
+            if (m.valid && m.lineAddress == lineAddr) {
+                m.valid = false;
+                break;
+            }
+        }
 
         // Insertion policy
         if (cfg.insertionPolicy == "lru") {

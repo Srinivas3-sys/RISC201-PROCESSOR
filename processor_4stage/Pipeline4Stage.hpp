@@ -122,7 +122,9 @@ public:
     bool isForwardingEnabled() const { return forwardingEnabled; }
 
     void setMemPreset(const std::string& preset) {
-        memHierarchy = memory::MemoryHierarchy(memory::getPreset(preset));
+        auto cfg = memory::getPreset(preset);
+        cfg.cpuFreqGhz = 0.5; // 500 MHz for 4-Stage Pipeline
+        memHierarchy = memory::MemoryHierarchy(cfg);
         useMemoryHierarchy = (preset != "ideal");
     }
 
@@ -163,6 +165,8 @@ public:
         bool bubble_EX = false;
         bool isBranchTaken = false;
         Word branchPC = 0;
+        bool isBranchMispredict = false;
+        Word redirectPC = 0;
 
         // =========================================================================
         // STAGE 4: MA_RW (Memory Access and Register Writeback Merged)
@@ -299,6 +303,17 @@ public:
                 if (isBranchTaken) {
                     branchTakenCount++;
                 }
+
+                bool wasPredTaken = l_OF_EX.predictedTaken;
+                Word wasPredTgt = l_OF_EX.predictedTarget;
+                branchPredictor.update(l_OF_EX.pc, d, isBranchTaken, branchPC, wasPredTaken);
+
+                // Branch misprediction detection
+                bool mispredicted = (isBranchTaken != wasPredTaken) || (isBranchTaken && branchPC != wasPredTgt);
+                if (mispredicted) {
+                    isBranchMispredict = true;
+                    redirectPC = isBranchTaken ? branchPC : (l_OF_EX.pc + 4);
+                }
             }
 
             // Prepare next EX_MARW latch
@@ -326,8 +341,7 @@ public:
             if (!l_OF_EX.isBubble && l_OF_EX.decoded.isLoad()) {
                 RegId loadDest = l_OF_EX.decoded.rd;
                 if ((d.readsRs1() && d.rs1 == loadDest) ||
-                    (d.readsRs2() && d.rs2 == loadDest) ||
-                    (d.isStore() && d.rd == loadDest)) {
+                    (d.readsRs2() && d.rs2 == loadDest)) {
                     loadUseHazard = true;
                 }
             }
@@ -382,6 +396,8 @@ public:
                 next_OF_EX.isBubble = false;
                 next_OF_EX.disassembly = l_IF_OF.disassembly;
                 next_OF_EX.instId = l_IF_OF.instId;
+                next_OF_EX.predictedTaken = l_IF_OF.predictedTaken;
+                next_OF_EX.predictedTarget = l_IF_OF.predictedTarget;
             }
         } else {
             next_OF_EX.reset();
@@ -390,14 +406,14 @@ public:
         // =========================================================================
         // STAGE 1: IF (Instruction Fetch)
         // =========================================================================
-        if (isBranchTaken) {
-            // Branch penalty / flush: Branch was taken in EX stage
-            // Instructions currently in IF_OF and newly decoded OF_EX must be flushed
-            pc = branchPC;
+        if (isBranchMispredict) {
+            // Branch penalty / flush: Mispredicted branch in EX
+            // Younger instruction in IF_OF is flushed (1 cycle branch penalty for 4-stage)
+            pc = redirectPC;
             next_IF_OF.reset(); // Flush IF
-            next_OF_EX.reset(); // Flush OF
-            bubbleCycles += 2;
-            perfTracker.recordBranchBubble(2);
+            bubbleCycles += 1;
+            perfTracker.recordBranchBubble(1);
+            perfTracker.recordStall("BRANCH_MISPREDICT", 1);
         } else if (programSize > 0 && pc >= programSize) {
             next_IF_OF.reset(); // Program completed, drain pipeline with bubbles
         } else if (!stall_IF) {
@@ -421,13 +437,23 @@ public:
                 }
             }
 
+            // Check dynamic branch predictor at fetch time
+            uint32_t predTgt = 0;
+            bool predTaken = branchPredictor.predictAtFetch(pc, predTgt);
+
             next_IF_OF.pc = pc;
             next_IF_OF.instruction = instWord;
             next_IF_OF.isBubble = false;
             next_IF_OF.disassembly = assembler::Disassembler::disassemble(instWord, pc);
             next_IF_OF.instId = nextInstId++;
+            next_IF_OF.predictedTaken = predTaken;
+            next_IF_OF.predictedTarget = predTgt;
 
-            pc += 4;
+            if (predTaken) {
+                pc = predTgt;
+            } else {
+                pc += 4;
+            }
         }
 
         // Record cycle snapshot for trace visualization

@@ -53,11 +53,16 @@ exp: exp_memory
 exp-pipe: exp_pipeline
 	./exp_pipeline
 
-audit_cpi: evaluation/audit_cpi.cpp common/*.hpp alu/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp memory/*.hpp
-	$(CXX) $(CXXFLAGS) evaluation/audit_cpi.cpp -o audit_cpi
+audit_cpi: tools/audit_cpi.cpp common/*.hpp alu/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp memory/*.hpp
+	$(CXX) $(CXXFLAGS) tools/audit_cpi.cpp -o audit_cpi
 
 audit-cpi: audit_cpi
 	./audit_cpi
+
+test-asan:
+	$(CXX) -std=c++17 -Wall -Wextra -O1 -g -fsanitize=address,undefined -I. tests/test_all.cpp -o risc201_test_asan
+	./risc201_test_asan
+	rm -f risc201_test_asan
 
 demo-mem: risc201_sim
 	./risc201_sim benchmarks/factorial_iter.s --mem-preset modern
@@ -71,4 +76,4 @@ demo-pipe: risc201_sim
 clean:
 	rm -f $(TARGETS) *.hex *.bin
 
-.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi
+.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi test-asan

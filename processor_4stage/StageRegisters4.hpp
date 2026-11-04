@@ -23,6 +23,8 @@ struct Latch_IF_OF {
     bool isBubble{true};
     std::string disassembly{"nop"};
     uint64_t instId{0};
+    bool predictedTaken{false};
+    Word predictedTarget{0};
 
     void reset() {
         pc = 0;
@@ -30,6 +32,8 @@ struct Latch_IF_OF {
         isBubble = true;
         disassembly = "nop";
         instId = 0;
+        predictedTaken = false;
+        predictedTarget = 0;
     }
 };
 
@@ -46,6 +50,8 @@ struct Latch_OF_EX {
     bool isBubble{true};
     std::string disassembly{"nop"};
     uint64_t instId{0};
+    bool predictedTaken{false};
+    Word predictedTarget{0};
 
     void reset() {
         pc = 0;
@@ -56,6 +62,8 @@ struct Latch_OF_EX {
         isBubble = true;
         disassembly = "nop";
         instId = 0;
+        predictedTaken = false;
+        predictedTarget = 0;
     }
 };
 

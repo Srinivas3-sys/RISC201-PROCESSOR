@@ -178,11 +178,7 @@ int main(int argc, char* argv[]) {
         std::cout << "No program file passed. Loaded default recursive factorial demonstration program.\n";
     }
 
-    if (!dbg.loadAssemblyString(programToLoad)) {
-        return 1;
-    }
-
-    // Configure pipeline depth
+    // Configure pipeline depth and memory presets before loading program
     if (pipelineDepth == 6) {
         dbg.setSimMode(debugger::SimMode::PIPELINE_6STAGE);
         dbg.p6.setMemPreset(memPreset);
@@ -193,6 +189,10 @@ int main(int argc, char* argv[]) {
         dbg.p4.setMemPreset(memPreset);
         dbg.p4.setForwardingMode(forwardingMode);
         dbg.p4.setBranchPolicy(branchPolicy);
+    }
+
+    if (!dbg.loadAssemblyString(programToLoad)) {
+        return 1;
     }
 
     alu::AluConfig aluCfg = dbg.p4.aluUnit.getConfig();
