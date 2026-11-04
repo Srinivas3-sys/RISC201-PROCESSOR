@@ -30,69 +30,73 @@ static const std::string REG_ZERO_BITS = "0000";
 static const std::string REG_SP_BITS   = "1110"; // r14
 static const std::string REG_RA_BITS   = "1111"; // r15
 
+// =========================================================================
+// SimpleRisc Opcode Definitions (5 bits, 0-31)
+// As specified in Sarangi Chapter 3 & 9, Table 3.10 / 9.2
 // Canonical 5-Bit Binary-String Opcodes
+// =========================================================================
 namespace isa {
-static const std::string OP_ADD     = "00000"; // 0:  add  rd, rs1, (rs2/imm)
-static const std::string OP_SUB     = "00001"; // 1:  sub  rd, rs1, (rs2/imm)
-static const std::string OP_MUL     = "00010"; // 2:  mul  rd, rs1, (rs2/imm)
-static const std::string OP_DIV     = "00011"; // 3:  div  rd, rs1, (rs2/imm)
-static const std::string OP_MOD     = "00100"; // 4:  mod  rd, rs1, (rs2/imm)
-static const std::string OP_CMP     = "00101"; // 5:  cmp  rs1, (rs2/imm)
-static const std::string OP_AND     = "00110"; // 6:  and  rd, rs1, (rs2/imm)
-static const std::string OP_OR      = "00111"; // 7:  or   rd, rs1, (rs2/imm)
-static const std::string OP_NOT     = "01000"; // 8:  not  rd, (rs2/imm)
-static const std::string OP_MOV     = "01001"; // 9:  mov  rd, (rs2/imm)
-static const std::string OP_LSL     = "01010"; // 10: lsl  rd, rs1, (rs2/imm)
-static const std::string OP_LSR     = "01011"; // 11: lsr  rd, rs1, (rs2/imm)
-static const std::string OP_ASR     = "01100"; // 12: asr  rd, rs1, (rs2/imm)
-static const std::string OP_NOP     = "01101"; // 13: nop
-static const std::string OP_LD      = "01110"; // 14: ld   rd, imm[rs1]
-static const std::string OP_ST      = "01111"; // 15: st   rd, imm[rs1]
-static const std::string OP_BEQ     = "10000"; // 16: beq  offset
-static const std::string OP_BGT     = "10001"; // 17: bgt  offset
-static const std::string OP_B       = "10010"; // 18: b    offset
-static const std::string OP_CALL    = "10011"; // 19: call offset
-static const std::string OP_RET     = "10100"; // 20: ret  (PC <- ra)
-static const std::string OP_MOVZ    = "10101"; // 21: movz (transfer privileged <-> general)
-static const std::string OP_RETZ    = "10110"; // 22: retz (PC <- oldPC, CPL <- 1)
-static const std::string OP_MIN     = "10111"; // 23: min  rd, rs1, (rs2/imm)
-static const std::string OP_MAX     = "11000"; // 24: max  rd, rs1, (rs2/imm)
-static const std::string OP_ROTS    = "11001"; // 25: rots rd, rs1, (rs2/imm)
-static const std::string OP_XOR     = "11010"; // 26: xor  rd, rs1, (rs2/imm)
-static const std::string OP_ABS     = "11011"; // 27: abs  rd, (rs2/imm)
-static const std::string OP_INVALID = "11111"; // 31: illegal / invalid opcode
-static const std::string OP_BUBBLE  = OP_NOP;
+inline const std::string OP_ADD     = "00000"; // 0:  add  rd, rs1, (rs2/imm)
+inline const std::string OP_SUB     = "00001"; // 1:  sub  rd, rs1, (rs2/imm)
+inline const std::string OP_MUL     = "00010"; // 2:  mul  rd, rs1, (rs2/imm)
+inline const std::string OP_DIV     = "00011"; // 3:  div  rd, rs1, (rs2/imm)
+inline const std::string OP_MOD     = "00100"; // 4:  mod  rd, rs1, (rs2/imm)
+inline const std::string OP_CMP     = "00101"; // 5:  cmp  rs1, (rs2/imm)
+inline const std::string OP_AND     = "00110"; // 6:  and  rd, rs1, (rs2/imm)
+inline const std::string OP_OR      = "00111"; // 7:  or   rd, rs1, (rs2/imm)
+inline const std::string OP_NOT     = "01000"; // 8:  not  rd, (rs2/imm)
+inline const std::string OP_MOV     = "01001"; // 9:  mov  rd, (rs2/imm)
+inline const std::string OP_LSL     = "01010"; // 10: lsl  rd, rs1, (rs2/imm)
+inline const std::string OP_LSR     = "01011"; // 11: lsr  rd, rs1, (rs2/imm)
+inline const std::string OP_ASR     = "01100"; // 12: asr  rd, rs1, (rs2/imm)
+inline const std::string OP_NOP     = "01101"; // 13: nop
+inline const std::string OP_LD      = "01110"; // 14: ld   rd, imm[rs1]
+inline const std::string OP_ST      = "01111"; // 15: st   rd, imm[rs1]
+inline const std::string OP_BEQ     = "10000"; // 16: beq  offset
+inline const std::string OP_BGT     = "10001"; // 17: bgt  offset
+inline const std::string OP_B       = "10010"; // 18: b    offset
+inline const std::string OP_CALL    = "10011"; // 19: call offset
+inline const std::string OP_RET     = "10100"; // 20: ret  (PC <- ra)
+inline const std::string OP_MOVZ    = "10101"; // 21: movz (transfer privileged <-> general)
+inline const std::string OP_RETZ    = "10110"; // 22: retz (PC <- oldPC, CPL <- 1)
+inline const std::string OP_MIN     = "10111"; // 23: min  rd, rs1, (rs2/imm)
+inline const std::string OP_MAX     = "11000"; // 24: max  rd, rs1, (rs2/imm)
+inline const std::string OP_ROTS    = "11001"; // 25: rots rd, rs1, (rs2/imm)
+inline const std::string OP_XOR     = "11010"; // 26: xor  rd, rs1, (rs2/imm)
+inline const std::string OP_ABS     = "11011"; // 27: abs  rd, (rs2/imm)
+inline const std::string OP_INVALID = "11111"; // 31: illegal / invalid opcode
+inline const std::string OP_BUBBLE  = OP_NOP;
 } // namespace isa
 
-static const std::string BIN_OP_ADD = isa::OP_ADD;
-static const std::string BIN_OP_SUB = isa::OP_SUB;
-static const std::string BIN_OP_MUL = isa::OP_MUL;
-static const std::string BIN_OP_DIV = isa::OP_DIV;
-static const std::string BIN_OP_MOD = isa::OP_MOD;
-static const std::string BIN_OP_CMP = isa::OP_CMP;
-static const std::string BIN_OP_AND = isa::OP_AND;
-static const std::string BIN_OP_OR  = isa::OP_OR;
-static const std::string BIN_OP_NOT = isa::OP_NOT;
-static const std::string BIN_OP_MOV = isa::OP_MOV;
-static const std::string BIN_OP_LSL = isa::OP_LSL;
-static const std::string BIN_OP_LSR = isa::OP_LSR;
-static const std::string BIN_OP_ASR = isa::OP_ASR;
-static const std::string BIN_OP_NOP = isa::OP_NOP;
-static const std::string BIN_OP_LD  = isa::OP_LD;
-static const std::string BIN_OP_ST  = isa::OP_ST;
-static const std::string BIN_OP_BEQ = isa::OP_BEQ;
-static const std::string BIN_OP_BGT = isa::OP_BGT;
-static const std::string BIN_OP_B   = isa::OP_B;
-static const std::string BIN_OP_CALL= isa::OP_CALL;
-static const std::string BIN_OP_RET = isa::OP_RET;
-static const std::string BIN_OP_MOVZ= isa::OP_MOVZ;
-static const std::string BIN_OP_RETZ= isa::OP_RETZ;
-static const std::string BIN_OP_MIN = isa::OP_MIN;
-static const std::string BIN_OP_MAX = isa::OP_MAX;
-static const std::string BIN_OP_ROTS= isa::OP_ROTS;
-static const std::string BIN_OP_XOR = isa::OP_XOR;
-static const std::string BIN_OP_ABS = isa::OP_ABS;
-static const std::string BIN_OP_INVALID = isa::OP_INVALID;
+inline const std::string& BIN_OP_ADD = isa::OP_ADD;
+inline const std::string& BIN_OP_SUB = isa::OP_SUB;
+inline const std::string& BIN_OP_MUL = isa::OP_MUL;
+inline const std::string& BIN_OP_DIV = isa::OP_DIV;
+inline const std::string& BIN_OP_MOD = isa::OP_MOD;
+inline const std::string& BIN_OP_CMP = isa::OP_CMP;
+inline const std::string& BIN_OP_AND = isa::OP_AND;
+inline const std::string& BIN_OP_OR  = isa::OP_OR;
+inline const std::string& BIN_OP_NOT = isa::OP_NOT;
+inline const std::string& BIN_OP_MOV = isa::OP_MOV;
+inline const std::string& BIN_OP_LSL = isa::OP_LSL;
+inline const std::string& BIN_OP_LSR = isa::OP_LSR;
+inline const std::string& BIN_OP_ASR = isa::OP_ASR;
+inline const std::string& BIN_OP_NOP = isa::OP_NOP;
+inline const std::string& BIN_OP_LD  = isa::OP_LD;
+inline const std::string& BIN_OP_ST  = isa::OP_ST;
+inline const std::string& BIN_OP_BEQ = isa::OP_BEQ;
+inline const std::string& BIN_OP_BGT = isa::OP_BGT;
+inline const std::string& BIN_OP_B   = isa::OP_B;
+inline const std::string& BIN_OP_CALL= isa::OP_CALL;
+inline const std::string& BIN_OP_RET = isa::OP_RET;
+inline const std::string& BIN_OP_MOVZ= isa::OP_MOVZ;
+inline const std::string& BIN_OP_RETZ= isa::OP_RETZ;
+inline const std::string& BIN_OP_MIN = isa::OP_MIN;
+inline const std::string& BIN_OP_MAX = isa::OP_MAX;
+inline const std::string& BIN_OP_ROTS= isa::OP_ROTS;
+inline const std::string& BIN_OP_XOR = isa::OP_XOR;
+inline const std::string& BIN_OP_ABS = isa::OP_ABS;
+inline const std::string& BIN_OP_INVALID = isa::OP_INVALID;
 
 // Bit-String Conversion & Slicing Helper Utilities
 inline std::string intToBits(uint64_t value, size_t width) {
@@ -181,41 +185,113 @@ struct InstructionInfo {
     std::string functionalUnit{"ALU"};
     bool canRaiseException{false};
     std::string earliestResultStage{"EX"};
+    bool isPrivileged{false};
 };
 
 // Global Instruction Metadata Lookup Table
 inline const std::unordered_map<std::string, InstructionInfo>& getInstructionTable() {
     static const std::unordered_map<std::string, InstructionInfo> table = {
-        {isa::OP_ADD,  {"add",  isa::OP_ADD,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00000", "ADD",    1, "ALU",    false, "EX"}},
-        {isa::OP_SUB,  {"sub",  isa::OP_SUB,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00001", "SUB",    1, "ALU",    false, "EX"}},
-        {isa::OP_MUL,  {"mul",  isa::OP_MUL,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00010", "MUL",    2, "ALU",    false, "EX"}},
-        {isa::OP_DIV,  {"div",  isa::OP_DIV,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00011", "DIV",    4, "ALU",    true,  "EX"}},
-        {isa::OP_MOD,  {"mod",  isa::OP_MOD,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00100", "MOD",    4, "ALU",    true,  "EX"}},
-        {isa::OP_CMP,  {"cmp",  isa::OP_CMP,  "R", "rs1, (rs2/imm)",     true,  true,  false, true,  false, false, false, false, false, false, true,  "00101", "CMP",    1, "ALU",    false, "EX"}},
-        {isa::OP_AND,  {"and",  isa::OP_AND,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00110", "AND",    1, "ALU",    false, "EX"}},
-        {isa::OP_OR,   {"or",   isa::OP_OR,   "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00111", "OR",     1, "ALU",    false, "EX"}},
-        {isa::OP_NOT,  {"not",  isa::OP_NOT,  "R", "rd, (rs2/imm)",      false, true,  true,  true,  false, false, false, false, false, false, true,  "01000", "NOT",    1, "ALU",    false, "EX"}},
-        {isa::OP_MOV,  {"mov",  isa::OP_MOV,  "R", "rd, (rs2/imm)",      false, true,  true,  true,  false, false, false, false, false, false, true,  "01001", "MOV",    1, "ALU",    false, "EX"}},
-        {isa::OP_LSL,  {"lsl",  isa::OP_LSL,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "01010", "LSL",    1, "ALU",    false, "EX"}},
-        {isa::OP_LSR,  {"lsr",  isa::OP_LSR,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "01011", "LSR",    1, "ALU",    false, "EX"}},
-        {isa::OP_ASR,  {"asr",  isa::OP_ASR,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "01100", "ASR",    1, "ALU",    false, "EX"}},
-        {isa::OP_NOP,  {"nop",  isa::OP_NOP,  "B", "",                   false, false, false, false, false, false, false, false, false, false, false, "11111", "NOP",    1, "ALU",    false, "EX"}},
-        {isa::OP_LD,   {"ld",   isa::OP_LD,   "I", "rd, imm[rs1]",       true,  false, true,  true,  true,  false, false, false, false, false, false, "00000", "LOAD",   1, "LSU",    true,  "MEM"}},
-        {isa::OP_ST,   {"st",   isa::OP_ST,   "I", "rd, imm[rs1]",       true,  false, false, true,  false, true,  false, false, false, false, false, "00000", "STORE",  1, "LSU",    true,  "MEM"}},
-        {isa::OP_BEQ,  {"beq",  isa::OP_BEQ,  "B", "offset",             false, false, false, false, false, false, true,  false, false, false, false, "11111", "BRANCH", 1, "BRANCH", false, "EX"}},
-        {isa::OP_BGT,  {"bgt",  isa::OP_BGT,  "B", "offset",             false, false, false, false, false, false, true,  false, false, false, false, "11111", "BRANCH", 1, "BRANCH", false, "EX"}},
-        {isa::OP_B,    {"b",    isa::OP_B,    "B", "offset",             false, false, false, false, false, false, true,  true,  false, false, false, "11111", "BRANCH", 1, "BRANCH", false, "EX"}},
-        {isa::OP_CALL, {"call", isa::OP_CALL, "B", "offset",             false, false, true,  false, false, false, true,  true,  true,  false, false, "11111", "CALL",   1, "BRANCH", false, "EX"}},
-        {isa::OP_RET,  {"ret",  isa::OP_RET,  "R", "",                   true,  false, false, false, false, false, true,  true,  false, true,  false, "11111", "RET",    1, "BRANCH", false, "EX"}},
-        {isa::OP_MOVZ, {"movz", isa::OP_MOVZ, "PRIV", "rd, priv_reg",   false, false, true,  false, false, false, false, false, false, false, false, "11111", "PRIV",   1, "ALU",    true,  "EX"}},
-        {isa::OP_RETZ, {"retz", isa::OP_RETZ, "PRIV", "",                false, false, false, false, false, false, true,  true,  false, true,  false, "11111", "PRIV",   1, "BRANCH", true,  "EX"}},
-        {isa::OP_MIN,  {"min",  isa::OP_MIN,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "10111", "MIN",    1, "ALU",    false, "EX"}},
-        {isa::OP_MAX,  {"max",  isa::OP_MAX,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11000", "MAX",    1, "ALU",    false, "EX"}},
-        {isa::OP_ROTS, {"rots", isa::OP_ROTS, "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11001", "ROTS",   1, "ALU",    false, "EX"}},
-        {isa::OP_XOR,  {"xor",  isa::OP_XOR,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11010", "XOR",    1, "ALU",    false, "EX"}},
-        {isa::OP_ABS,  {"abs",  isa::OP_ABS,  "R", "rd, (rs2/imm)",      false, true,  true,  true,  false, false, false, false, false, false, true,  "11011", "ABS",    1, "ALU",    false, "EX"}},
+        {isa::OP_ADD,  {"add",  isa::OP_ADD,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00000", "ADD",    1, "ALU",    false, "EX", false}},
+        {isa::OP_SUB,  {"sub",  isa::OP_SUB,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00001", "SUB",    1, "ALU",    false, "EX", false}},
+        {isa::OP_MUL,  {"mul",  isa::OP_MUL,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00010", "MUL",    2, "ALU",    false, "EX", false}},
+        {isa::OP_DIV,  {"div",  isa::OP_DIV,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00011", "DIV",    4, "ALU",    true,  "EX", false}},
+        {isa::OP_MOD,  {"mod",  isa::OP_MOD,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00100", "MOD",    4, "ALU",    true,  "EX", false}},
+        {isa::OP_CMP,  {"cmp",  isa::OP_CMP,  "R", "rs1, (rs2/imm)",     true,  true,  false, true,  false, false, false, false, false, false, true,  "00101", "CMP",    1, "ALU",    false, "EX", false}},
+        {isa::OP_AND,  {"and",  isa::OP_AND,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00110", "AND",    1, "ALU",    false, "EX", false}},
+        {isa::OP_OR,   {"or",   isa::OP_OR,   "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "00111", "OR",     1, "ALU",    false, "EX", false}},
+        {isa::OP_NOT,  {"not",  isa::OP_NOT,  "R", "rd, (rs2/imm)",      false, true,  true,  true,  false, false, false, false, false, false, true,  "01000", "NOT",    1, "ALU",    false, "EX", false}},
+        {isa::OP_MOV,  {"mov",  isa::OP_MOV,  "R", "rd, (rs2/imm)",      false, true,  true,  true,  false, false, false, false, false, false, true,  "01001", "MOV",    1, "ALU",    false, "EX", false}},
+        {isa::OP_LSL,  {"lsl",  isa::OP_LSL,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "01010", "LSL",    1, "ALU",    false, "EX", false}},
+        {isa::OP_LSR,  {"lsr",  isa::OP_LSR,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "01011", "LSR",    1, "ALU",    false, "EX", false}},
+        {isa::OP_ASR,  {"asr",  isa::OP_ASR,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "01100", "ASR",    1, "ALU",    false, "EX", false}},
+        {isa::OP_NOP,  {"nop",  isa::OP_NOP,  "B", "",                   false, false, false, false, false, false, false, false, false, false, false, "11111", "NOP",    1, "ALU",    false, "EX", false}},
+        {isa::OP_LD,   {"ld",   isa::OP_LD,   "I", "rd, imm[rs1]",       true,  false, true,  true,  true,  false, false, false, false, false, false, "00000", "LOAD",   1, "LSU",    true,  "MEM", false}},
+        {isa::OP_ST,   {"st",   isa::OP_ST,   "I", "rd, imm[rs1]",       true,  false, false, true,  false, true,  false, false, false, false, false, "00000", "STORE",  1, "LSU",    true,  "MEM", false}},
+        {isa::OP_BEQ,  {"beq",  isa::OP_BEQ,  "B", "offset",             false, false, false, false, false, false, true,  false, false, false, false, "11111", "BRANCH", 1, "BRANCH", false, "EX", false}},
+        {isa::OP_BGT,  {"bgt",  isa::OP_BGT,  "B", "offset",             false, false, false, false, false, false, true,  false, false, false, false, "11111", "BRANCH", 1, "BRANCH", false, "EX", false}},
+        {isa::OP_B,    {"b",    isa::OP_B,    "B", "offset",             false, false, false, false, false, false, true,  true,  false, false, false, "11111", "BRANCH", 1, "BRANCH", false, "EX", false}},
+        {isa::OP_CALL, {"call", isa::OP_CALL, "B", "offset",             false, false, true,  false, false, false, true,  true,  true,  false, false, "11111", "CALL",   1, "BRANCH", false, "EX", false}},
+        {isa::OP_RET,  {"ret",  isa::OP_RET,  "R", "",                   true,  false, false, false, false, false, true,  true,  false, true,  false, "11111", "RET",    1, "BRANCH", false, "EX", false}},
+        {isa::OP_MOVZ, {"movz", isa::OP_MOVZ, "PRIV", "rd, priv_reg",   false, false, true,  false, false, false, false, false, false, false, false, "11111", "PRIV",   1, "ALU",    true,  "EX", true}},
+        {isa::OP_RETZ, {"retz", isa::OP_RETZ, "PRIV", "",                false, false, false, false, false, false, true,  true,  false, true,  false, "11111", "PRIV",   1, "BRANCH", true,  "EX", true}},
+        {isa::OP_MIN,  {"min",  isa::OP_MIN,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "10111", "MIN",    1, "ALU",    false, "EX", false}},
+        {isa::OP_MAX,  {"max",  isa::OP_MAX,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11000", "MAX",    1, "ALU",    false, "EX", false}},
+        {isa::OP_ROTS, {"rots", isa::OP_ROTS, "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11001", "ROTS",   1, "ALU",    false, "EX", false}},
+        {isa::OP_XOR,  {"xor",  isa::OP_XOR,  "R", "rd, rs1, (rs2/imm)", true,  true,  true,  true,  false, false, false, false, false, false, true,  "11010", "XOR",    1, "ALU",    false, "EX", false}},
+        {isa::OP_ABS,  {"abs",  isa::OP_ABS,  "R", "rd, (rs2/imm)",      false, true,  true,  true,  false, false, false, false, false, false, true,  "11011", "ABS",    1, "ALU",    false, "EX", false}},
     };
     return table;
+}
+
+// Helpers for validation, mnemonic lookup, and word-boundary bit conversion
+inline bool isValidOpcode(const std::string& bits) {
+    if (bits.length() != OPCODE_BITS) return false;
+    const auto& tbl = getInstructionTable();
+    return tbl.find(bits) != tbl.end();
+}
+
+inline const std::unordered_map<std::string, std::string>& getMnemonicToOpcodeTable() {
+    static const auto table = []() {
+        std::unordered_map<std::string, std::string> m;
+        for (const auto& kv : getInstructionTable()) {
+            m[kv.second.mnemonic] = kv.first;
+        }
+        return m;
+    }();
+    return table;
+}
+
+inline std::string mnemonicOf(const std::string& bits) {
+    const auto& tbl = getInstructionTable();
+    auto it = tbl.find(bits);
+    if (it != tbl.end()) return it->second.mnemonic;
+    return "unknown";
+}
+
+inline std::string opcodeOf(const std::string& mnemonic) {
+    const auto& tbl = getMnemonicToOpcodeTable();
+    auto it = tbl.find(mnemonic);
+    if (it != tbl.end()) return it->second;
+    return isa::OP_INVALID;
+}
+
+inline const std::string& wordToOpcode(uint32_t word) {
+    static const std::string opcodeStrings[32] = {
+        "00000", "00001", "00010", "00011",
+        "00100", "00101", "00110", "00111",
+        "01000", "01001", "01010", "01011",
+        "01100", "01101", "01110", "01111",
+        "10000", "10001", "10010", "10011",
+        "10100", "10101", "10110", "10111",
+        "11000", "11001", "11010", "11011",
+        "11100", "11101", "11110", "11111"
+    };
+    uint32_t opVal = (word >> 27) & 0x1FU;
+    return opcodeStrings[opVal];
+}
+
+inline uint32_t opcodeToWordBits(const std::string& op) {
+    validateOpcodeBits(op);
+    uint32_t val = static_cast<uint32_t>(bitsToInt(op, false));
+    return (val & 0x1FU) << 27;
+}
+
+inline bool verifyIsaTable() {
+    const auto& tbl = getInstructionTable();
+    if (tbl.size() != 28) return false;
+    for (const auto& kv : tbl) {
+        if (kv.first.length() != 5) return false;
+        if (kv.first != kv.second.opcode) return false;
+        for (char c : kv.first) {
+            if (c != '0' && c != '1') return false;
+        }
+    }
+    // Verify unassigned patterns 28, 29, 30 and 31 (OP_INVALID) are illegal
+    if (tbl.find("11100") != tbl.end()) return false;
+    if (tbl.find("11101") != tbl.end()) return false;
+    if (tbl.find("11110") != tbl.end()) return false;
+    if (tbl.find("11111") != tbl.end()) return false;
+    return true;
 }
 
 inline uint64_t getNextInstId() {
