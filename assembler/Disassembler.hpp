@@ -20,16 +20,21 @@ public:
     static DecodedInst decode(Word word, Word pc = 0) {
         DecodedInst d;
         d.rawWord = word;
-        d.opcode = static_cast<Opcode>((word >> 27) & 0x1F);
+        d.opcode = isa::wordToOpcode(word);
+        const auto& tbl = isa::getInstructionTable();
+        auto it = tbl.find(d.opcode);
+        if (it != tbl.end()) {
+            d.info = &it->second;
+        }
 
         // Branch format check: branch opcodes have MSB bit = 1 or opcode == NOP
         // (Sarangi Section 3.3.14, Table 3.10)
         // b (18), beq (16), bgt (17), call (19), ret (20), nop (13)
-        if (d.opcode == OP_B || d.opcode == OP_BEQ || d.opcode == OP_BGT ||
-            d.opcode == OP_CALL || d.opcode == OP_RET || d.opcode == OP_NOP ||
-            d.opcode == OP_RETZ) {
+        if (d.opcode == isa::OP_B || d.opcode == isa::OP_BEQ || d.opcode == isa::OP_BGT ||
+            d.opcode == isa::OP_CALL || d.opcode == isa::OP_RET || d.opcode == isa::OP_NOP ||
+            d.opcode == isa::OP_RETZ) {
             d.format = InstFormat::BRANCH;
-            if (d.opcode == OP_RET) {
+            if (d.opcode == isa::OP_RET) {
                 d.rs1 = REG_RA;
             }
             int32_t offset27 = static_cast<int32_t>(word & 0x07FFFFFF);
@@ -83,83 +88,84 @@ public:
             return "";
         };
 
-        switch (d.opcode) {
-            case OP_NOP: return "nop";
-            case OP_RET: return "ret";
-            case OP_RETZ: return "retz";
+        if (d.opcode == isa::OP_NOP) return "nop";
+        if (d.opcode == isa::OP_RET) return "ret";
+        if (d.opcode == isa::OP_RETZ) return "retz";
 
-            case OP_B:
-            case OP_BEQ:
-            case OP_BGT:
-            case OP_CALL: {
-                std::string opName;
-                if (d.opcode == OP_B) opName = "b";
-                else if (d.opcode == OP_BEQ) opName = "beq";
-                else if (d.opcode == OP_BGT) opName = "bgt";
-                else opName = "call";
+        if (d.opcode == isa::OP_B || d.opcode == isa::OP_BEQ || d.opcode == isa::OP_BGT || d.opcode == isa::OP_CALL) {
+            std::string opName;
+            if (d.opcode == isa::OP_B) opName = "b";
+            else if (d.opcode == isa::OP_BEQ) opName = "beq";
+            else if (d.opcode == isa::OP_BGT) opName = "bgt";
+            else opName = "call";
 
-                oss << opName << " ";
-                if (d.branchOffset >= 0) oss << "+" << (d.branchOffset * 4);
-                else oss << (d.branchOffset * 4);
-                oss << " [target: " << toHex(d.branchTarget) << "]";
-                return oss.str();
-            }
-
-            case OP_LD:
-                oss << "ld " << getReg(d.rd) << ", " << d.imm16 << "[" << getReg(d.rs1) << "]";
-                return oss.str();
-
-            case OP_ST:
-                oss << "st " << getReg(d.rd) << ", " << d.imm16 << "[" << getReg(d.rs1) << "]";
-                return oss.str();
-
-            case OP_MOV:
-                oss << "mov" << getImmSuffix(d.modifier) << " " << getReg(d.rd) << ", ";
-                if (d.isImmediate) oss << d.imm16;
-                else oss << getReg(d.rs2);
-                return oss.str();
-
-            case OP_NOT:
-                oss << "not" << getImmSuffix(d.modifier) << " " << getReg(d.rd) << ", ";
-                if (d.isImmediate) oss << d.imm16;
-                else oss << getReg(d.rs2);
-                return oss.str();
-
-            case OP_ABS:
-                oss << "abs" << getImmSuffix(d.modifier) << " " << getReg(d.rd) << ", ";
-                if (d.isImmediate) oss << d.imm16;
-                else oss << getReg(d.rs2);
-                return oss.str();
-
-            case OP_CMP:
-                oss << "cmp" << getImmSuffix(d.modifier) << " " << getReg(d.rs1) << ", ";
-                if (d.isImmediate) oss << d.imm16;
-                else oss << getReg(d.rs2);
-                return oss.str();
-
-            default: {
-                std::string opName;
-                switch (d.opcode) {
-                    case OP_ADD: opName = "add"; break;
-                    case OP_SUB: opName = "sub"; break;
-                    case OP_MUL: opName = "mul"; break;
-                    case OP_DIV: opName = "div"; break;
-                    case OP_MOD: opName = "mod"; break;
-                    case OP_AND: opName = "and"; break;
-                    case OP_OR:  opName = "or"; break;
-                    case OP_XOR: opName = "xor"; break;
-                    case OP_LSL: opName = "lsl"; break;
-                    case OP_LSR: opName = "lsr"; break;
-                    case OP_ASR: opName = "asr"; break;
-                    default: return "unknown (" + toHex(word) + ")";
-                }
-                oss << opName << getImmSuffix(d.modifier) << " "
-                    << getReg(d.rd) << ", " << getReg(d.rs1) << ", ";
-                if (d.isImmediate) oss << d.imm16;
-                else oss << getReg(d.rs2);
-                return oss.str();
-            }
+            oss << opName << " ";
+            if (d.branchOffset >= 0) oss << "+" << (d.branchOffset * 4);
+            else oss << (d.branchOffset * 4);
+            oss << " [target: " << toHex(d.branchTarget) << "]";
+            return oss.str();
         }
+
+        if (d.opcode == isa::OP_LD) {
+            oss << "ld " << getReg(d.rd) << ", " << d.imm16 << "[" << getReg(d.rs1) << "]";
+            return oss.str();
+        }
+
+        if (d.opcode == isa::OP_ST) {
+            oss << "st " << getReg(d.rd) << ", " << d.imm16 << "[" << getReg(d.rs1) << "]";
+            return oss.str();
+        }
+
+        if (d.opcode == isa::OP_MOV) {
+            oss << "mov" << getImmSuffix(d.modifier) << " " << getReg(d.rd) << ", ";
+            if (d.isImmediate) oss << d.imm16;
+            else oss << getReg(d.rs2);
+            return oss.str();
+        }
+
+        if (d.opcode == isa::OP_NOT) {
+            oss << "not" << getImmSuffix(d.modifier) << " " << getReg(d.rd) << ", ";
+            if (d.isImmediate) oss << d.imm16;
+            else oss << getReg(d.rs2);
+            return oss.str();
+        }
+
+        if (d.opcode == isa::OP_ABS) {
+            oss << "abs" << getImmSuffix(d.modifier) << " " << getReg(d.rd) << ", ";
+            if (d.isImmediate) oss << d.imm16;
+            else oss << getReg(d.rs2);
+            return oss.str();
+        }
+
+        if (d.opcode == isa::OP_CMP) {
+            oss << "cmp" << getImmSuffix(d.modifier) << " " << getReg(d.rs1) << ", ";
+            if (d.isImmediate) oss << d.imm16;
+            else oss << getReg(d.rs2);
+            return oss.str();
+        }
+
+        std::string opName;
+        if (d.opcode == isa::OP_ADD) opName = "add";
+        else if (d.opcode == isa::OP_SUB) opName = "sub";
+        else if (d.opcode == isa::OP_MUL) opName = "mul";
+        else if (d.opcode == isa::OP_DIV) opName = "div";
+        else if (d.opcode == isa::OP_MOD) opName = "mod";
+        else if (d.opcode == isa::OP_AND) opName = "and";
+        else if (d.opcode == isa::OP_OR)  opName = "or";
+        else if (d.opcode == isa::OP_XOR) opName = "xor";
+        else if (d.opcode == isa::OP_LSL) opName = "lsl";
+        else if (d.opcode == isa::OP_LSR) opName = "lsr";
+        else if (d.opcode == isa::OP_ASR) opName = "asr";
+        else if (d.opcode == isa::OP_MIN) opName = "min";
+        else if (d.opcode == isa::OP_MAX) opName = "max";
+        else if (d.opcode == isa::OP_ROTS) opName = "rots";
+        else return "unknown (" + toHex(word) + ")";
+
+        oss << opName << getImmSuffix(d.modifier) << " "
+            << getReg(d.rd) << ", " << getReg(d.rs1) << ", ";
+        if (d.isImmediate) oss << d.imm16;
+        else oss << getReg(d.rs2);
+        return oss.str();
     }
 
     static Word parseHexString(const std::string& hex) {

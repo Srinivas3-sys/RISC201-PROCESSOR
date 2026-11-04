@@ -7,6 +7,7 @@
 #include <array>
 #include <sstream>
 #include <iomanip>
+#include "ISA.hpp"
 
 namespace risc201 {
 
@@ -90,7 +91,8 @@ enum class InstFormat {
 // Decoded Instruction Structure
 struct DecodedInst {
     Word rawWord{0};
-    Opcode opcode{OP_NOP};
+    std::string opcode{isa::OP_NOP};
+    const InstructionInfo* info{nullptr};
     InstFormat format{InstFormat::BRANCH};
     bool isImmediate{false};
     RegId rd{0};
@@ -104,39 +106,40 @@ struct DecodedInst {
 
     // Helper query functions
     bool isBranch() const {
-        return opcode == OP_B || opcode == OP_BEQ || opcode == OP_BGT ||
-               opcode == OP_CALL || opcode == OP_RET || opcode == OP_RETZ;
+        return info ? info->isBranch : (opcode == isa::OP_B || opcode == isa::OP_BEQ || opcode == isa::OP_BGT ||
+               opcode == isa::OP_CALL || opcode == isa::OP_RET || opcode == isa::OP_RETZ);
     }
 
     bool isConditionalBranch() const {
-        return opcode == OP_BEQ || opcode == OP_BGT;
+        return opcode == isa::OP_BEQ || opcode == isa::OP_BGT;
     }
 
     bool isCall() const {
-        return opcode == OP_CALL;
+        return info ? info->isCall : (opcode == isa::OP_CALL);
     }
 
     bool isRet() const {
-        return opcode == OP_RET || opcode == OP_RETZ;
+        return info ? info->isReturn : (opcode == isa::OP_RET || opcode == isa::OP_RETZ);
     }
 
     bool isLoad() const {
-        return opcode == OP_LD;
+        return info ? info->isLoad : (opcode == isa::OP_LD);
     }
 
     bool isStore() const {
-        return opcode == OP_ST;
+        return info ? info->isStore : (opcode == isa::OP_ST);
     }
 
     bool isNop() const {
-        return opcode == OP_NOP;
+        return opcode == isa::OP_NOP;
     }
 
     // Does this instruction write back to the register file?
     // Sarangi Section 9.3: isWb is true for ALU, mov, ld, and call (writes ra)
     bool writesRegister() const {
-        if (opcode == OP_NOP || opcode == OP_ST || opcode == OP_CMP ||
-            opcode == OP_B || opcode == OP_BEQ || opcode == OP_BGT || opcode == OP_RET || opcode == OP_RETZ) {
+        if (info) return info->writesRd;
+        if (opcode == isa::OP_NOP || opcode == isa::OP_ST || opcode == isa::OP_CMP ||
+            opcode == isa::OP_B || opcode == isa::OP_BEQ || opcode == isa::OP_BGT || opcode == isa::OP_RET || opcode == isa::OP_RETZ) {
             return false;
         }
         return true;
@@ -144,14 +147,15 @@ struct DecodedInst {
 
     // Destination register id (ra for CALL, rd for others)
     RegId getDestReg() const {
-        if (opcode == OP_CALL) return REG_RA;
+        if (opcode == isa::OP_CALL) return REG_RA;
         return rd;
     }
 
     // Does instruction read rs1? (Not used for NOT, MOV, or branch formats except RET)
     bool readsRs1() const {
-        if (opcode == OP_NOP || opcode == OP_B || opcode == OP_BEQ ||
-            opcode == OP_BGT || opcode == OP_CALL || opcode == OP_NOT || opcode == OP_MOV || opcode == OP_ABS) {
+        if (info) return info->readsRs1;
+        if (opcode == isa::OP_NOP || opcode == isa::OP_B || opcode == isa::OP_BEQ ||
+            opcode == isa::OP_BGT || opcode == isa::OP_CALL || opcode == isa::OP_NOT || opcode == isa::OP_MOV || opcode == isa::OP_ABS) {
             return false;
         }
         // RET reads ra (REG_RA = 15)
@@ -161,9 +165,10 @@ struct DecodedInst {
     // Does instruction read rs2? (Only when not immediate, and not store which reads rd as source data)
     bool readsRs2() const {
         if (isImmediate) return false;
-        if (opcode == OP_NOP || opcode == OP_B || opcode == OP_BEQ ||
-            opcode == OP_BGT || opcode == OP_CALL || opcode == OP_RET || opcode == OP_RETZ ||
-            opcode == OP_LD) {
+        if (info) return info->readsRs2;
+        if (opcode == isa::OP_NOP || opcode == isa::OP_B || opcode == isa::OP_BEQ ||
+            opcode == isa::OP_BGT || opcode == isa::OP_CALL || opcode == isa::OP_RET || opcode == isa::OP_RETZ ||
+            opcode == isa::OP_LD) {
             return false;
         }
         return true; // add, sub, mul, div, mod, cmp, and, or, lsl, lsr, asr, not, mov
@@ -171,7 +176,7 @@ struct DecodedInst {
 
     // ST reads rd as data to store!
     bool readsRd() const {
-        return opcode == OP_ST;
+        return opcode == isa::OP_ST;
     }
 };
 

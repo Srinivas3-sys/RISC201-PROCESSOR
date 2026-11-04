@@ -459,10 +459,11 @@ private:
             memory->writeWord(mar, mdr, &ex);
         } else {
             // ALU operation
-            Opcode op = static_cast<Opcode>(static_cast<uint16_t>(arg) & 0x1F);
-            auto out = aluUnit->execute(op, A, B, flags);
+            uint8_t opVal = static_cast<uint8_t>(static_cast<uint16_t>(arg) & 0x1F);
+            const std::string& opStr = isa::wordToOpcode(static_cast<uint32_t>(opVal) << 27);
+            auto out = aluUnit->execute(opStr, A, B, flags);
             aluResult = out.result;
-            if (op == OP_CMP) {
+            if (opStr == isa::OP_CMP) {
                 flags = out.flags;
                 regFile->setFlags(flags);
             }

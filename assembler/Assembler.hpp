@@ -463,7 +463,7 @@ public:
                 for (size_t j = i + 2; j < bEnd; ++j) {
                     DecodedInst dj = Disassembler::decode(assembledLines[j].machineCode, assembledLines[j].address);
                     // Do not move branches, nops, or CMP instructions
-                    if (dj.isBranch() || dj.opcode == OP_NOP || dj.opcode == OP_CMP) continue;
+                    if (dj.isBranch() || dj.opcode == isa::OP_NOP || dj.opcode == isa::OP_CMP) continue;
                     // Do not move memory instructions (loads or stores) to preserve memory ordering
                     if (dj.isLoad() || dj.isStore()) continue;
 

@@ -294,6 +294,18 @@ inline bool verifyIsaTable() {
     return true;
 }
 
+namespace isa {
+    using risc201::InstructionInfo;
+    using risc201::getInstructionTable;
+    using risc201::isValidOpcode;
+    using risc201::getMnemonicToOpcodeTable;
+    using risc201::mnemonicOf;
+    using risc201::opcodeOf;
+    using risc201::wordToOpcode;
+    using risc201::opcodeToWordBits;
+    using risc201::verifyIsaTable;
+} // namespace isa
+
 inline uint64_t getNextInstId() {
     static uint64_t counter = 0;
     return ++counter;

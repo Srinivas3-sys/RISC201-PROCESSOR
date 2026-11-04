@@ -302,7 +302,7 @@ public:
 
             // Execute in ALU
             auto aluOut = aluUnit.execute(d.opcode, opA, opB, regFile.getFlags());
-            if (d.opcode == OP_CMP) {
+            if (d.opcode == isa::OP_CMP) {
                 regFile.setFlags(aluOut.flags);
             }
             if (aluOut.exception.hasOccurred()) {
@@ -315,22 +315,22 @@ public:
                 branchCount++;
                 Flags flg = regFile.getFlags();
 
-                if (d.opcode == OP_B) {
+                if (d.opcode == isa::OP_B) {
                     isBranchTaken = true;
                     branchPC = l_RF_EX.branchTarget;
-                } else if (d.opcode == OP_BEQ) {
+                } else if (d.opcode == isa::OP_BEQ) {
                     isBranchTaken = flg.E;
                     branchPC = l_RF_EX.branchTarget;
-                } else if (d.opcode == OP_BGT) {
+                } else if (d.opcode == isa::OP_BGT) {
                     isBranchTaken = flg.GT;
                     branchPC = l_RF_EX.branchTarget;
-                } else if (d.opcode == OP_CALL) {
+                } else if (d.opcode == isa::OP_CALL) {
                     isBranchTaken = true;
                     branchPC = l_RF_EX.branchTarget;
-                } else if (d.opcode == OP_RET) {
+                } else if (d.opcode == isa::OP_RET) {
                     isBranchTaken = true;
                     branchPC = opA;
-                } else if (d.opcode == OP_RETZ) {
+                } else if (d.opcode == isa::OP_RETZ) {
                     isBranchTaken = true;
                     branchPC = regFile.getOldPC();
                     regFile.setCPL(1);
