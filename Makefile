@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -I.
 
-TARGETS = risc201_sim risc201_as risc201_disasm risc201_eval risc201_test exp_pipeline exp_memory audit_cpi generate_perf_docs lint_docs
+TARGETS = risc201_sim risc201_as risc201_disasm risc201_eval risc201_test exp_pipeline exp_memory audit_cpi generate_perf_docs lint_docs lint_isa verify_golden
 
 all: $(TARGETS)
 
@@ -75,6 +75,18 @@ lint-docs: lint_docs
 lint-docs-fix: lint_docs
 	./lint_docs --fix
 
+lint_isa: tools/lint_isa.cpp
+	$(CXX) $(CXXFLAGS) tools/lint_isa.cpp -o lint_isa
+
+lint-isa: lint_isa
+	./lint_isa
+
+verify_golden: tools/verify_golden.cpp common/*.hpp alu/*.hpp microcode/*.hpp assembler/*.hpp processor_4stage/*.hpp processor_6stage/*.hpp memory/*.hpp
+	$(CXX) $(CXXFLAGS) tools/verify_golden.cpp -o verify_golden
+
+verify-golden: verify_golden
+	./verify_golden
+
 test-asan:
 	$(CXX) -std=c++17 -Wall -Wextra -O1 -g -fsanitize=address,undefined -I. tests/test_all.cpp -o risc201_test_asan
 	./risc201_test_asan
@@ -92,4 +104,4 @@ demo-pipe: risc201_sim
 clean:
 	rm -f $(TARGETS) *.hex *.bin
 
-.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi perf-docs lint-docs lint-docs-fix test-asan
+.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi perf-docs lint-docs lint-docs-fix lint-isa verify-golden test-asan

@@ -1,7 +1,7 @@
 # SimpleRisc Architectural ISA Specification: 5-Bit Binary-String Opcodes
 
 ## 1. Architectural Philosophy & Overview
-The RISC201 SimpleRisc processor is a 32-bit load-store architecture modeled after modern RISC principles (such as MIPS, RISC-V, and DLX). Inside the Python simulator, the architectural identity of every instruction is strictly represented as a **5-bit fixed-width binary string** (`"00000"` through `"11001"` and `"11111"`), rather than an integer or arbitrary enum.
+The RISC201 SimpleRisc processor is a 32-bit load-store architecture modeled after modern RISC principles (such as MIPS, RISC-V, and DLX). Inside the C++ simulator (`common/ISA.hpp`), the architectural identity of every instruction is strictly represented as a **5-bit fixed-width binary string** (`"00000"` through `"11011"` and `"11111"`), rather than an integer or arbitrary enum.
 
 This representation reflects physical hardware control signals where opcodes are routed as 5 parallel bitlines to instruction decoders, ALU control units, and hazard detection logic.
 
@@ -83,6 +83,8 @@ All SimpleRisc instructions are 32 bits wide, aligned to 4-byte boundaries, with
 | `min`  | `"10111"` | R / I | `rd, rs1, (rs2/imm)` | Minimum of Operands | `"10111"` | 1 | EX | No |
 | `max`  | `"11000"` | R / I | `rd, rs1, (rs2/imm)` | Maximum of Operands | `"11000"` | 1 | EX | No |
 | `rots` | `"11001"` | R / I | `rd, rs1, (rs2/imm)` | Rotate Shift | `"11001"` | 1 | EX | No |
+| `xor`  | `"11010"` | R / I | `rd, rs1, (rs2/imm)` | Bitwise XOR | `"11010"` | 1 | EX | No |
+| `abs`  | `"11011"` | R / I | `rd, (rs2/imm)` | Absolute Value | `"11011"` | 1 | EX | No |
 | `inv`  | `"11111"` | — | — | Reserved Illegal Opcode | `"11111"` | 1 | — | Yes (IllegalOpcode) |
 
 ---
@@ -100,27 +102,35 @@ SimpleRisc provides sixteen 32-bit general-purpose registers ($r0 - r15$):
 
 ---
 
-## 5. Bit-String Helper API & Verification
+## 5. Binary-String C++ API & Verification
 
-The single source of truth for all binary-string operations resides in `common/isa.py`:
+The single source of truth for all binary-string operations resides in `common/ISA.hpp`:
 
-```python
-from common.isa import (
-    int_to_bits, bits_to_int, word_to_bits, bits_to_word,
-    slice_field, encode, decode, validate_opcode_bits
-)
+```cpp
+#include "common/ISA.hpp"
+using namespace risc201;
 
-# Convert integer to exactly 5-bit binary string
-op_str = int_to_bits(14, 5)   # -> "01110" (ld)
+// Canonical 5-bit opcode constants
+std::string op = isa::OP_ADD; // "00000"
 
-# Slice fields from 32-bit binary instruction word
-op_slice = slice_field("01110000010000000000000000000000", 31, 27)  # -> "01110"
+// Fast word boundary conversions
+const std::string& opStr = isa::wordToOpcode(0x70400000); // -> "01110" (ld)
+uint32_t wordBits = isa::opcodeToWordBits(isa::OP_LD);    // -> (14 << 27)
 
-# Decode 32-bit machine word into typed Instruction
-inst = decode(0x70400000, pc=0x1000)
-assert inst.opcode == "01110"
-assert inst.is_load() == True
-assert inst.rd == 1
+// Decode 32-bit machine word into typed Instruction or DecodedInst
+Instruction inst = decode(0x70400000, 0x1000);
+assert(inst.opcode == isa::OP_LD);
+assert(inst.isLoad() == true);
+assert(inst.rd == 1);
+
+// Architectural validation
+assert(isa::isValidOpcode(isa::OP_ADD) == true);
+assert(isa::isValidOpcode("11100") == false); // Unassigned pattern
+assert(isa::isValidOpcode(isa::OP_INVALID) == false);
 ```
 
-All helpers strictly enforce that binary strings contain only `'0'` and `'1'` characters and match exact field widths, raising `ValueError` on any violation.
+Enforced across the entire codebase via automated AST/pattern linting:
+```bash
+make lint-isa
+make verify-golden
+```

@@ -97,12 +97,36 @@ Machine code generation, cycle counts, CPI numbers, exception semantics, and UI 
 ## 4. Migration & Verification Strategy
 
 Each phase will be compiled and verified against the golden baselines captured in `tests/golden_refactor/`:
-- **Phase 1**: ISA.hpp hardening & metadata table extension
-- **Phase 2**: Decoder + DecodedInst stringification
-- **Phase 3**: ALU unified string execution
-- **Phase 4**: Common units & ISS verification
-- **Phase 5**: Pipelines 4-stage and 6-stage migration
-- **Phase 6**: Microcode control store migration
-- **Phase 7**: Assembler & Disassembler migration
-- **Phase 8**: Types.hpp opcode enum deletion & BIN_OP_* removal
-- **Phase 9**: Final verification, linting (`make lint-isa`), and documentation
+- **Phase 1**: ISA.hpp hardening & metadata table extension [COMPLETED - 4a512e7]
+- **Phase 2**: Decoder + DecodedInst stringification [COMPLETED - c7b1468]
+- **Phase 3**: ALU unified string execution [COMPLETED - c7b1468]
+- **Phase 4**: Common units & ISS verification [COMPLETED - c7b1468]
+- **Phase 5**: Pipelines 4-stage and 6-stage migration [COMPLETED - c7b1468]
+- **Phase 6**: Microcode control store migration [COMPLETED - be36e7b]
+- **Phase 7**: Assembler & Disassembler migration [COMPLETED - c7b1468]
+- **Phase 8**: Types.hpp opcode enum deletion & BIN_OP_* removal [COMPLETED - fa33baa]
+- **Phase 9**: Final verification, linting (`make lint-isa`), and documentation [COMPLETED]
+
+---
+
+## 5. Verification & Validation Results
+
+1. **Exhaustive Unit Tests (`make test`)**:
+   - 78 / 78 tests passed (100% success rate).
+   - AddressSanitizer and UndefinedBehaviorSanitizer clean (`make test-asan`).
+
+2. **ISA Linter Target (`make lint-isa`)**:
+   - Scanned all 43 C++ header and implementation files across all subsystems.
+   - 0 integer `enum Opcode` definitions.
+   - 0 `case OP_` or integer switches on opcodes.
+   - 0 `BIN_OP_` alias usages.
+   - 0 quoted 5-bit binary string literals outside `common/ISA.hpp` and tests.
+
+3. **Golden Regression Validator (`make verify-golden`)**:
+   - Total checks: 231 / 231 passed (100% match).
+   - Assembler machine code words (.hex, .bin) match golden across all 12 benchmarks byte-for-byte.
+   - Disassembler text reconstructs golden (.disasm) across all 12 benchmarks character-for-character.
+   - Microcode horizontal and vertical control store dumps match golden baselines byte-for-byte.
+   - Full 192-configuration simulation matrix (12 benchmarks × 2 pipelines × 4 memory presets × 2 forwarding modes) matches IC, cycles, cold CPI, steady CPI, exceptions, all 16 registers (r0–r13, sp, ra), and FNV-1a memory checksums identically.
+   - Simulator throughput measured at ~955k instructions/sec (well above baseline requirement).
+
