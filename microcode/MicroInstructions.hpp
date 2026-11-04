@@ -85,20 +85,20 @@ enum class FunctionalArg : uint16_t {
     // Memory unit args
     MEM_LOAD  = (3 << 7) | 1,
     MEM_STORE = (3 << 7) | 2,
-    // ALU args
-    ALU_ADD = (1 << 7) | OP_ADD,
-    ALU_SUB = (1 << 7) | OP_SUB,
-    ALU_MUL = (1 << 7) | OP_MUL,
-    ALU_DIV = (1 << 7) | OP_DIV,
-    ALU_MOD = (1 << 7) | OP_MOD,
-    ALU_CMP = (1 << 7) | OP_CMP,
-    ALU_AND = (1 << 7) | OP_AND,
-    ALU_OR  = (1 << 7) | OP_OR,
-    ALU_NOT = (1 << 7) | OP_NOT,
-    ALU_MOV = (1 << 7) | OP_MOV,
-    ALU_LSL = (1 << 7) | OP_LSL,
-    ALU_LSR = (1 << 7) | OP_LSR,
-    ALU_ASR = (1 << 7) | OP_ASR
+    // ALU args (decoupled bit tags preserving control word bit layout)
+    ALU_ADD = (1 << 7) | 0,
+    ALU_SUB = (1 << 7) | 1,
+    ALU_MUL = (1 << 7) | 2,
+    ALU_DIV = (1 << 7) | 3,
+    ALU_MOD = (1 << 7) | 4,
+    ALU_CMP = (1 << 7) | 5,
+    ALU_AND = (1 << 7) | 6,
+    ALU_OR  = (1 << 7) | 7,
+    ALU_NOT = (1 << 7) | 8,
+    ALU_MOV = (1 << 7) | 9,
+    ALU_LSL = (1 << 7) | 10,
+    ALU_LSR = (1 << 7) | 11,
+    ALU_ASR = (1 << 7) | 12
 };
 
 inline std::string functionalArgName(FunctionalArg arg) {

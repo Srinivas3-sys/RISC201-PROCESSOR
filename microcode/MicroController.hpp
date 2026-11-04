@@ -33,7 +33,7 @@ public:
     // Microcode Control Store (up to 1024 microinstructions)
     std::vector<HorizontalControlWord> controlStoreHorizontal;
     std::vector<VerticalMicroInst> controlStoreVertical;
-    std::map<Opcode, uint16_t> opcodeDispatchTable;
+    std::unordered_map<std::string, uint16_t> opcodeDispatchTable;
 
     // Execution state
     uint16_t upc{0};
@@ -135,7 +135,7 @@ public:
         emit(MicroOp::MSWITCH, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mswitch");
 
         // Helper for 3-address ALU instructions (add, sub, mul, div, mod, and, or, lsl, lsr, asr)
-        auto emitAlu3Op = [&](Opcode op, FunctionalArg arg, [[maybe_unused]] const std::string& opName) {
+        auto emitAlu3Op = [&](const std::string& op, FunctionalArg arg, [[maybe_unused]] const std::string& opName) {
             uint16_t startAddr = static_cast<uint16_t>(controlStoreVertical.size());
             opcodeDispatchTable[op] = startAddr;
 
@@ -163,21 +163,21 @@ public:
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
         };
 
-        emitAlu3Op(OP_ADD, FunctionalArg::ALU_ADD, "add");
-        emitAlu3Op(OP_SUB, FunctionalArg::ALU_SUB, "sub");
-        emitAlu3Op(OP_MUL, FunctionalArg::ALU_MUL, "mul");
-        emitAlu3Op(OP_DIV, FunctionalArg::ALU_DIV, "div");
-        emitAlu3Op(OP_MOD, FunctionalArg::ALU_MOD, "mod");
-        emitAlu3Op(OP_AND, FunctionalArg::ALU_AND, "and");
-        emitAlu3Op(OP_OR,  FunctionalArg::ALU_OR,  "or");
-        emitAlu3Op(OP_LSL, FunctionalArg::ALU_LSL, "lsl");
-        emitAlu3Op(OP_LSR, FunctionalArg::ALU_LSR, "lsr");
-        emitAlu3Op(OP_ASR, FunctionalArg::ALU_ASR, "asr");
+        emitAlu3Op(isa::OP_ADD, FunctionalArg::ALU_ADD, "add");
+        emitAlu3Op(isa::OP_SUB, FunctionalArg::ALU_SUB, "sub");
+        emitAlu3Op(isa::OP_MUL, FunctionalArg::ALU_MUL, "mul");
+        emitAlu3Op(isa::OP_DIV, FunctionalArg::ALU_DIV, "div");
+        emitAlu3Op(isa::OP_MOD, FunctionalArg::ALU_MOD, "mod");
+        emitAlu3Op(isa::OP_AND, FunctionalArg::ALU_AND, "and");
+        emitAlu3Op(isa::OP_OR,  FunctionalArg::ALU_OR,  "or");
+        emitAlu3Op(isa::OP_LSL, FunctionalArg::ALU_LSL, "lsl");
+        emitAlu3Op(isa::OP_LSR, FunctionalArg::ALU_LSR, "lsr");
+        emitAlu3Op(isa::OP_ASR, FunctionalArg::ALU_ASR, "asr");
 
         // --- MOV (Opcode 9) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_MOV] = start;
+            opcodeDispatchTable[isa::OP_MOV] = start;
             // mbeq I, 1, .imm
             emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::I_BIT, 1, start + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
             // mmov regSrc, rs2, <read>
@@ -197,7 +197,7 @@ public:
         // --- NOT (Opcode 8) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_NOT] = start;
+            opcodeDispatchTable[isa::OP_NOT] = start;
             emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::I_BIT, 1, start + 4, FunctionalArg::NONE, "mbeq I, 1, .imm");
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS2, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs2, <read>");
             emit(MicroOp::MMOV, MicroReg::B, MicroReg::REG_VAL, 0, 0, FunctionalArg::ALU_NOT, "mmov B, regVal, <not>");
@@ -211,7 +211,7 @@ public:
         // --- CMP (Opcode 5) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_CMP] = start;
+            opcodeDispatchTable[isa::OP_CMP] = start;
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS1, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs1, <read>");
             emit(MicroOp::MMOV, MicroReg::A, MicroReg::REG_VAL, 0, 0, FunctionalArg::NONE, "mmov A, regVal");
             emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::I_BIT, 1, start + 6, FunctionalArg::NONE, "mbeq I, 1, .imm");
@@ -225,14 +225,14 @@ public:
         // --- NOP (Opcode 13) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_NOP] = start;
+            opcodeDispatchTable[isa::OP_NOP] = start;
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
         }
 
         // --- LD (Opcode 14) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_LD] = start;
+            opcodeDispatchTable[isa::OP_LD] = start;
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS1, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs1, <read>");
             emit(MicroOp::MMOV, MicroReg::A, MicroReg::REG_VAL, 0, 0, FunctionalArg::NONE, "mmov A, regVal");
             emit(MicroOp::MMOV, MicroReg::B, MicroReg::IMMX, 0, 0, FunctionalArg::ALU_ADD, "mmov B, immx, <add>");
@@ -245,7 +245,7 @@ public:
         // --- ST (Opcode 15) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_ST] = start;
+            opcodeDispatchTable[isa::OP_ST] = start;
             emit(MicroOp::MMOV, MicroReg::REG_SRC, MicroReg::RS1, 0, 0, FunctionalArg::REG_READ, "mmov regSrc, rs1, <read>");
             emit(MicroOp::MMOV, MicroReg::A, MicroReg::REG_VAL, 0, 0, FunctionalArg::NONE, "mmov A, regVal");
             emit(MicroOp::MMOV, MicroReg::B, MicroReg::IMMX, 0, 0, FunctionalArg::ALU_ADD, "mmov B, immx, <add>");
@@ -258,7 +258,7 @@ public:
         // --- B (Opcode 18) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_B] = start;
+            opcodeDispatchTable[isa::OP_B] = start;
             emit(MicroOp::MMOV, MicroReg::PC, MicroReg::BRANCH_TARGET, 0, 0, FunctionalArg::NONE, "mmov pc, branchTarget");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
         }
@@ -266,7 +266,7 @@ public:
         // --- BEQ (Opcode 16) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_BEQ] = start;
+            opcodeDispatchTable[isa::OP_BEQ] = start;
             emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::FLAGS_E, 1, start + 2, FunctionalArg::NONE, "mbeq flags.E, 1, .branch");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
             emit(MicroOp::MMOV, MicroReg::PC, MicroReg::BRANCH_TARGET, 0, 0, FunctionalArg::NONE, "mmov pc, branchTarget");
@@ -276,7 +276,7 @@ public:
         // --- BGT (Opcode 17) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_BGT] = start;
+            opcodeDispatchTable[isa::OP_BGT] = start;
             emit(MicroOp::MBEQ, MicroReg::NONE, MicroReg::FLAGS_GT, 1, start + 2, FunctionalArg::NONE, "mbeq flags.GT, 1, .branch");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
             emit(MicroOp::MMOV, MicroReg::PC, MicroReg::BRANCH_TARGET, 0, 0, FunctionalArg::NONE, "mmov pc, branchTarget");
@@ -286,7 +286,7 @@ public:
         // --- CALL (Opcode 19) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_CALL] = start;
+            opcodeDispatchTable[isa::OP_CALL] = start;
             emit(MicroOp::MMOV, MicroReg::REG_DATA, MicroReg::PC, 0, 0, FunctionalArg::NONE, "mmov regData, pc");
             emit(MicroOp::MMOVI, MicroReg::REG_SRC, MicroReg::NONE, 15, 0, FunctionalArg::REG_WRITE, "mmovi regSrc, 15, <write>");
             emit(MicroOp::MMOV, MicroReg::PC, MicroReg::BRANCH_TARGET, 0, 0, FunctionalArg::NONE, "mmov pc, branchTarget");
@@ -296,7 +296,7 @@ public:
         // --- RET (Opcode 20) ---
         {
             uint16_t start = static_cast<uint16_t>(controlStoreVertical.size());
-            opcodeDispatchTable[OP_RET] = start;
+            opcodeDispatchTable[isa::OP_RET] = start;
             emit(MicroOp::MMOVI, MicroReg::REG_SRC, MicroReg::NONE, 15, 0, FunctionalArg::REG_READ, "mmovi regSrc, 15, <read>");
             emit(MicroOp::MMOV, MicroReg::PC, MicroReg::REG_VAL, 0, 0, FunctionalArg::NONE, "mmov pc, regVal");
             emit(MicroOp::MB, MicroReg::NONE, MicroReg::NONE, 0, 0, FunctionalArg::NONE, "mb .begin");
@@ -393,7 +393,7 @@ public:
             nextUpc = hw.ubranchTarget;
         } else if (ufetchMux == 2) {
             // mswitch: jump to start of opcode routine
-            Opcode op = static_cast<Opcode>((ir >> 27) & 0x1F);
+            const std::string& op = isa::wordToOpcode(ir);
             auto it = opcodeDispatchTable.find(op);
             if (it != opcodeDispatchTable.end()) {
                 nextUpc = it->second;
