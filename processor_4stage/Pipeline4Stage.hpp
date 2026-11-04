@@ -167,6 +167,8 @@ public:
         Word branchPC = 0;
         bool isBranchMispredict = false;
         Word redirectPC = 0;
+        std::string fwdInfo = "";
+        std::string stallReasonLabel = "";
 
         // =========================================================================
         // STAGE 4: MA_RW (Memory Access and Register Writeback Merged)
@@ -226,6 +228,7 @@ public:
             if (forwardingEnabled && !l_EX_MARW.isBubble && l_EX_MARW.decoded.writesRegister()) {
                 RegId destPrev = l_EX_MARW.decoded.getDestReg();
                 if (d.readsRs1() && d.rs1 == destPrev) {
+                    fwdInfo = "r" + std::to_string(d.rs1) + " forwarded from EX_MARW -> EX_IN1";
                     // Forwarded value from previous instruction (ALU result or Load result)
                     if (l_EX_MARW.decoded.isLoad()) {
                         opA = memory.readWord(l_EX_MARW.aluResult, nullptr);
@@ -242,6 +245,8 @@ public:
             if (!l_OF_EX.isImmediate && forwardingEnabled && !l_EX_MARW.isBubble && l_EX_MARW.decoded.writesRegister()) {
                 RegId destPrev = l_EX_MARW.decoded.getDestReg();
                 if (d.readsRs2() && d.rs2 == destPrev) {
+                    if (!fwdInfo.empty()) fwdInfo += " | ";
+                    fwdInfo += "r" + std::to_string(d.rs2) + " forwarded from EX_MARW -> EX_IN2";
                     if (l_EX_MARW.decoded.isLoad()) {
                         opB = memory.readWord(l_EX_MARW.aluResult, nullptr);
                     } else if (l_EX_MARW.decoded.isCall()) {
@@ -256,6 +261,8 @@ public:
             Word storeData = l_OF_EX.op2;
             if (d.isStore() && forwardingEnabled && !l_EX_MARW.isBubble && l_EX_MARW.decoded.writesRegister()) {
                 if (d.rd == l_EX_MARW.decoded.getDestReg()) {
+                    if (!fwdInfo.empty()) fwdInfo += " | ";
+                    fwdInfo += "r" + std::to_string(d.rd) + " forwarded from EX_MARW -> STORE_DATA";
                     if (l_EX_MARW.decoded.isLoad()) {
                         storeData = memory.readWord(l_EX_MARW.aluResult, nullptr);
                     } else {
@@ -365,7 +372,8 @@ public:
                 stall_OF = true;
                 bubble_EX = true;
                 stallCycles++;
-                perfTracker.recordStall(loadUseHazard ? "RAW_LOAD_USE" : "RAW_NOFWD");
+                stallReasonLabel = loadUseHazard ? "RAW_LOAD_USE" : "RAW_NOFWD";
+                perfTracker.recordStall(stallReasonLabel);
             } else {
                 // Read register operands
                 Word op1 = regFile.readPort1(d.isRet() ? REG_RA : d.rs1);
@@ -408,12 +416,51 @@ public:
         // =========================================================================
         if (isBranchMispredict) {
             // Branch penalty / flush: Mispredicted branch in EX
-            // Younger instruction in IF_OF is flushed (1 cycle branch penalty for 4-stage)
+            // Younger instruction in OF is flushed (1 cycle branch penalty for 4-stage)
+            stallReasonLabel = "BRANCH_MISPREDICT";
             pc = redirectPC;
-            next_IF_OF.reset(); // Flush IF
+            next_OF_EX.reset(); // Flush wrong-path instruction in OF
             bubbleCycles += 1;
             perfTracker.recordBranchBubble(1);
             perfTracker.recordStall("BRANCH_MISPREDICT", 1);
+
+            Word instWord = 0;
+            if (useMemoryHierarchy) {
+                auto res = memHierarchy.readWord(pc, true, pc, cycles);
+                Word w = std::get<0>(res);
+                uint32_t lat = std::get<1>(res);
+                instWord = w;
+                if (lat > 1) {
+                    perfTracker.recordStall("ICACHE_MISS", lat - 1);
+                    stallCycles += (lat - 1);
+                    cycles += (lat - 1);
+                }
+            } else {
+                instWord = memory.readWord(pc, &currentException);
+                if (currentException.hasOccurred()) {
+                    currentException.faultingPC = pc;
+                    halted = true;
+                    return;
+                }
+            }
+
+            // Check dynamic branch predictor at fetch time
+            uint32_t predTgt = 0;
+            bool predTaken = branchPredictor.predictAtFetch(pc, predTgt);
+
+            next_IF_OF.pc = pc;
+            next_IF_OF.instruction = instWord;
+            next_IF_OF.isBubble = false;
+            next_IF_OF.disassembly = assembler::Disassembler::disassemble(instWord, pc);
+            next_IF_OF.instId = nextInstId++;
+            next_IF_OF.predictedTaken = predTaken;
+            next_IF_OF.predictedTarget = predTgt;
+
+            if (predTaken) {
+                pc = predTgt;
+            } else {
+                pc += 4;
+            }
         } else if (programSize > 0 && pc >= programSize) {
             next_IF_OF.reset(); // Program completed, drain pipeline with bubbles
         } else if (!stall_IF) {
@@ -469,12 +516,14 @@ public:
             ifStage.isBubble = next_IF_OF.isBubble;
             ifStage.isStalled = true;
             ifStage.instId = next_IF_OF.instId;
+            ifStage.stallReason = stallReasonLabel;
         } else {
             ifStage.instructionText = next_IF_OF.isBubble ? "" : next_IF_OF.disassembly;
             ifStage.pc = next_IF_OF.pc;
             ifStage.isBubble = next_IF_OF.isBubble;
             ifStage.isStalled = false;
             ifStage.instId = next_IF_OF.instId;
+            if (isBranchMispredict) ifStage.stallReason = "BRANCH_MISPREDICT";
         }
         snap.stages.push_back(ifStage);
 
@@ -486,6 +535,7 @@ public:
         ofStage.isBubble = l_IF_OF.isBubble;
         ofStage.isStalled = stall_OF;
         ofStage.instId = l_IF_OF.instId;
+        if (stall_OF) ofStage.stallReason = stallReasonLabel;
         snap.stages.push_back(ofStage);
 
         // Stage 3: EX
@@ -496,6 +546,11 @@ public:
         exStage.isBubble = l_OF_EX.isBubble;
         exStage.isStalled = bubble_EX;
         exStage.instId = l_OF_EX.instId;
+        if (bubble_EX) {
+            exStage.isBubble = true;
+            exStage.stallReason = stallReasonLabel;
+        }
+        exStage.forwardingInfo = fwdInfo;
         snap.stages.push_back(exStage);
 
         // Stage 4: MA_RW

@@ -90,7 +90,13 @@ public:
     }
 
     bool verifyInvariant(int tolerance = 5) const {
-        uint64_t accounted = retiredInstructions + getTotalStallCycles() + branchBubbles + pipelineFillCycles;
+        uint64_t stallsWithoutBranch = 0;
+        for (const auto& kv : stallBreakdown) {
+            if (kv.first != "BRANCH_MISPREDICT" && kv.first != "BRANCH_STALL") {
+                stallsWithoutBranch += kv.second;
+            }
+        }
+        uint64_t accounted = retiredInstructions + stallsWithoutBranch + branchBubbles + pipelineFillCycles;
         int64_t diff = static_cast<int64_t>(totalCycles) - static_cast<int64_t>(accounted);
         return std::abs(diff) <= tolerance;
     }

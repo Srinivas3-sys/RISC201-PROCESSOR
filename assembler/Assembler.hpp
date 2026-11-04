@@ -3,9 +3,11 @@
 
 #include "../common/Types.hpp"
 #include "MacroPreprocessor.hpp"
+#include "Disassembler.hpp"
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -113,7 +115,7 @@ private:
     }
 
 public:
-    bool assemble(const std::string& sourceCode) {
+    bool assemble(const std::string& sourceCode, bool enableScheduling = false) {
         symbolTable.clear();
         assembledLines.clear();
 
@@ -402,7 +404,125 @@ public:
             assembledLines.push_back(al);
         }
 
+        if (enableScheduling) {
+            scheduleBasicBlocks();
+        }
+
         return true;
+    }
+
+    void scheduleBasicBlocks() {
+        if (assembledLines.empty()) return;
+
+        // Collect all label target addresses
+        std::set<Word> labelAddresses;
+        for (const auto& kv : symbolTable) {
+            labelAddresses.insert(kv.second);
+        }
+
+        // Identify basic block boundaries [startIdx, endIdx)
+        std::vector<std::pair<size_t, size_t>> blocks;
+        size_t blockStart = 0;
+        for (size_t i = 0; i < assembledLines.size(); ++i) {
+            Word pc = assembledLines[i].address;
+            if (i > blockStart && labelAddresses.count(pc)) {
+                blocks.push_back({blockStart, i});
+                blockStart = i;
+            }
+
+            DecodedInst d = Disassembler::decode(assembledLines[i].machineCode, pc);
+            if (d.isBranch() || i == assembledLines.size() - 1) {
+                blocks.push_back({blockStart, i + 1});
+                blockStart = i + 1;
+            }
+        }
+
+        // For each basic block, find load-use hazards and attempt instruction scheduling
+        for (const auto& blk : blocks) {
+            size_t bStart = blk.first;
+            size_t bEnd = blk.second;
+            if (bEnd <= bStart + 2) continue; // Need at least 3 instructions to reorder
+
+            for (size_t i = bStart; i + 1 < bEnd; ++i) {
+                DecodedInst di = Disassembler::decode(assembledLines[i].machineCode, assembledLines[i].address);
+                if (!di.isLoad()) continue;
+
+                RegId loadDest = di.getDestReg();
+                DecodedInst dNext = Disassembler::decode(assembledLines[i + 1].machineCode, assembledLines[i + 1].address);
+
+                // Check for load-use RAW hazard
+                bool isLoadUse = false;
+                if (dNext.readsRs1() && dNext.rs1 == loadDest) isLoadUse = true;
+                if (dNext.readsRs2() && dNext.rs2 == loadDest) isLoadUse = true;
+                if (dNext.isStore() && dNext.rd == loadDest) isLoadUse = true;
+
+                if (!isLoadUse) continue;
+
+                // Look for an independent candidate instruction after i+1 in the same basic block
+                size_t candIdx = bEnd;
+                for (size_t j = i + 2; j < bEnd; ++j) {
+                    DecodedInst dj = Disassembler::decode(assembledLines[j].machineCode, assembledLines[j].address);
+                    // Do not move branches, nops, or CMP instructions
+                    if (dj.isBranch() || dj.opcode == OP_NOP || dj.opcode == OP_CMP) continue;
+                    // Do not move memory instructions (loads or stores) to preserve memory ordering
+                    if (dj.isLoad() || dj.isStore()) continue;
+
+                    // dj must not read or write loadDest
+                    if (dj.writesRegister() && dj.getDestReg() == loadDest) continue;
+                    if (dj.readsRs1() && dj.rs1 == loadDest) continue;
+                    if (dj.readsRs2() && dj.rs2 == loadDest) continue;
+
+                    // If load reads rs1, dj must not write load's rs1
+                    if (di.readsRs1() && dj.writesRegister() && dj.getDestReg() == di.rs1) continue;
+
+                    // Verify total independence between dj and every instruction k in [i+1, j-1]
+                    bool independent = true;
+                    for (size_t k = i + 1; k < j; ++k) {
+                        DecodedInst dk = Disassembler::decode(assembledLines[k].machineCode, assembledLines[k].address);
+                        // RAW: dj reads what dk writes
+                        if (dk.writesRegister() && ((dj.readsRs1() && dj.rs1 == dk.getDestReg()) ||
+                                                    (dj.readsRs2() && dj.rs2 == dk.getDestReg()))) {
+                            independent = false;
+                            break;
+                        }
+                        // WAR: dj writes what dk reads
+                        if (dj.writesRegister() && ((dk.readsRs1() && dk.rs1 == dj.getDestReg()) ||
+                                                    (dk.readsRs2() && dk.rs2 == dj.getDestReg()) ||
+                                                    (dk.isStore() && dk.rd == dj.getDestReg()))) {
+                            independent = false;
+                            break;
+                        }
+                        // WAW: dj writes what dk writes
+                        if (dj.writesRegister() && dk.writesRegister() && dj.getDestReg() == dk.getDestReg()) {
+                            independent = false;
+                            break;
+                        }
+                    }
+
+                    if (independent) {
+                        candIdx = j;
+                        break;
+                    }
+                }
+
+                if (candIdx < bEnd) {
+                    // Move instruction at candIdx to position i+1
+                    auto lineToMove = assembledLines[candIdx];
+                    assembledLines.erase(assembledLines.begin() + candIdx);
+                    assembledLines.insert(assembledLines.begin() + i + 1, lineToMove);
+                    // Skip over the newly inserted instruction
+                    i++;
+                }
+            }
+        }
+
+        // Reassign sequential addresses to all lines
+        for (size_t idx = 0; idx < assembledLines.size(); ++idx) {
+            Word newAddr = static_cast<Word>(idx * 4);
+            assembledLines[idx].address = newAddr;
+            assembledLines[idx].hexString = toHex(assembledLines[idx].machineCode);
+            assembledLines[idx].binaryString = std::bitset<32>(assembledLines[idx].machineCode).to_string();
+        }
     }
 
     std::vector<Word> getMachineWords() const {

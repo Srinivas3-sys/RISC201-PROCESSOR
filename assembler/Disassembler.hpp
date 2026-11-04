@@ -36,7 +36,7 @@ public:
             // Sign-extend 27-bit signed word offset
             if (offset27 & 0x04000000) offset27 |= 0xF8000000;
             d.branchOffset = offset27;
-            d.branchTarget = pc + (offset27 << 2);
+            d.branchTarget = pc + static_cast<Word>(offset27 * 4);
             return d;
         }
 
@@ -99,8 +99,8 @@ public:
                 else opName = "call";
 
                 oss << opName << " ";
-                if (d.branchOffset >= 0) oss << "+" << (d.branchOffset << 2);
-                else oss << (d.branchOffset << 2);
+                if (d.branchOffset >= 0) oss << "+" << (d.branchOffset * 4);
+                else oss << (d.branchOffset * 4);
                 oss << " [target: " << toHex(d.branchTarget) << "]";
                 return oss.str();
             }

@@ -51,15 +51,17 @@ public:
     SimMode currentSimMode{SimMode::MICROCODED};
     std::set<Word> breakpoints;
     std::string loadedProgramSource;
+    bool enableScheduling{false};
     assembler::Assembler asmEngine;
 
 public:
     Debugger()
         : p4(1024 * 1024), p6(1024 * 1024), mcu(&p4.regFile, &p4.memory, &p4.aluUnit) {}
 
-    bool loadAssemblyString(const std::string& source) {
+    bool loadAssemblyString(const std::string& source, bool schedule = false) {
         loadedProgramSource = source;
-        bool ok = asmEngine.assemble(source);
+        if (schedule) enableScheduling = true;
+        bool ok = asmEngine.assemble(source, enableScheduling);
         if (!ok) {
             std::cerr << "Assembly failed!\n";
             return false;
@@ -171,6 +173,16 @@ public:
         }
         std::cout << "Execution stopped after " << stepCount << " cycles.\n";
         showRegisters();
+    }
+
+    uint64_t getCycles() const {
+        return (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.cycles : p4.cycles;
+    }
+    uint64_t getRetiredInstructions() const {
+        return (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.retiredInstructions : p4.retiredInstructions;
+    }
+    bool isHalted() const {
+        return (currentSimMode == SimMode::PIPELINE_6STAGE) ? (p6.halted || p6.isDrained()) : (p4.halted || p4.isDrained());
     }
 
     void showRegisters() const {
@@ -308,6 +320,148 @@ public:
         }
     }
 
+    void showCPIStack(bool steadyState = false) const {
+        if (currentSimMode == SimMode::PIPELINE_6STAGE) {
+            std::cout << visualizer::MemoryVisualizer::renderCPIStack(p6.perfTracker, steadyState);
+        } else {
+            std::cout << visualizer::MemoryVisualizer::renderCPIStack(p4.perfTracker, steadyState);
+        }
+    }
+
+    void showMemorySummary() const {
+        if (currentSimMode == SimMode::PIPELINE_6STAGE) {
+            std::cout << visualizer::MemoryVisualizer::renderMemorySummary(p6.memHierarchy);
+        } else {
+            std::cout << visualizer::MemoryVisualizer::renderMemorySummary(p4.memHierarchy);
+        }
+    }
+
+    void showCompare() {
+        if (loadedProgramSource.empty()) {
+            std::cout << "No program loaded to compare. Load a program or assembly first.\n";
+            return;
+        }
+
+        auto words = asmEngine.getMachineWords();
+        Word progSize = static_cast<Word>(words.size() * 4);
+
+        // Run 4-stage pipeline
+        stage4::Pipeline4Stage testP4(1024 * 1024);
+        testP4.setMemPreset("ideal");
+        testP4.setForwarding(true);
+        testP4.setProgramSize(progSize);
+        testP4.memory.loadProgram(0, words);
+        testP4.run(500000);
+
+        // Run 6-stage pipeline
+        stage6::Pipeline6Stage testP6(1024 * 1024);
+        testP6.setMemPreset("ideal");
+        testP6.setForwarding(true);
+        testP6.setProgramSize(progSize);
+        testP6.memory.loadProgram(0, words);
+        testP6.run(500000);
+
+        double p4ClockGhz = 0.5; // 500 MHz
+        double p6ClockGhz = 0.8; // 800 MHz
+        double p4TimeUs = (testP4.cycles / (p4ClockGhz * 1000.0));
+        double p6TimeUs = (testP6.cycles / (p6ClockGhz * 1000.0));
+        double speedup = (p6TimeUs > 0) ? (p4TimeUs / p6TimeUs) : 1.0;
+
+        std::cout << "\n========================================================================\n"
+                  << "             4-STAGE VS 6-STAGE PIPELINE COMPARISON VIEW                \n"
+                  << "========================================================================\n"
+                  << std::left << std::setw(30) << "Metric" 
+                  << std::setw(24) << "4-Stage Pipeline" 
+                  << "6-Stage Pipeline\n"
+                  << "------------------------------------------------------------------------\n"
+                  << std::left << std::setw(30) << "Stage Partitioning" 
+                  << std::setw(24) << "IF-OF-EX-MA/RW" 
+                  << "IF-ID-RF-EX-MA-RW\n"
+                  << std::left << std::setw(30) << "Clock Frequency" 
+                  << std::setw(24) << "500 MHz (2.0 ns)" 
+                  << "800 MHz (1.25 ns)\n"
+                  << std::left << std::setw(30) << "Retired Instructions" 
+                  << std::setw(24) << testP4.retiredInstructions 
+                  << testP6.retiredInstructions << "\n"
+                  << std::left << std::setw(30) << "Total Clock Cycles" 
+                  << std::setw(24) << testP4.cycles 
+                  << testP6.cycles << "\n"
+                  << std::left << std::setw(30) << "Cycles Per Inst (CPI)" 
+                  << std::setw(24) << std::fixed << std::setprecision(3) << testP4.perfTracker.getCPI() 
+                  << std::fixed << std::setprecision(3) << testP6.perfTracker.getCPI() << "\n"
+                  << std::left << std::setw(30) << "Inst Per Cycle (IPC)" 
+                  << std::setw(24) << std::fixed << std::setprecision(3) << testP4.perfTracker.getIPC() 
+                  << std::fixed << std::setprecision(3) << testP6.perfTracker.getIPC() << "\n"
+                  << std::left << std::setw(30) << "RAW Stall Cycles" 
+                  << std::setw(24) << testP4.stallCycles 
+                  << testP6.stallCycles << "\n"
+                  << std::left << std::setw(30) << "Branch Flushes / Bubbles" 
+                  << std::setw(24) << testP4.bubbleCycles 
+                  << testP6.bubbleCycles << "\n"
+                  << std::left << std::setw(30) << "Wall-Clock Time" 
+                  << std::setw(24) << (std::to_string(p4TimeUs).substr(0, 6) + " us") 
+                  << (std::to_string(p6TimeUs).substr(0, 6) + " us") << "\n"
+                  << "------------------------------------------------------------------------\n"
+                  << "Speedup (6-Stage vs 4-Stage) : " << std::fixed << std::setprecision(2) << speedup << "x "
+                  << (speedup >= 1.0 ? "(6-Stage is faster due to higher clock frequency)" : "(4-Stage is faster on this code)") << "\n"
+                  << "========================================================================\n\n";
+    }
+
+    void explainStall(uint64_t targetCycle = 0) const {
+        const auto& history = (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.cycleHistory : p4.cycleHistory;
+        if (history.empty()) {
+            std::cout << "No pipeline execution history available. Run the program (e.g. 'r') first.\n";
+            return;
+        }
+
+        if (targetCycle == 0 || targetCycle > history.size()) {
+            targetCycle = history.size();
+        }
+
+        const auto& snap = history[targetCycle - 1];
+        std::cout << "\n========================================================================\n"
+                  << "                STALL & HAZARD EXPLANATION FOR CYCLE " << std::setw(5) << targetCycle << "          \n"
+                  << "========================================================================\n";
+
+        bool foundEvent = false;
+        for (const auto& st : snap.stages) {
+            if (st.isStalled) {
+                foundEvent = true;
+                std::cout << "[STALL IN STAGE " << st.stageName << "]:\n"
+                          << "  Instruction  : " << st.instructionText << " (PC: " << toHex(st.pc) << ")\n"
+                          << "  Hazard Reason: " << (st.stallReason.empty() ? "Interlock Stall" : st.stallReason) << "\n";
+                if (st.stallReason == "RAW_LOAD_USE") {
+                    std::cout << "  Root Cause   : An instruction requires data from a preceding load instruction\n"
+                              << "                 that is currently accessing memory. A 1-cycle bubble was injected.\n";
+                } else if (st.stallReason == "RAW_NOFWD") {
+                    std::cout << "  Root Cause   : Data forwarding is disabled. Pipeline interlock stalled until\n"
+                              << "                 the producing instruction cleared the execution stage.\n";
+                } else {
+                    std::cout << "  Root Cause   : Stage could not advance due to structural or data hazards.\n";
+                }
+            } else if (st.isBubble && !st.stallReason.empty()) {
+                foundEvent = true;
+                std::cout << "[BUBBLE INSERTED IN " << st.stageName << "]:\n"
+                          << "  Bubble Reason: " << st.stallReason << "\n";
+                if (st.stallReason == "BRANCH_MISPREDICT") {
+                    std::cout << "  Root Cause   : Dynamic branch predictor mispredicted branch direction/target.\n"
+                              << "                 Wrong-path instructions flushed and target refetched.\n";
+                } else if (st.stallReason == "RAW_LOAD_USE") {
+                    std::cout << "  Root Cause   : Bubble inserted to delay consumer instruction by 1 cycle.\n";
+                }
+            }
+            if (!st.forwardingInfo.empty()) {
+                std::cout << "  Forwarding   : " << st.forwardingInfo << "\n";
+            }
+        }
+
+        if (!foundEvent) {
+            std::cout << "No stalls or hazard bubbles occurred in cycle " << targetCycle << ".\n"
+                      << "All active pipeline stages advanced smoothly without latency penalty.\n";
+        }
+        std::cout << "========================================================================\n";
+    }
+
     void showHazards() const {
         const auto& hz = (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.hazardUnit : p4.hazardUnit;
         std::cout << "=== Hazard Unit Telemetry ===\n"
@@ -407,6 +561,10 @@ public:
                   << "  hazards                 : Display hazard detection telemetry\n"
                   << "  fwd                     : Display data forwarding bypass telemetry\n"
                   << "  cpi                     : Display ASCII CPI stack breakdown chart\n"
+                  << "  cpistack [steady|cold]  : Render CPI stack with steady-state vs cold-start breakdown\n"
+                  << "  compare                 : Compare 4-Stage vs 6-Stage CPI and wall-clock execution time\n"
+                  << "  explain [cycle]         : Explain stall cause, hazard type, and bubble counts for a cycle\n"
+                  << "  mem, memory             : Render cache/TLB summary, MSHR occupancy, and memory access trace\n"
                   << "  cache                   : Render cache sets/ways visualizer\n"
                   << "  dram                    : Render DRAM banks and row buffer status\n"
                   << "  tlb                     : Render TLB translation entries\n"
@@ -480,6 +638,19 @@ public:
                 showForwarding();
             } else if (cmd == "cpi") {
                 showCPI();
+            } else if (cmd == "cpistack") {
+                std::string mode;
+                ss >> mode;
+                bool steady = (mode == "steady" || mode == "warm" || mode == "steady-state");
+                showCPIStack(steady);
+            } else if (cmd == "compare") {
+                showCompare();
+            } else if (cmd == "explain") {
+                uint64_t targetCycle = 0;
+                ss >> targetCycle;
+                explainStall(targetCycle);
+            } else if (cmd == "mem" || cmd == "memory") {
+                showMemorySummary();
             } else if (cmd == "cache") {
                 showCache();
             } else if (cmd == "dram") {

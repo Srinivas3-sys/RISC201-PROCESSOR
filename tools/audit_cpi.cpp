@@ -25,14 +25,7 @@ std::string readFile(const std::string& path) {
     return buffer.str();
 }
 
-int main(int argc, char* argv[]) {
-    bool warmUp = false;
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if (arg == "--warmup" || arg == "-w") {
-            warmUp = true;
-        }
-    }
+int main(int, char**) {
 
     std::vector<std::string> benchmarks = {
         "factorial_iter",
@@ -40,7 +33,13 @@ int main(int argc, char* argv[]) {
         "prime_test",
         "array_sum",
         "hazard_test",
-        "stack_test"
+        "stack_test",
+        "factorial_iter_long",
+        "factorial_rec_long",
+        "prime_test_long",
+        "array_sum_long",
+        "hazard_test_long",
+        "stack_test_long"
     };
 
     std::vector<std::string> presets = {"ideal", "simple", "modern", "modern-ddr5"};
@@ -48,7 +47,7 @@ int main(int argc, char* argv[]) {
 
     std::ofstream csv("experiments/pipeline/audit_results.csv");
     if (csv.is_open()) {
-        csv << "Benchmark,Pipeline,Preset,Forwarding,IC,Cycles,CPI,BaseCycles,RAW_NOFWD,RAW_LOAD_USE,BRANCH_MISPREDICT,BRANCH_STALL,ICACHE_MISS,DCACHE_MISS,TLB_MISS,PAGE_WALK,PAGE_FAULT,Exception\n";
+        csv << "Benchmark,Pipeline,Preset,Forwarding,IC,Cycles,CPI_Cold,CPI_Steady,BaseCycles,RAW_NOFWD,RAW_LOAD_USE,BRANCH_MISPREDICT,BRANCH_STALL,ICACHE_MISS,DCACHE_MISS,TLB_MISS,PAGE_WALK,PAGE_FAULT,Exception\n";
     }
 
     std::ofstream jsonFile("experiments/pipeline/audit_results.json");
@@ -60,8 +59,8 @@ int main(int argc, char* argv[]) {
               << "             RISC201 REPEATABLE CPI AUDIT BENCHMARK MATRIX              \n"
               << "========================================================================\n\n";
 
-    std::cout << "| Benchmark | Pipeline | Preset | Fwd | IC | Cycles | CPI | I-Miss | D-Miss | BranchBubbles | RAW |\n"
-              << "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n";
+    std::cout << "| Benchmark | Pipeline | Preset | Fwd | IC | Cycles | CPI(Cold) | CPI(Steady) | I-Miss | D-Miss | BranchBubbles | RAW |\n"
+              << "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n";
 
     bool firstJson = true;
 
@@ -78,7 +77,7 @@ int main(int argc, char* argv[]) {
             for (const auto& preset : presets) {
                 for (const auto& fwd : fwdModes) {
                     uint64_t ic = 0, cyc = 0;
-                    double cpi = 0;
+                    double cpiCold = 0, cpiSteady = 0;
                     std::string exStr = "NONE";
                     PerformanceTracker perf(pipe);
 
@@ -87,21 +86,27 @@ int main(int argc, char* argv[]) {
                         p4.setMemPreset(preset);
                         p4.setForwardingMode(fwd);
                         p4.loadProgram(0, words);
-                        if (warmUp) {
-                            // Warmup run: populate cache & TLB
-                            p4.run(1000);
-                            p4.perfTracker.reset();
-                            p4.cycles = 0;
-                            p4.retiredInstructions = 0;
-                            p4.bubbleCycles = 0;
-                            p4.stallCycles = 0;
-                            p4.pc = 0;
-                            p4.halted = false;
+
+                        uint64_t warmCycles = 0, warmRetired = 0;
+                        while (!p4.isDrained() && !p4.halted && p4.retiredInstructions < 1000 && p4.cycles < 50000) {
+                            p4.stepCycle();
                         }
-                        p4.run(500000);
+                        warmCycles = p4.cycles;
+                        warmRetired = p4.retiredInstructions;
+
+                        p4.run(1000000);
                         ic = p4.retiredInstructions;
                         cyc = p4.cycles;
-                        cpi = (ic > 0) ? (static_cast<double>(cyc) / ic) : 0;
+                        cpiCold = (ic > 0) ? (static_cast<double>(cyc) / ic) : 0;
+                        if (ic > warmRetired && warmRetired >= 500) {
+                            uint64_t steadyCyc = cyc - warmCycles;
+                            uint64_t steadyInst = ic - warmRetired;
+                            cpiSteady = (steadyInst > 0) ? (static_cast<double>(steadyCyc) / steadyInst) : cpiCold;
+                        } else {
+                            uint64_t coldPenalty = p4.perfTracker.stallBreakdown["ICACHE_MISS"] + p4.perfTracker.stallBreakdown["PAGE_FAULT"];
+                            uint64_t steadyCyc = (cyc > coldPenalty) ? (cyc - coldPenalty) : cyc;
+                            cpiSteady = (ic > 0) ? (static_cast<double>(steadyCyc) / ic) : cpiCold;
+                        }
                         perf = p4.perfTracker;
                         if (p4.currentException.hasOccurred()) {
                             exStr = exceptionToString(p4.currentException.type);
@@ -111,20 +116,27 @@ int main(int argc, char* argv[]) {
                         p6.setMemPreset(preset);
                         p6.setForwardingMode(fwd);
                         p6.loadProgram(0, words);
-                        if (warmUp) {
-                            p6.run(1000);
-                            p6.perfTracker.reset();
-                            p6.cycles = 0;
-                            p6.retiredInstructions = 0;
-                            p6.bubbleCycles = 0;
-                            p6.stallCycles = 0;
-                            p6.pc = 0;
-                            p6.halted = false;
+
+                        uint64_t warmCycles = 0, warmRetired = 0;
+                        while (!p6.isDrained() && !p6.halted && p6.retiredInstructions < 1000 && p6.cycles < 50000) {
+                            p6.stepCycle();
                         }
-                        p6.run(500000);
+                        warmCycles = p6.cycles;
+                        warmRetired = p6.retiredInstructions;
+
+                        p6.run(1000000);
                         ic = p6.retiredInstructions;
                         cyc = p6.cycles;
-                        cpi = (ic > 0) ? (static_cast<double>(cyc) / ic) : 0;
+                        cpiCold = (ic > 0) ? (static_cast<double>(cyc) / ic) : 0;
+                        if (ic > warmRetired && warmRetired >= 500) {
+                            uint64_t steadyCyc = cyc - warmCycles;
+                            uint64_t steadyInst = ic - warmRetired;
+                            cpiSteady = (steadyInst > 0) ? (static_cast<double>(steadyCyc) / steadyInst) : cpiCold;
+                        } else {
+                            uint64_t coldPenalty = p6.perfTracker.stallBreakdown["ICACHE_MISS"] + p6.perfTracker.stallBreakdown["PAGE_FAULT"];
+                            uint64_t steadyCyc = (cyc > coldPenalty) ? (cyc - coldPenalty) : cyc;
+                            cpiSteady = (ic > 0) ? (static_cast<double>(steadyCyc) / ic) : cpiCold;
+                        }
                         perf = p6.perfTracker;
                         if (p6.currentException.hasOccurred()) {
                             exStr = exceptionToString(p6.currentException.type);
@@ -138,7 +150,8 @@ int main(int argc, char* argv[]) {
                             << fwd << ","
                             << ic << ","
                             << cyc << ","
-                            << std::fixed << std::setprecision(3) << cpi << ","
+                            << std::fixed << std::setprecision(3) << cpiCold << ","
+                            << std::fixed << std::setprecision(3) << cpiSteady << ","
                             << ic << ","
                             << perf.stallBreakdown["RAW_NOFWD"] << ","
                             << perf.stallBreakdown["RAW_LOAD_USE"] << ","
@@ -162,7 +175,8 @@ int main(int argc, char* argv[]) {
                                  << "    \"forwarding\": \"" << fwd << "\",\n"
                                  << "    \"instruction_count\": " << ic << ",\n"
                                  << "    \"cycles\": " << cyc << ",\n"
-                                 << "    \"cpi\": " << std::fixed << std::setprecision(3) << cpi << ",\n"
+                                 << "    \"cpi_cold\": " << std::fixed << std::setprecision(3) << cpiCold << ",\n"
+                                 << "    \"cpi_steady\": " << std::fixed << std::setprecision(3) << cpiSteady << ",\n"
                                  << "    \"branch_bubbles\": " << perf.branchBubbles << ",\n"
                                  << "    \"stalls\": {\n"
                                  << "      \"RAW_NOFWD\": " << perf.stallBreakdown["RAW_NOFWD"] << ",\n"
@@ -180,13 +194,14 @@ int main(int argc, char* argv[]) {
                     }
 
                     if (fwd == "full" && (preset == "ideal" || preset == "modern")) {
-                        std::cout << "| " << std::setw(15) << std::left << bm
+                        std::cout << "| " << std::setw(20) << std::left << bm
                                   << " | " << pipe << "-Stage"
                                   << " | " << std::setw(6) << preset
                                   << " | " << std::setw(4) << fwd
-                                  << " | " << std::setw(5) << std::right << ic
-                                  << " | " << std::setw(6) << cyc
-                                  << " | " << std::setw(6) << std::fixed << std::setprecision(3) << cpi
+                                  << " | " << std::setw(7) << std::right << ic
+                                  << " | " << std::setw(7) << cyc
+                                  << " | " << std::setw(9) << std::fixed << std::setprecision(3) << cpiCold
+                                  << " | " << std::setw(11) << std::fixed << std::setprecision(3) << cpiSteady
                                   << " | " << std::setw(6) << perf.stallBreakdown["ICACHE_MISS"]
                                   << " | " << std::setw(6) << perf.stallBreakdown["DCACHE_MISS"]
                                   << " | " << std::setw(13) << perf.branchBubbles

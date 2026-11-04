@@ -25,6 +25,12 @@ void printUsage() {
               << "  --isa-table                 Display complete SimpleRisc ISA table and exit\n"
               << "  --export-csv <file>         Export execution metrics to CSV file\n"
               << "  --cycles <n>                Maximum simulation cycles (default: 100000)\n"
+              << "  --schedule                  Enable basic-block instruction scheduling pass to fill load-use gaps\n"
+              << "  --no-mshr                   Disable MSHR non-blocking cache hit merging\n"
+              << "  --no-store-buffer           Disable store buffer non-blocking stores\n"
+              << "  --no-prefetch               Disable next-line/stream prefetcher\n"
+              << "  --prefetch <type>           Set prefetcher: none, next_line, stride, stream\n"
+              << "  --warmup <n>                Warm-up instructions before steady-state performance measurement\n"
               << "  -i, --interactive           Launch interactive REPL debugger after loading\n"
               << "  -h, --help                  Show this help message\n";
 }
@@ -45,6 +51,12 @@ int main(int argc, char* argv[]) {
     bool interactive = (argc == 1);
     std::string exportCsv = "";
     uint64_t maxCycles = 100000;
+    bool enableScheduling = false;
+    bool disableMshr = false;
+    bool disableStoreBuffer = false;
+    bool disablePrefetch = false;
+    std::string prefetchType = "";
+    uint64_t warmupInsts = 0;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -76,6 +88,18 @@ int main(int argc, char* argv[]) {
             showCpiBreakdown = true;
         } else if (arg == "--check-forwarding") {
             checkForwarding = true;
+        } else if (arg == "--schedule") {
+            enableScheduling = true;
+        } else if (arg == "--no-mshr") {
+            disableMshr = true;
+        } else if (arg == "--no-store-buffer") {
+            disableStoreBuffer = true;
+        } else if (arg == "--no-prefetch") {
+            disablePrefetch = true;
+        } else if (arg == "--prefetch" && i + 1 < argc) {
+            prefetchType = argv[++i];
+        } else if (arg == "--warmup" && i + 1 < argc) {
+            warmupInsts = std::stoull(argv[++i]);
         } else if (arg == "-i" || arg == "--interactive") {
             interactive = true;
         } else if (arg == "--export-csv" && i + 1 < argc) {
@@ -179,19 +203,44 @@ int main(int argc, char* argv[]) {
     }
 
     // Configure pipeline depth and memory presets before loading program
+    auto applyMemFlags = [&](memory::MemoryHierarchy& mh) {
+        if (disableMshr) {
+            mh.l1i.cfg.mshrEntries = 0;
+            mh.l1d.cfg.mshrEntries = 0;
+            mh.cfg.l1i.mshrEntries = 0;
+            mh.cfg.l1d.mshrEntries = 0;
+        }
+        if (disableStoreBuffer) {
+            mh.l1d.cfg.writeBufferEntries = 0;
+            mh.cfg.l1d.writeBufferEntries = 0;
+        }
+        if (disablePrefetch) {
+            mh.prefetcher.cfg.enabled = false;
+            mh.cfg.prefetcher.enabled = false;
+        }
+        if (!prefetchType.empty()) {
+            mh.prefetcher.cfg.prefetcherType = prefetchType;
+            mh.prefetcher.cfg.enabled = (prefetchType != "none");
+            mh.cfg.prefetcher.prefetcherType = prefetchType;
+            mh.cfg.prefetcher.enabled = (prefetchType != "none");
+        }
+    };
+
     if (pipelineDepth == 6) {
         dbg.setSimMode(debugger::SimMode::PIPELINE_6STAGE);
         dbg.p6.setMemPreset(memPreset);
+        applyMemFlags(dbg.p6.memHierarchy);
         dbg.p6.setForwardingMode(forwardingMode);
         dbg.p6.setBranchPolicy(branchPolicy);
     } else {
         dbg.setSimMode(debugger::SimMode::PIPELINE_4STAGE);
         dbg.p4.setMemPreset(memPreset);
+        applyMemFlags(dbg.p4.memHierarchy);
         dbg.p4.setForwardingMode(forwardingMode);
         dbg.p4.setBranchPolicy(branchPolicy);
     }
 
-    if (!dbg.loadAssemblyString(programToLoad)) {
+    if (!dbg.loadAssemblyString(programToLoad, enableScheduling)) {
         return 1;
     }
 
@@ -212,7 +261,30 @@ int main(int argc, char* argv[]) {
     if (interactive) {
         dbg.repl();
     } else {
-        dbg.run(maxCycles);
+        if (warmupInsts > 0) {
+            uint64_t warmCycles = 0;
+            uint64_t warmRetired = 0;
+            while (!dbg.isHalted() && dbg.getRetiredInstructions() < warmupInsts && dbg.getCycles() < maxCycles) {
+                if (pipelineDepth == 6) dbg.p6.stepCycle();
+                else dbg.p4.stepCycle();
+            }
+            warmCycles = dbg.getCycles();
+            warmRetired = dbg.getRetiredInstructions();
+            dbg.run(maxCycles);
+            uint64_t totalCycles = dbg.getCycles();
+            uint64_t totalRetired = dbg.getRetiredInstructions();
+            uint64_t steadyCycles = totalCycles > warmCycles ? totalCycles - warmCycles : 0;
+            uint64_t steadyRetired = totalRetired > warmRetired ? totalRetired - warmRetired : 0;
+            double steadyCpi = steadyRetired > 0 ? (double)steadyCycles / steadyRetired : 0.0;
+            double coldCpi = totalRetired > 0 ? (double)totalCycles / totalRetired : 0.0;
+            std::cout << "\n=== Warm-up & Steady-State Measurement ===\n"
+                      << "Warm-up Retired Insts : " << warmRetired << " (took " << warmCycles << " cycles)\n"
+                      << "Steady Retired Insts  : " << steadyRetired << " (took " << steadyCycles << " cycles)\n"
+                      << "Cold-Start CPI        : " << std::fixed << std::setprecision(3) << coldCpi << "\n"
+                      << "Steady-State CPI      : " << std::fixed << std::setprecision(3) << steadyCpi << "\n\n";
+        } else {
+            dbg.run(maxCycles);
+        }
 
         if (showTrace) {
             dbg.showTrace();

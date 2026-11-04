@@ -8,6 +8,9 @@ risc201_test
 exp_memory
 exp_pipeline
 audit_cpi
+generate_perf_docs
+lint_docs
+risc201_test_asan
 
 # Generated output files
 benchmarks/*.hex

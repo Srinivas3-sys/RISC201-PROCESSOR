@@ -133,9 +133,9 @@ Configurations can be passed via command line flags or selected via `--mem-prese
 | Preset | CPU Freq | VM / TLB | L1 Caches | L2 Cache | L3 Cache | DRAM Subsystem | Prefetcher |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **`ideal`** | 3.2 GHz | Disabled (1-cyc) | None | None | None | Instant (1 cycle) | None |
-| **`simple`** | 3.2 GHz | Disabled (Direct PA) | 32 KB, 8-way, 4-cyc | None | None | DDR4-3200 (1 channel) | None |
-| **`modern`** | 3.2 GHz | 48b Radix-4, L1/L2 TLB, PWC | 32 KB I/D, 8-way, 4-cyc | 512 KB, 8-way, 12-cyc | 8 MB, 16-way, 38-cyc | DDR4-3200 (1 channel) | Stream |
-| **`modern-ddr5`**| 3.6 GHz | 48b Radix-4, L1/L2 TLB, PWC | 32 KB I/D, 8-way, 4-cyc | 1 MB, 8-way, 12-cyc | 16 MB, 16-way, 36-cyc | DDR5-4800 (2 subchan) | Stream |
+| **`simple`** | 3.2 GHz | Disabled (Direct PA) | 32 KB, 8-way, 1-cyc | None | None | DDR4-3200 (1 channel) | None |
+| **`modern`** | 3.2 GHz | 48b Radix-4, L1/L2 TLB, PWC | 32 KB I/D, 8-way, 1-cyc | 512 KB, 8-way, 12-cyc | 8 MB, 16-way, 38-cyc | DDR4-3200 (1 channel) | Stream |
+| **`modern-ddr5`**| 3.6 GHz | 48b Radix-4, L1/L2 TLB, PWC | 32 KB I/D, 8-way, 1-cyc | 1 MB, 8-way, 12-cyc | 16 MB, 16-way, 36-cyc | DDR5-4800 (2 subchan) | Stream |
 | **`lecture`** | 3.2 GHz | 32b 2-Level | 64 B direct (2/3/3 split)| None | None | SDR SDRAM (133 MHz) | None |
 
 ---
@@ -161,10 +161,14 @@ make all
 When launched with `-i` (or `--interactive`), the simulator provides an architectural debugging console:
 - `step [N]` / `s [N]`: Advance pipeline by $N$ clock cycles.
 - `run` / `r`: Run to program completion.
-- `pipe`: Display current pipeline stages and latched instructions.
+- `pipe`: Display current pipeline stages and latched instructions with labeled stall causes and forwarding arrows.
 - `hazards`: Show active pipeline hazards, stalls, and bubble injections.
 - `fwd`: Inspect active data forwarding paths and operand bypasses.
 - `cpi`: Print cycle count, instruction count, and CPI stack breakdown.
+- `cpistack [steady|cold]`: Render ASCII bar chart visualization of the CPI stack.
+- `compare`: Side-by-side comparison between 4-stage and 6-stage pipeline execution times and speedups.
+- `explain [cycle]`: Explain root cause, hazard type, and cycle penalty for active stalls.
+- `mem` / `memory`: Live monitor of cache hit rates, TLB hit rates, MSHR depth, and store buffer.
 - `cache`: Display ASCII set-way grid and line status for L1I, L1D, L2, and L3.
 - `dram`: Display DRAM channel, bank group, and bank buffer states.
 - `tlb`: View ITLB, DTLB, and STLB cached virtual-to-physical translations.
@@ -181,8 +185,20 @@ The entire repository is built with **100% pure modern C++17** (`g++ -std=c++17 
 # Compile all binaries (simulator, assembler, disassembler, test suite, evaluation)
 make all
 
-# Run comprehensive verification test suite (44/44 unit & differential tests)
+# Run comprehensive verification test suite (63/63 unit, differential, and CPI micro-kernel tests)
 make test
+
+# Run test suite under AddressSanitizer and UndefinedBehaviorSanitizer
+make test-asan
+
+# Run repeatable CPI audit matrix across all 12 benchmarks, pipelines, presets
+make audit-cpi
+
+# Regenerate docs/PERFORMANCE.md exclusively from actual simulation runs
+make perf-docs
+
+# Lint LaTeX math syntax across all documentation
+make lint-docs
 
 # Run comparison evaluation across 30 architectural configurations
 ./risc201_eval

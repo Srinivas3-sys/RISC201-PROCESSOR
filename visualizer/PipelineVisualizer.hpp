@@ -19,6 +19,8 @@ struct PipelineStageInfo {
     bool isBubble{false};
     bool isStalled{false};
     uint64_t instId{0};
+    std::string stallReason{""};
+    std::string forwardingInfo{""};
 };
 
 struct CycleSnapshot {
@@ -47,13 +49,24 @@ public:
         for (const auto& st : stages) {
             oss << "  [" << std::setw(6) << std::left << st.stageName << "] : ";
             if (st.isBubble) {
-                oss << "-- BUBBLE / NOP --";
+                if (!st.stallReason.empty()) {
+                    oss << "[BUBBLE: " << st.stallReason << "]";
+                } else {
+                    oss << "-- BUBBLE / NOP --";
+                }
             } else if (st.isStalled) {
-                oss << "[STALLED] " << st.instructionText << " (PC: " << toHex(st.pc) << ")";
+                if (!st.stallReason.empty()) {
+                    oss << "[STALL: " << st.stallReason << "] " << st.instructionText << " (PC: " << toHex(st.pc) << ")";
+                } else {
+                    oss << "[STALLED] " << st.instructionText << " (PC: " << toHex(st.pc) << ")";
+                }
             } else if (!st.instructionText.empty()) {
                 oss << st.instructionText << " (PC: " << toHex(st.pc) << ")";
             } else {
                 oss << "(empty)";
+            }
+            if (!st.forwardingInfo.empty()) {
+                oss << "\n             ↳ " << st.forwardingInfo;
             }
             oss << "\n";
         }
@@ -95,7 +108,9 @@ public:
                     if (s < snap.stages.size()) {
                         const auto& st = snap.stages[s];
                         if (st.isStalled) {
-                            cell = "[STALL] " + st.instructionText;
+                            cell = st.stallReason.empty() ? ("[STALL] " + st.instructionText) : ("[STALL:" + st.stallReason + "]");
+                        } else if (st.isBubble && !st.stallReason.empty()) {
+                            cell = "[" + st.stallReason + "]";
                         } else if (!st.isBubble && !st.instructionText.empty()) {
                             cell = st.instructionText;
                         }
@@ -117,7 +132,9 @@ public:
                     if (s < snap.stages.size()) {
                         const auto& st = snap.stages[s];
                         if (st.isStalled) {
-                            cell = "[STALL] " + st.instructionText;
+                            cell = st.stallReason.empty() ? ("[STALL] " + st.instructionText) : ("[STALL:" + st.stallReason + "]");
+                        } else if (st.isBubble && !st.stallReason.empty()) {
+                            cell = "[" + st.stallReason + "]";
                         } else if (!st.isBubble && !st.instructionText.empty()) {
                             cell = st.instructionText;
                         }

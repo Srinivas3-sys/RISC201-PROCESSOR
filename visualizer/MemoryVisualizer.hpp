@@ -139,18 +139,26 @@ public:
         return oss.str();
     }
 
-    static std::string renderCPIStack(const PerformanceTracker& perf) {
+    static std::string renderCPIStack(const PerformanceTracker& perf, bool steadyState = false, uint64_t warmCycles = 0, uint64_t warmRetired = 0) {
         std::ostringstream oss;
         oss << "========================================================================\n";
-        oss << "                      CPI STACK BREAKDOWN VISUALIZER                    \n";
+        oss << (steadyState ? "             CPI STACK BREAKDOWN VISUALIZER (STEADY-STATE)              \n"
+                            : "                      CPI STACK BREAKDOWN VISUALIZER                    \n");
         oss << "========================================================================\n";
         oss << "Base CPI:  [████████████████████] 1.000\n";
+
+        uint64_t ret = perf.retiredInstructions;
+        uint64_t cyc = perf.totalCycles;
+        if (steadyState && warmRetired > 0 && ret > warmRetired) {
+            ret -= warmRetired;
+            cyc = cyc > warmCycles ? cyc - warmCycles : 0;
+        }
 
         uint64_t totalStalls = perf.getTotalStallCycles();
         for (const auto& r : CANONICAL_STALL_REASONS) {
             uint64_t c = perf.stallBreakdown.at(r);
             if (c > 0) {
-                double deltaCpi = (perf.retiredInstructions > 0) ? (static_cast<double>(c) / perf.retiredInstructions) : 0.0;
+                double deltaCpi = (ret > 0) ? (static_cast<double>(c) / ret) : 0.0;
                 size_t barLen = std::min(size_t(30), static_cast<size_t>(deltaCpi * 20.0));
                 if (barLen == 0) barLen = 1;
                 std::string bar(barLen, '#');
@@ -161,8 +169,62 @@ public:
             }
         }
         oss << "------------------------------------------------------------------------\n";
-        oss << "Total Measured CPI: " << std::fixed << std::setprecision(3) << perf.getCPI()
+        double measuredCpi = (ret > 0) ? (static_cast<double>(cyc) / ret) : perf.getCPI();
+        oss << "Total Measured CPI: " << std::fixed << std::setprecision(3) << measuredCpi
+            << " | Mode: " << (steadyState ? "STEADY-STATE" : "COLD-START")
             << " | Invariant Check: " << (perf.verifyInvariant() ? "PASSED" : "WARN") << "\n";
+        oss << "========================================================================\n";
+        return oss.str();
+    }
+
+    static std::string renderMemorySummary(const memory::MemoryHierarchy& mem) {
+        std::ostringstream oss;
+        oss << "========================================================================\n";
+        oss << "                    MEMORY SUBSYSTEM LIVE MONITOR                       \n";
+        oss << "========================================================================\n";
+        oss << "L1I Cache      : Hit Rate: " << std::fixed << std::setprecision(2) << mem.l1i.getHitRate() * 100.0 << "%"
+            << " (Hits: " << mem.l1i.hits << ", Misses: " << mem.l1i.misses << ")\n";
+        oss << "L1D Cache      : Hit Rate: " << std::fixed << std::setprecision(2) << mem.l1d.getHitRate() * 100.0 << "%"
+            << " (Hits: " << mem.l1d.hits << ", Misses: " << mem.l1d.misses << ")\n";
+        if (mem.l2) {
+            oss << "L2 Cache       : Hit Rate: " << std::fixed << std::setprecision(2) << mem.l2->getHitRate() * 100.0 << "%"
+                << " (Hits: " << mem.l2->hits << ", Misses: " << mem.l2->misses << ")\n";
+        }
+        if (mem.l3) {
+            oss << "L3 Cache       : Hit Rate: " << std::fixed << std::setprecision(2) << mem.l3->getHitRate() * 100.0 << "%"
+                << " (Hits: " << mem.l3->hits << ", Misses: " << mem.l3->misses << ")\n";
+        }
+        oss << "ITLB           : Hits: " << mem.vm.itlb.hits << ", Misses: " << mem.vm.itlb.misses
+            << " (Hit Rate: " << std::fixed << std::setprecision(2)
+            << (mem.vm.itlb.lookups > 0 ? (100.0 * mem.vm.itlb.hits / mem.vm.itlb.lookups) : 100.0) << "%)\n";
+        oss << "DTLB           : Hits: " << mem.vm.dtlb.hits << ", Misses: " << mem.vm.dtlb.misses
+            << " (Hit Rate: " << std::fixed << std::setprecision(2)
+            << (mem.vm.dtlb.lookups > 0 ? (100.0 * mem.vm.dtlb.hits / mem.vm.dtlb.lookups) : 100.0) << "%)\n";
+
+        size_t activeMshrI = 0, activeMshrD = 0;
+        for (const auto& m : mem.l1i.mshrs) if (m.valid) activeMshrI++;
+        for (const auto& m : mem.l1d.mshrs) if (m.valid) activeMshrD++;
+        oss << "MSHR Occupancy : L1I: " << activeMshrI << "/" << mem.l1i.cfg.mshrEntries
+            << " | L1D: " << activeMshrD << "/" << mem.l1d.cfg.mshrEntries << " active\n";
+
+        size_t activeSb = 0;
+        for (const auto& sb : mem.storeBuffer) if (sb.valid) activeSb++;
+        oss << "Store Buffer   : " << activeSb << "/" << mem.l1d.cfg.writeBufferEntries << " entries queued\n";
+
+        oss << "------------------------------------------------------------------------\n";
+        oss << "LATEST MEMORY ACCESS TRACE:\n";
+        if (!mem.accessHistory.empty()) {
+            const auto& last = mem.accessHistory.back();
+            oss << "[Cycle " << std::setw(6) << last.cycleStart << "] "
+                << (last.isWrite ? "WRITE" : "READ ") << " "
+                << (last.isFetch ? "(INST) " : "(DATA) ")
+                << "VAddr: " << toHex(static_cast<Word>(last.vaddr))
+                << " -> PAddr: " << toHex(static_cast<Word>(last.paddr))
+                << " | Served by: " << std::setw(5) << last.servedBy
+                << " | Latency: " << last.totalLatency << " cycles\n";
+        } else {
+            oss << "(No memory accesses recorded yet)\n";
+        }
         oss << "========================================================================\n";
         return oss.str();
     }

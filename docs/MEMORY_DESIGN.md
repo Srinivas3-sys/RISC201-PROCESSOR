@@ -275,12 +275,19 @@ All 20 experiments were executed using the integrated experimental driver (`expe
 - High-temp 32 ms retention ($t_{\text{REFI}} = 6240$): Overhead doubles to **8.97%**.
 - Severe 16 ms retention ($t_{\text{REFI}} = 3120$): Overhead reaches **17.95%**, severely degrading throughput.
 
-### Exp 9: Pipeline CPI Comparison Across Presets (Ideal, Simple, Modern)
+### Exp 9: Pipeline CPI Comparison Across Presets (Ideal, Simple, Modern, Modern DDR5)
 *Data for Factorial Iterative (4-Stage vs 6-Stage)*:
-- **Ideal** (1-cycle memory): 4-Stage CPI = 1.458; 6-Stage CPI = 1.708.
-- **Simple** (L1 + DRAM): 4-Stage CPI = 4.292; 6-Stage CPI = 4.542.
-- **Modern** (Full Hierarchy + VM): 4-Stage CPI = 9.828; 6-Stage CPI = 10.078.
-*Key Takeaway*: Realistic memory latency accounts for over 75% of total execution cycles, demonstrating the fundamental importance of cache optimization in modern processors.
+- **Cold-Start (Short Benchmark: 26 / 24 Instructions)**:
+  - **Ideal** (1-cycle memory): 4-Stage CPI = 1.231; 6-Stage CPI = 1.417.
+  - **Simple** (L1 + DRAM): 4-Stage CPI = 2.192; 6-Stage CPI = 3.083.
+  - **Modern** (Full Hierarchy + VM): 4-Stage CPI = 5.731; 6-Stage CPI = 6.667.
+  - **Modern DDR5**: 4-Stage CPI = 5.846; 6-Stage CPI = 6.833.
+- **Steady-State (Scaled Benchmark: 134,978 / 130,002 Instructions)**:
+  - **Ideal** (1-cycle memory): 4-Stage CPI = 1.037; 6-Stage CPI = 1.077.
+  - **Simple** (L1 + DRAM): 4-Stage CPI = 1.037; 6-Stage CPI = 1.077.
+  - **Modern** (Full Hierarchy + VM): 4-Stage CPI = 1.038; 6-Stage CPI = 1.078.
+  - **Modern DDR5**: 4-Stage CPI = 1.038; 6-Stage CPI = 1.078.
+*Key Takeaway*: In micro-benchmarks with cold start, unamortized compulsory cold line fills cause apparent CPI inflation (from 1.23 to 5.73). In steady-state execution where working sets fit within L1/L2 caches, the hit rate exceeds 99.99%, reducing memory stall cycles to near zero and allowing effective CPI to approach the core pipeline limit (1.037 for 4-Stage, 1.077 for 6-Stage).
 
 ### Exp 10: Memory Controller Scheduling: FCFS vs FR-FCFS
 *Data*: Alternating requests to two different rows:

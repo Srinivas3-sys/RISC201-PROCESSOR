@@ -175,6 +175,8 @@ public:
         Word branchPC = 0;
         bool isBranchMispredict = false;
         Word redirectPC = 0;
+        std::string fwdInfo = "";
+        std::string stallReasonLabel = "";
 
         // =========================================================================
         // STAGE 6: RW (Register Writeback Stage)
@@ -262,8 +264,10 @@ public:
                 RegId r1 = (d.isRet()) ? REG_RA : d.rs1;
                 if (!l_EX_MA.isBubble && l_EX_MA.decoded.writesRegister() && l_EX_MA.decoded.getDestReg() == r1) {
                     opA = l_EX_MA.aluResult;
+                    fwdInfo = "r" + std::to_string(r1) + " forwarded from EX_MA -> EX_IN1";
                 } else if (!l_MA_RW.isBubble && l_MA_RW.decoded.writesRegister() && l_MA_RW.decoded.getDestReg() == r1) {
                     opA = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
+                    fwdInfo = "r" + std::to_string(r1) + " forwarded from MA_RW -> EX_IN1";
                 }
             }
 
@@ -273,8 +277,12 @@ public:
                 RegId r2 = d.rs2;
                 if (!l_EX_MA.isBubble && l_EX_MA.decoded.writesRegister() && l_EX_MA.decoded.getDestReg() == r2) {
                     opB = l_EX_MA.aluResult;
+                    if (!fwdInfo.empty()) fwdInfo += " | ";
+                    fwdInfo += "r" + std::to_string(r2) + " forwarded from EX_MA -> EX_IN2";
                 } else if (!l_MA_RW.isBubble && l_MA_RW.decoded.writesRegister() && l_MA_RW.decoded.getDestReg() == r2) {
                     opB = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
+                    if (!fwdInfo.empty()) fwdInfo += " | ";
+                    fwdInfo += "r" + std::to_string(r2) + " forwarded from MA_RW -> EX_IN2";
                 }
             }
 
@@ -283,8 +291,12 @@ public:
             if (d.isStore() && forwardingEnabled) {
                 if (!l_EX_MA.isBubble && l_EX_MA.decoded.writesRegister() && l_EX_MA.decoded.getDestReg() == d.rd) {
                     storeVal = l_EX_MA.aluResult;
+                    if (!fwdInfo.empty()) fwdInfo += " | ";
+                    fwdInfo += "r" + std::to_string(d.rd) + " forwarded from EX_MA -> STORE_DATA";
                 } else if (!l_MA_RW.isBubble && l_MA_RW.decoded.writesRegister() && l_MA_RW.decoded.getDestReg() == d.rd) {
                     storeVal = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
+                    if (!fwdInfo.empty()) fwdInfo += " | ";
+                    fwdInfo += "r" + std::to_string(d.rd) + " forwarded from MA_RW -> STORE_DATA";
                 }
             }
 
@@ -389,7 +401,8 @@ public:
                 stall_RF = true;
                 bubble_EX = true;
                 stallCycles++;
-                perfTracker.recordStall(loadUse ? "RAW_LOAD_USE" : "RAW_NOFWD");
+                stallReasonLabel = loadUse ? "RAW_LOAD_USE" : "RAW_NOFWD";
+                perfTracker.recordStall(stallReasonLabel);
             } else {
                 // Fetch register operands
                 Word op1 = regFile.readPort1(d.isRet() ? REG_RA : d.rs1);
@@ -451,6 +464,7 @@ public:
         // =========================================================================
         if (isBranchMispredict) {
             // Flush wrong path instructions in ID_RF and RF_EX (2 cycles branch penalty for 6-stage)
+            stallReasonLabel = "BRANCH_MISPREDICT";
             stall_IF = false;
             stall_ID = false;
             stall_RF = false;
@@ -553,12 +567,14 @@ public:
             ifStage.isBubble = next_IF_ID.isBubble;
             ifStage.isStalled = true;
             ifStage.instId = next_IF_ID.instId;
+            ifStage.stallReason = stallReasonLabel;
         } else {
             ifStage.instructionText = next_IF_ID.isBubble ? "" : next_IF_ID.disassembly;
             ifStage.pc = next_IF_ID.pc;
             ifStage.isBubble = next_IF_ID.isBubble;
             ifStage.isStalled = false;
             ifStage.instId = next_IF_ID.instId;
+            if (isBranchMispredict) ifStage.stallReason = "BRANCH_MISPREDICT";
         }
         snap.stages.push_back(ifStage);
 
@@ -570,6 +586,7 @@ public:
         idStage.isBubble = l_IF_ID.isBubble;
         idStage.isStalled = stall_ID;
         idStage.instId = l_IF_ID.instId;
+        if (stall_ID) idStage.stallReason = stallReasonLabel;
         snap.stages.push_back(idStage);
 
         // Stage 3: RF
@@ -580,6 +597,7 @@ public:
         rfStage.isBubble = l_ID_RF.isBubble;
         rfStage.isStalled = stall_RF;
         rfStage.instId = l_ID_RF.instId;
+        if (stall_RF) rfStage.stallReason = stallReasonLabel;
         snap.stages.push_back(rfStage);
 
         // Stage 4: EX
@@ -590,6 +608,11 @@ public:
         exStage.isBubble = l_RF_EX.isBubble;
         exStage.isStalled = bubble_EX;
         exStage.instId = l_RF_EX.instId;
+        if (bubble_EX) {
+            exStage.isBubble = true;
+            exStage.stallReason = stallReasonLabel;
+        }
+        exStage.forwardingInfo = fwdInfo;
         snap.stages.push_back(exStage);
 
         // Stage 5: MA

@@ -240,6 +240,128 @@ void test_differential_iss() {
     TEST_ASSERT(p6.regFile.read(4) == expR4, "6-Stage r4 matches ISS");
 }
 
+// -------------------------------------------------------------
+// Test 6: CPI Invariants, Scheduling, & Micro-kernels
+// -------------------------------------------------------------
+void test_cpi_invariants_and_microkernels() {
+    std::cout << "[TEST] 6. CPI Invariants, Scheduling, & Micro-kernels...\n";
+
+    // 1. Hazard-free independent ALU stream
+    std::string noHazardAsm = R"(
+.text
+    mov r0, 1
+    mov r1, 2
+    mov r2, 3
+    mov r3, 4
+    mov r4, 5
+    mov r5, 6
+    mov r6, 7
+    mov r7, 8
+    nop
+)";
+    assembler::Assembler asmb;
+    bool ok = asmb.assemble(noHazardAsm);
+    TEST_ASSERT(ok, "Hazard-free assembly ok");
+    auto words = asmb.getMachineWords();
+    Word progSize = static_cast<Word>(words.size() * 4);
+
+    stage4::Pipeline4Stage p4_hazardFree;
+    p4_hazardFree.setProgramSize(progSize);
+    p4_hazardFree.memory.loadProgram(0, words);
+    p4_hazardFree.setMemPreset("ideal");
+    p4_hazardFree.setForwarding(true);
+    p4_hazardFree.run(100);
+
+    TEST_ASSERT(p4_hazardFree.perfTracker.stallBreakdown.at("RAW_LOAD_USE") == 0, "Hazard-free has 0 RAW stalls");
+    TEST_ASSERT(p4_hazardFree.perfTracker.branchBubbles == 0, "Hazard-free has 0 branch bubbles");
+    TEST_ASSERT(p4_hazardFree.perfTracker.stallBreakdown.at("ICACHE_MISS") == 0, "Ideal preset has 0 ICACHE stalls");
+    TEST_ASSERT(p4_hazardFree.perfTracker.stallBreakdown.at("DCACHE_MISS") == 0, "Ideal preset has 0 DCACHE stalls");
+    TEST_ASSERT(p4_hazardFree.perfTracker.verifyInvariant(), "4-Stage cycle accounting invariant holds");
+
+    // 2. Load-Use Hazard with and without Instruction Scheduling
+    std::string loadUseAsm = R"(
+.text
+    mov r0, 0
+    ld r1, 0[r0]
+    add r2, r1, 10
+    mov r3, 4
+    ld r4, 0[r3]
+    add r5, r4, 20
+    mov r6, 30
+    nop
+)";
+    // A: Without scheduling
+    assembler::Assembler asmbUnscheduled;
+    TEST_ASSERT(asmbUnscheduled.assemble(loadUseAsm, false), "Load-use unscheduled assembly ok");
+    auto wordsUnscheduled = asmbUnscheduled.getMachineWords();
+
+    stage4::Pipeline4Stage p4_unscheduled;
+    p4_unscheduled.setProgramSize(static_cast<Word>(wordsUnscheduled.size() * 4));
+    p4_unscheduled.memory.loadProgram(0, wordsUnscheduled);
+    p4_unscheduled.setMemPreset("ideal");
+    p4_unscheduled.setForwarding(true);
+    p4_unscheduled.run(100);
+
+    TEST_ASSERT(p4_unscheduled.perfTracker.stallBreakdown.at("RAW_LOAD_USE") == 2, "Unscheduled load-use incurs 2 stall bubbles");
+
+    // B: With scheduling pass
+    assembler::Assembler asmbScheduled;
+    TEST_ASSERT(asmbScheduled.assemble(loadUseAsm, true), "Load-use scheduled assembly ok");
+    auto wordsScheduled = asmbScheduled.getMachineWords();
+
+    stage4::Pipeline4Stage p4_scheduled;
+    p4_scheduled.setProgramSize(static_cast<Word>(wordsScheduled.size() * 4));
+    p4_scheduled.memory.loadProgram(0, wordsScheduled);
+    p4_scheduled.setMemPreset("ideal");
+    p4_scheduled.setForwarding(true);
+    p4_scheduled.run(100);
+
+    TEST_ASSERT(p4_scheduled.perfTracker.stallBreakdown.at("RAW_LOAD_USE") == 0, "Scheduled load-use completely eliminates load-use bubbles (0 stalls)");
+    TEST_ASSERT(p4_scheduled.regFile.read(2) == p4_unscheduled.regFile.read(2), "Scheduled r2 matches unscheduled");
+    TEST_ASSERT(p4_scheduled.regFile.read(5) == p4_unscheduled.regFile.read(5), "Scheduled r5 matches unscheduled");
+    TEST_ASSERT(p4_scheduled.perfTracker.verifyInvariant(), "Scheduled 4-Stage invariant holds");
+
+    // 3. Tight Loop Branch Prediction Training
+    std::string loopAsm = R"(
+.text
+    mov r0, 10
+.loop:
+    sub r0, r0, 1
+    cmp r0, 0
+    bgt .loop
+    nop
+)";
+    assembler::Assembler asmbLoop;
+    TEST_ASSERT(asmbLoop.assemble(loopAsm), "Loop assembly ok");
+    auto wordsLoop = asmbLoop.getMachineWords();
+
+    stage4::Pipeline4Stage p4_loop;
+    p4_loop.setProgramSize(static_cast<Word>(wordsLoop.size() * 4));
+    p4_loop.memory.loadProgram(0, wordsLoop);
+    p4_loop.setMemPreset("ideal");
+    p4_loop.setForwarding(true);
+    p4_loop.setBranchPolicy("2bit");
+    p4_loop.run(200);
+
+    // 10 branch executions, bimodal predictor correctly predicts iterations 2-9 taken
+    // Only iteration 10 loop exit mispredicts (and possibly iteration 1 if cold)
+    TEST_ASSERT(p4_loop.perfTracker.branchBubbles <= 2, "Bimodal 2-bit predictor trains in tight loop, branch bubbles <= 2");
+    TEST_ASSERT(p4_loop.regFile.read(0) == 0, "Loop terminates with r0 == 0");
+    TEST_ASSERT(p4_loop.perfTracker.verifyInvariant(), "Loop 4-Stage invariant holds");
+
+    // 4. 6-Stage Pipeline Invariant Check
+    stage6::Pipeline6Stage p6_loop;
+    p6_loop.setProgramSize(static_cast<Word>(wordsLoop.size() * 4));
+    p6_loop.memory.loadProgram(0, wordsLoop);
+    p6_loop.setMemPreset("ideal");
+    p6_loop.setForwarding(true);
+    p6_loop.setBranchPolicy("2bit");
+    p6_loop.run(200);
+
+    TEST_ASSERT(p6_loop.perfTracker.branchBubbles <= 4, "6-Stage tight loop branch bubbles <= 4 (2 bubbles per mispredict)");
+    TEST_ASSERT(p6_loop.perfTracker.verifyInvariant(), "Loop 6-Stage invariant holds");
+}
+
 int main() {
     std::cout << "========================================================================\n";
     std::cout << "           RISC201 C++ EXHAUSTIVE VERIFICATION TEST SUITE               \n";
@@ -250,6 +372,7 @@ int main() {
     test_virtual_memory();
     test_hazards_and_forwarding();
     test_differential_iss();
+    test_cpi_invariants_and_microkernels();
 
     std::cout << "\n========================================================================\n";
     std::cout << "TEST RESULTS: " << testsPassed << " / " << testsRun << " PASSED\n";
