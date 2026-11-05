@@ -191,3 +191,4 @@ Every single metric, cycle count, and stall attribution was obtained directly by
     - $\text{Total Cycles} = 5 + 11 + 1 + 2 = \mathbf{19\text{ cycles}}$.
     - $\mathrm{CPI} = 19 / 11 = \mathbf{1.727}$.
     - Cycle Accounting Invariant: PASS.
+

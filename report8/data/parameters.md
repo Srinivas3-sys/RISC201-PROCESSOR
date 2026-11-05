@@ -1,79 +1,91 @@
-# RISC201 Architectural & Physical Parameters (Sarangi Textbook Scope)
+# RISC201 Architectural & Microarchitectural Parameters (Complete Feature Inventory)
 
-This document contains all real parameters extracted directly from the C++ codebase with exact `file:line` citations.
+Extracted directly from the C++ codebase with exact `file:line` citations. Covers both textbook baselines and advanced architectural extensions.
 
 ---
 
 ## 1. Pipelines & Execution Timing
 
-| Parameter | 4-Stage Pipeline | 6-Stage Pipeline | Code Reference |
+| Architectural Parameter | 4-Stage Pipeline Core | 6-Stage Pipeline Core | Code Citation |
 | :--- | :---: | :---: | :--- |
-| **Pipeline Stages** | 4 (`IF`, `OF`, `EX`, `MA_RW`) | 6 (`IF`, `ID`, `RF`, `EX`, `MA`, `WB`) | `processor_4stage/Pipeline4Stage.hpp:12-25`, `processor_6stage/Pipeline6Stage.hpp:15-30` |
+| **Pipeline Stage Breakdown** | `IF`, `OF`, `EX`, `MA_RW` | `IF`, `ID`, `RF`, `EX`, `MA`, `WB` | `processor_4stage/Pipeline4Stage.hpp:12-25`, `processor_6stage/Pipeline6Stage.hpp:15-30` |
 | **Clock Frequency ($f$)** | **500 MHz** | **800 MHz** | `processor_4stage/Pipeline4Stage.hpp:45`, `processor_6stage/Pipeline6Stage.hpp:48` |
-| **Clock Period ($t_{\mathrm{clk}}$)** | **2.00 ns** | **1.25 ns** | $t_{\mathrm{clk}} = 1 / f$ |
-| **Operand Read Stage** | `OF` (Stage 2) | `RF` (Stage 3) | `processor_4stage/Pipeline4Stage.hpp:185`, `processor_6stage/Pipeline6Stage.hpp:215` |
-| **ALU Result Available** | End of `EX` (Stage 3) | End of `EX` (Stage 4) | `processor_4stage/Pipeline4Stage.hpp:210`, `processor_6stage/Pipeline6Stage.hpp:240` |
-| **Memory Data Available** | End of `MA_RW` (Stage 4) | End of `MA` (Stage 5) | `processor_4stage/Pipeline4Stage.hpp:245`, `processor_6stage/Pipeline6Stage.hpp:270` |
-| **Register Writeback** | End of `MA_RW` (Stage 4) | End of `WB` (Stage 6) | `processor_4stage/Pipeline4Stage.hpp:255`, `processor_6stage/Pipeline6Stage.hpp:290` |
+| **Clock Period ($t_{\mathrm{clk}}$)** | **2.00 ns** | **1.25 ns** | Configured architectural clock period |
+| **Operand Fetch Stage** | `OF` (Stage 2) | `RF` (Stage 3) | `processor_4stage/Pipeline4Stage.hpp:185`, `processor_6stage/Pipeline6Stage.hpp:215` |
+| **ALU Execution Stage** | `EX` (Stage 3) | `EX` (Stage 4) | `processor_4stage/Pipeline4Stage.hpp:210`, `processor_6stage/Pipeline6Stage.hpp:240` |
+| **Memory Access Stage** | `MA_RW` (Stage 4) | `MA` (Stage 5) | `processor_4stage/Pipeline4Stage.hpp:245`, `processor_6stage/Pipeline6Stage.hpp:270` |
+| **Register Writeback Stage**| `MA_RW` (Stage 4) | `WB` (Stage 6) | `processor_4stage/Pipeline4Stage.hpp:255`, `processor_6stage/Pipeline6Stage.hpp:290` |
 | **Branch Resolution Stage** | `EX` (Stage 3) | `EX` (Stage 4) | `processor_4stage/Pipeline4Stage.hpp:220`, `processor_6stage/Pipeline6Stage.hpp:250` |
-| **Branch Penalty (Flush)** | **1 cycle** (squashes `IF_OF`) | **2 cycles** (squashes `IF_ID` & `ID_RF`) | `common/HazardUnit.hpp:56-60`, `common/HazardUnit.hpp:115-120` |
+| **Branch Penalty (Flush)** | **1 bubble** (squashes `IF_OF`) | **2 bubbles** (squashes `IF_ID` & `ID_RF`) | `common/HazardUnit.hpp:56-60`, `common/HazardUnit.hpp:115-120` |
 | **Pipeline Fill Latency** | $4 - 1 = \mathbf{3\text{ cycles}}$ | $6 - 1 = \mathbf{5\text{ cycles}}$ | `common/PerformanceTracker.hpp:48` |
-| **Ideal CPI** | **1.000** | **1.000** | Retires 1 instruction per cycle under zero hazards |
+| **Ideal CPI** | **1.000** | **1.000** | Single-issue in-order baseline throughput |
+| **ISA Binary String Opcodes**| 28 canonical 5-bit strings | 28 canonical 5-bit strings | `common/ISA.hpp:20-65` (`isa::OP_ADD = "00000"` to `"11011"`) |
 
 ---
 
-## 2. Hazard Handling & Forwarding Network
+## 2. Hazards, Stall Logic & Branch Predictors
 
-| Parameter | 4-Stage Core | 6-Stage Core | Code Reference |
-| :--- | :---: | :---: | :--- |
-| **Forwarding Modes** | `NONE`, `BASIC`, `FULL` | `NONE`, `BASIC`, `FULL` | `common/ForwardingUnit.hpp:13-18` |
-| **EX-to-EX Bypass Path** | `EX_MARW -> OF_EX` | `EX_MA -> RF_EX` | `common/ForwardingUnit.hpp:153-166`, `common/ForwardingUnit.hpp:205-225` |
-| **MEM-to-EX Bypass Path**| Merged in `EX_MARW` | `MA_RW -> RF_EX` | `common/ForwardingUnit.hpp:226-245` |
-| **WB-to-EX Bypass Path** | (Not needed: merged RW) | `RW -> RF_EX` | `common/ForwardingUnit.hpp:246-260` |
-| **Priority Rule** | Youngest producer first | `EX_MA` > `MA_RW` > `RW` | `common/ForwardingUnit.hpp:202-265` |
-| **Store Data Forwarding** | `EX_MARW -> MARW` | `EX_MA / MA_RW -> MA` | `common/ForwardingUnit.hpp:169-174` |
-| **RAW ALU-to-ALU Stall** | 0 cycles (with FULL fwd) | 0 cycles (with FULL fwd) | `common/ForwardingUnit.hpp:155` |
-| **RAW Without Forwarding** | 1 stall cycle | 2 stall cycles | `common/HazardUnit.hpp:75-82`, `common/HazardUnit.hpp:144-168` |
-| **Load-Use Stall** | **1 bubble cycle** | **1 bubble cycle** | `common/HazardUnit.hpp:88-95`, `common/HazardUnit.hpp:126-140` |
-| **Stall Reason Codes** | `RAW_LOAD_USE`, `RAW_NOFWD`, `BRANCH_MISPREDICT`, `STRUCTURAL_MEM` | `common/PerformanceTracker.hpp:14-32` |
+| Feature | Configured Value / Implementation | Code Citation |
+| :--- | :--- | :--- |
+| **Hazard Interlock Unit** | Detects RAW Load-Use, asserts freeze PC & IF/OF, inserts bubble into EX | `common/HazardUnit.hpp:18-120` |
+| **Stall Reason Attribution** | `RAW_LOAD_USE`, `RAW_NOFWD`, `BRANCH_MISPREDICT`, `STRUCTURAL_MEM`, `ICACHE_MISS`, `DCACHE_MISS`, `TLB_MISS_PAGE_WALK`, `DRAM_LATENCY` | `common/PerformanceTracker.hpp:14-35` |
+| **Load-Use Delay Slot** | 1 cycle hardware stall bubble; completely eliminated via compiler instruction scheduling pass (`--schedule`) | `common/HazardUnit.hpp:88-95`, `assembler/Assembler.hpp:310-340` |
+| **Branch Predictor Policies** | 8 policies: `STALL`, `FLUSH` (predict not-taken), `PREDICT_TAKEN`, `STATIC_BTFN`, `BIMODAL_1BIT`, `BIMODAL_2BIT`, `GSHARE`, `PERFECT` | `common/BranchPredictor.hpp:13-36` |
+| **Bimodal 2-Bit Predictor** | 256-entry table of 2-bit saturating counters (00, 01, 10, 11) with hysteresis | `common/BranchPredictor.hpp:148, 165` |
+| **GShare Predictor** | 10-bit Global History Register (GHR) XOR with PC: `index = ((pc >> 2) ^ ghr) % tableSize` | `common/BranchPredictor.hpp:151, 256` |
+| **Branch Target Buffer (BTB)**| 64-entry direct-mapped BTB with tag comparison | `common/BranchPredictor.hpp:58-95` |
+| **Return Address Stack (RAS)**| 16-entry circular call-return target prediction stack | `common/BranchPredictor.hpp:97-130` |
+| **Precise Exceptions** | Faulting PC captured, pipeline drained, control transferred to kernel handler via `RETZ` | `common/Exception.hpp:12-45`, `processor_4stage/Pipeline4Stage.hpp:280-285` |
 
 ---
 
-## 3. Memory Hierarchy (Textbook Baseline)
+## 3. Data Forwarding Bypass Network
 
-| Subsystem | Architectural Parameter | Configured Value | Code Reference |
+| Bypass Network Property | Configured Value / Implementation | Code Citation |
+| :--- | :--- | :--- |
+| **Forwarding Modes** | `NONE` (interlocks only), `BASIC` (`EX->EX`), `FULL` (`EX->EX`, `MEM->EX`, `WB->EX`), `FULL_PLUS` (+StoreBuffer bypass) | `common/ForwardingUnit.hpp:13-28` |
+| **4-Stage Core Bypass Paths** | `EX_MARW -> OF_EX` (ALU-to-ALU), `MARW -> MARW` (Store Data) | `common/ForwardingUnit.hpp:150-175` |
+| **6-Stage Core Bypass Paths** | `EX_MA -> RF_EX` (Priority 1), `MA_RW -> RF_EX` (Priority 2), `RW -> RF_EX` (Priority 3) | `common/ForwardingUnit.hpp:200-265` |
+| **Priority Resolution Rule** | Youngest producer strictly overrides older pipeline registers (`EX_MA` > `MA_RW` > `RW`) | `common/ForwardingUnit.hpp:202-245` |
+| **Store-Data Forwarding** | MEM-to-MEM forwarding for `load -> store` dependency with 0 stalls | `common/ForwardingUnit.hpp:247-266` |
+| **Store-to-Load Bypass** | 16-entry `StoreBuffer` bypasses pending data to subsequent load to same address before cache write | `common/ForwardingUnit.hpp:48-95` |
+
+---
+
+## 4. Memory System Architecture (Textbook + Advanced)
+
+| Subsystem | Architectural Parameter | Configured Value | Code Citation |
 | :--- | :--- | :--- | :--- |
-| **L1 Instruction Cache** | Organization | 32 KB, 8-way set-associative | `memory/Config.hpp:128-132` |
+| **L1 Caches (I & D)** | Capacity & Associativity | 32 KB, 8-way set-associative | `memory/Config.hpp:128-140` |
 | | Line Size ($B$) | 64 Bytes ($b = 6\text{ offset bits}$) | `memory/Cache.hpp:66` |
 | | Number of Sets ($S$) | 64 Sets ($s = 6\text{ index bits}$) | `memory/Cache.hpp:65` |
 | | Tag Width ($t$) | 20 bits ($32 - (6 + 6)$) | `memory/Cache.hpp:68` |
 | | Hit Latency | **1 clock cycle** | `memory/Config.hpp:131` |
-| | Write / Replacement Policy| Write-Back + Write-Allocate, LRU | `memory/Config.hpp:18-20` |
-| **L1 Data Cache** | Organization | 32 KB, 8-way set-associative | `memory/Config.hpp:134-140` |
-| | Line Size / Hit Latency | 64 Bytes, **1 clock cycle** | `memory/Config.hpp:137-138` |
-| **Main Memory (DRAM)** | Cell Architecture | 1T-1C capacitive storage cell | `memory/DRAM.hpp:15-30` |
-| | Clock Cycle ($t_{\mathrm{CK}}$) | 1.0 ns (Textbook SimpleDRAM) | `memory/Config.hpp:196` |
-| | $t_{\mathrm{RCD}}$ (Row-to-Column) | 15 DRAM cycles (15 ns) | `memory/Config.hpp:197` |
-| | $t_{\mathrm{RP}}$ (Row Precharge) | 15 DRAM cycles (15 ns) | `memory/Config.hpp:198` |
-| | $t_{\mathrm{CAS}}$ / $t_{\mathrm{CL}}$ (Column Latency)| 15 DRAM cycles (15 ns) | `memory/Config.hpp:199` |
-| | $t_{\mathrm{BURST}}$ (Burst Duration) | 4 DRAM cycles (8-word burst) | `memory/Config.hpp:200` |
-| | Row Hit Latency | $t_{\mathrm{CAS}} + t_{\mathrm{BURST}} = \mathbf{19\text{ ns}}$ | `memory/DRAM.hpp:120-140` |
-| | Row Empty Latency | $t_{\mathrm{RCD}} + t_{\mathrm{CAS}} + t_{\mathrm{BURST}} = \mathbf{34\text{ ns}}$ | `memory/DRAM.hpp:141-160` |
-| | Row Conflict Latency | $t_{\mathrm{RP}} + t_{\mathrm{RCD}} + t_{\mathrm{CAS}} + t_{\mathrm{BURST}} = \mathbf{49\text{ ns}}$ | `memory/DRAM.hpp:161-180` |
-| **Virtual Memory** | Virtual Address Width | 32 bits ($4\text{ GB}$ address space) | `memory/Config.hpp:69` |
-| | Page Size | 4096 Bytes ($4\text{ KB}$, 12-bit offset) | `memory/Config.hpp:71` |
-| | Page Table Structure | 2-level hierarchical radix tree | `memory/Config.hpp:72` |
-| | Page Directory (PD) | 10 bits ($2^{10} = 1024$ entries) | `docs/VIRTUAL_MEMORY.md:70-74` |
-| | Page Table (PT) | 10 bits ($2^{10} = 1024$ entries) | `docs/VIRTUAL_MEMORY.md:72` |
-| | Address Split | `[31:22] PD | [21:12] PT | [11:0] Offset` | `docs/VIRTUAL_MEMORY.md:74` |
-| | Page Table Entry (PTE) | 4 bytes (PFN: 20 bits, Flags: 12 bits)| `memory/VirtualMemory.hpp:16-27` |
-| | TLB Organization | 64 entries, 4-way associative | `memory/Config.hpp:75-78` |
-| | TLB Hit Latency | **1 clock cycle** | `memory/Config.hpp:84` |
+| | Write & Replacement Policy| Write-Back + Write-Allocate (`wb_wa`), True LRU, SRRIP, BIP | `memory/Config.hpp:20-26` |
+| | 3C Miss Categorization | Compulsory, Capacity (fully-associative shadow tag), Conflict | `memory/Cache.hpp:74-95, 296-330` |
+| **Non-Blocking MSHRs** | MSHR Entries | **8 MSHR entries** (hit-under-miss & secondary hit merging) | `memory/Config.hpp:22`, `memory/Cache.hpp:72, 278-294` |
+| **Hardware Prefetchers** | Supported Types | Next-Line, Stride (16-entry RPT), Stream (4 stream buffers, degree 2) | `memory/Config.hpp:94-102`, `memory/Prefetcher.hpp:20-95` |
+| | Page Boundary Suppression | Prevents prefetch requests from crossing 4 KB page boundaries | `memory/Prefetcher.hpp:70-73` |
+| **DRAM (DDR4-3200)** | Clock Period ($t_{\mathrm{CK}}$)| **0.625 ns** (1600 MHz clock, 3200 MT/s) | `memory/Config.hpp:30` |
+| | JEDEC Timings | $t_{\mathrm{CL}}=22, t_{\mathrm{RCD}}=22, t_{\mathrm{RP}}=22, t_{\mathrm{RAS}}=52, t_{\mathrm{RC}}=74, t_{\mathrm{WR}}=24, t_{\mathrm{FAW}}=34$ | `memory/Config.hpp:31-40` |
+| | Bank Architecture | 4 Bank Groups $\times$ 4 Banks = **16 Banks total** | `memory/Config.hpp:56-57` |
+| | Bank Group Timings | Short $t_{\mathrm{CCD\_S}}=4, t_{\mathrm{RRD\_S}}=4$; Long $t_{\mathrm{CCD\_L}}=8, t_{\mathrm{RRD\_L}}=8$ | `memory/Config.hpp:42-44` |
+| | Burst Length & Width | 64-bit bus (8 Bytes), $\text{BL}=8$ ($64\text{ B}$ burst), $t_{\mathrm{BURST}}=4\text{ cycles}$ | `memory/Config.hpp:45-46, 60` |
+| | Peak Channel Bandwidth | $3200\text{ MT/s} \times 8\text{ B} = \mathbf{25.6\text{ GB/s}}$ | `docs/MEMORY_DESIGN.md:151` |
+| | Refresh Parameters | $t_{\mathrm{RFC}}=350\text{ ns}, t_{\mathrm{REFI}}=7.8\ \mu\text{s}$ ($7800\text{ ns}$) | `memory/Config.hpp:47-48` |
+| | Row Buffer Policy & Sched | Open-Page Policy, FR-FCFS out-of-order scheduling | `memory/Config.hpp:61-62`, `memory/DRAM.hpp:155-180` |
+| **DDR5 Extension** | Subchannels & Banks | Dual independent 32-bit subchannels, 8 bank groups (32 banks), 38.4 GB/s | `memory/Config.hpp:207-229` |
+| **Virtual Memory** | Address Widths | 32-bit baseline (SimpleRisc) & 48-bit modern x86-64/ARM64 | `memory/Config.hpp:69-70` |
+| | Page Size & Structure | 4096 Bytes (4 KB, 12-bit offset); 2-level (10+10+12) or 4-level radix tree | `memory/Config.hpp:71-72` |
+| | 4-Level Radix Split | `[47:39] PML4` (512 entries) $\to$ `[38:30] PDPT` $\to$ `[29:21] PD` $\to$ `[20:12] PT` | `memory/Config.hpp:72`, `docs/VIRTUAL_MEMORY.md:80` |
+| | TLB Hierarchy | L1 ITLB & DTLB: 64 entries, 4-way, 1 cyc; L2 STLB: 1024 entries, 8-way, 7 cyc | `memory/Config.hpp:75-80, 84-85` |
+| | Page-Walk Cache (PWC) | **16-entry PWC** caches intermediate directory levels (PML4, PDPT, PD), 3 cyc | `memory/Config.hpp:81, 86`, `memory/VirtualMemory.hpp:350-361` |
+| | Page Fault Latencies | Minor fault (demand zero-fill): 1200 cyc; Major fault (swap-in): 300,000 cyc | `memory/Config.hpp:87-88` |
 
 ---
 
-## 4. Performance Accounting Invariant
+## 5. Performance Accounting Invariant
 
-$$\text{Total Execution Cycles} = (\text{Stages} - 1) + IC + \sum \text{Stall Cycles} + \text{Branch Bubbles}$$
+$$\text{Total Execution Cycles} = (\text{Stages} - 1) + IC + \sum_{k} \text{StallCycles}_k + \text{BranchBubbles}$$
 * Reference: `common/PerformanceTracker.hpp:92-105`.
-* Enforces that every single CPU cycle is attributed to **exactly one** canonical reason.
+* Enforces that every single CPU cycle is strictly attributed to **exactly one** canonical reason with zero unallocated time.

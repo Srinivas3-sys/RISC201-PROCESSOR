@@ -69,3 +69,4 @@
     <text x="410" y="105" font-size="9.5" fill="#64748b" text-anchor="middle">Hysteresis Property: A single anomaly (e.g. one-off loop exit) changes WT -> ST or ST -> WT without inverting prediction direction.</text>
   </g>
 </svg>
+
