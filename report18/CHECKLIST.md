@@ -10,24 +10,24 @@ This audit checklist verifies compliance with all specifications, course require
 - [x] **Verification Command**: `pdfinfo report18/RISC201_Project_Report.pdf | grep "Pages:"` -> **`Pages: 18`**.
 - [x] **Typesetting Engine**: Typst v0.11.0 (`report18/source/report.typ`).
 - [x] **Page Budget Breakdown (Zero Spill / Zero Half-Empty Pages)**:
-  - **Page 1**: Title block (authors, repo commit, date), Abstract, Keywords, At-A-Glance Metric Box, Table of Contents.
-  - **Page 2**: Section 1 Introduction & Implementation Scope, Section 1.1 Problem Statement & Course Context, Table 1 (Assignment Requirements Traceability Matrix), Section 1.3 Textbook Baseline Theory vs RISC201 Extensions, Table 2 (Comparative Domain Matrix).
-  - **Page 3**: Section 2 System Architecture & Toolchain Organization, Figure 1 (Software Toolchain & Cycle-Accurate Simulator Dataflow), Section 2.2 Source Code Inventory, Table 3 (52 Core Files, 12,946 LOC), Section 2.3 One-Instruction End-to-End Dataflow Walkthrough.
-  - **Page 4**: Section 3 Instruction Set Architecture (ISA) & Encoding, Section 3.1 Canonical 5-Bit Binary-String Opcodes & Design Rationale, Figure 2 (SimpleRisc 32-Bit Instruction Word Formats: R-Type, I-Type, B-Type), Table 4 (Complete 28-Opcode Catalog in 2-Column Format), Section 3.3 Register File & Status Flags, Example E1 (Bit-by-Bit Machine Encoding & Decoding).
-  - **Page 5**: Section 4 Software Toolchain Implementation, Section 4.1 Two-Pass Assembler (`risc201_as`), Table 5 (Assembler Directives, Immediate Modifiers & CLI Flags), Section 4.2 Disassembler (`risc201_disasm`), Section 4.3 Full-Descending Stack Macro Preprocessing (`push`/`pop`), Example E2 (Forward Label Resolution & Macro Expansion).
-  - **Page 6**: Section 5 Processor Microarchitectures & Pipelining, Section 5.1 Pipelining Principles & Ideal CPI, Figure 3 (Pipeline Stage Organization: 4-Stage Core @ 500 MHz and 6-Stage Core @ 800 MHz), Table 6 (Architectural Comparison Between 4-Stage and 6-Stage Processors), Section 5.3 Golden Instruction Set Simulator (ISS) Model, Example E3 (Pipeline Fill Latency & Cycle Counting).
-  - **Page 7**: Section 6 Pipeline Hazards & Branch Handling, Section 6.1 Hazard Taxonomy & Resolution Mechanics, Section 6.2 HazardUnit Detection & Load-Use Interlocks, Figure 4 (2-Bit Bimodal Saturating Counter State Machine with Hysteresis), Section 6.3 Dynamic Branch Predictors (Static, 1b, 2b, GShare, BTB, RAS), Table 7 (Branch Predictor Hardware Structures & Misprediction Penalties), Example E4 (RAW Interlocks), Example E6 (Load-Use Scheduling), Example E7 (Branch Penalty & GShare/RAS Tracing).
-  - **Page 8**: Section 7 Data Forwarding Network & Priority Logic, Section 7.1 Forwarding Bypass Architecture & Multiplexers, Figure 5 (Forwarding Multiplexers & Producer-Consumer Matrix), Section 7.2 Forwarding Modes (`NONE`, `BASIC`, `FULL`, `FULL_PLUS`), Table 8 (Comprehensive Producer-to-Consumer Forwarding Matrix for 4-Stage and 6-Stage Processors), Section 7.3 Youngest-Producer Priority Resolution, Example E5 (Bypass Network vs RAW Hazards).
-  - **Page 9**: Section 8 Microprogrammed Control Units, Section 8.1 Hardwired vs Microprogrammed Control Store, Figure 6 (Control Store Architecture: 65-bit Horizontal vs 45-bit Vertical with Hardware Decoders), Section 8.2 Horizontal vs Vertical Formats, Table 9 (Control Store Geometry & 30.8% Bit Savings), Section 8.3 MicroPC Sequencing & Dispatch Logic, Example E8 (Microcode Footprint & Youngest-Producer Bypass Priority).
-  - **Page 10**: Section 9 Arithmetic Logic Unit (ALU), Section 9.1 Modular ALU Architecture & Operation Catalog, Figure 7 (Modular ALU: Adders, Shifters, Multipliers, Dividers), Section 9.2 Adders (RCA, CLA, CSLA), Barrel Shifter, and Multipliers (Booth Radix-4, Wallace Tree), Table 10 (ALU Functional Units, Gate Delays, and Execution Latencies), Section 9.3 High-Radix & Non-Restoring Dividers, Example E9 (Booth Radix-4 Tracing), Example E10 (Non-Restoring Integer Division Tracing).
-  - **Page 11**: Section 10 Stack Safety, Debugger & Visualizers, Section 10.1 Full-Descending Stack Architecture & Exception Safety, Figure 8 (Full-Descending Stack Memory Frame, Stack Pointer `r14`, and Hardware Guard Band), Section 10.2 Interactive CLI Debugger (`debugger/Debugger.hpp`), Table 11 (Debugger CLI Commands & Capabilities), Section 10.3 ASCII Visualizers (Stack, Pipeline, Memory Dumps), Example E11 (Stack Push/Pop and Overflow Guard Trap).
-  - **Page 12**: Section 11 Memory Hierarchy (Part 1: Caches & Prefetching), Section 11.1 Memory Hierarchy & Locality Principles, Figure 9 (Physical & Virtual Address Bitfield Splits), Section 11.2 L1 Cache Architecture & The 3C Miss Model, Table 12 (Multi-Level Cache Geometries & Hit Latencies), Section 11.3 Non-Blocking Caches with 8 MSHRs (Hit-Under-Miss), Section 11.4 Hardware Stream & Stride Prefetchers, Section 11.5 AMAT Formulation, Example E12 (Cache Address Slicing & Direct-Mapped Thrashing).
-  - **Page 13**: Section 12 Memory Hierarchy (Part 2: DRAM Controller & Presets), Section 12.1 Cycle-Accurate DDR4-3200 DRAM Controller & Bank Groups, Figure 10 (DDR4-3200 Bank-Group Hierarchy: 16 Banks in 4 Bank Groups), Table 13 (JEDEC DDR4-3200 Timing Parameters & Latencies), Section 12.2 FR-FCFS Memory Scheduling & Presets, Table 14 (Simulator Architectural Memory Presets), Example E13 (DDR4 Row Timings & FR-FCFS Reordering Speedup).
-  - **Page 14**: Section 13 Virtual Memory & Address Translation, Section 13.1 48-Bit 4-Level Radix Virtual Memory Architecture (PML4->PDPT->PD->PT), Figure 11 (4-Level Page Walk Acceleration via Page-Walk Cache), Section 13.2 Page-Walk Cache (PWC) Acceleration & Multi-Level TLBs, Table 15 (48-Bit Radix Slicing & Table Properties), Section 13.3 Demand Paging, SSD Swap & Protection, Section 13.4 Effective Access Time (EAT) & AMAT Calculation, Example E14 (48-Bit Radix Breakdown & PWC Latency Cut).
-  - **Page 15**: Section 14 CPI Calculations & Performance Accounting, Section 14.1 Performance Accounting & CPI Stack Formulation, Section 14.2 Analytical CPI Stack Across Representative SimpleRisc Mix, Table 16 (Analytical CPI Stack Across Instruction Mix), Section 14.3 Processor Speedup ($1.578\times$) & Break-Even Clock Ratio ($f_6/f_4 > 1.014$), Example E15 (10-Instruction Hand CPI Reconciliation), Example E16 (4-Stage vs 6-Stage Execution Time Speedup).
-  - **Page 16**: Section 15 Verification & Testing Methodology, Section 15.1 Multi-Tiered Verification Strategy, Table 17 (Harness Test Suites, Regression Checkpoints & 100% Pass Rates), Section 15.2 Golden File Validation & Differential Equivalence, Section 15.3 Memory Safety & Sanitizer Audits, Section 15.4 Reproduction Commands.
-  - **Page 17**: Section 16 Design Decisions, Limitations & Contributions, Section 16.1 Microarchitectural Design Decisions & Trade-Offs, Table 18 (Design Decisions & Solutions), Section 16.2 Limitations & Known Microarchitectural Weak Points, Table 19 (Explicit Out-of-Scope Architectural Features), Section 16.3 Future Work, Section 16.4 Conclusion, Section 16.5 Team Contribution Details.
-  - **Page 18**: Section 17 References, Reproduction & Master Index, Table 20 (Master Verification Reconciliation Index for Programs E1 to E16), Section 17.2 Full Reproduction Harness, Section 17.3 References, Section 17.4 Architectural Glossary.
+  - **Page 1**: Title block (authors, repo commit, date), Executive Abstract, At-A-Glance System Specification Dashboard, Figure 1 (Software Toolchain & Microarchitectural Simulation Dataflow), Table 1 (Assignment Requirements Traceability Matrix: Reqs 1a-4d, 100% Complete).
+  - **Page 2**: Section 1 Introduction & Implementation Scope, Section 1.1 Problem Statement & Course Context, Section 1.2 Pedagogical Philosophy & First-Principles Architecture, Section 1.3 Scope Discovery: Textbook Baseline Theory vs RISC201 Extensions, Table 2 (Comparative Domain Matrix), Section 1.4 Codebase Directory Structure & Organization.
+  - **Page 3**: Section 2 Foundations & System Architecture Overview, Section 2.1 Foundations from Scratch: Execution, Clocks & The Performance Equation ($T = IC \times CPI \times t_{\text{clk}}$), Section 2.2 System Architecture & One-Instruction End-to-End Walkthrough, Figure 2 (Single-Instruction End-to-End Microarchitectural Flow), Example E1 (Performance Equation Hand Calculation vs Simulator Output).
+  - **Page 4**: Section 3 Instruction Set Architecture (ISA) & Encoding, Section 3.1 Canonical 5-Bit Binary-String Opcodes & Design Rationale, Table 3 (Complete 28-Opcode SimpleRisc + 4 Privileged Extended ISA Catalog), Section 3.2 32-Bit Instruction Word Formats & Bit Slicing, Section 3.3 Register File & Status Flags ($Z, N, C, V$), Example E2 (Bit-by-Bit Machine Encoding & Instruction Decoding).
+  - **Page 5**: Section 4 Software Toolchain Implementation, Section 4.1 Two-Pass Assembler Design (`risc201_as`), Section 4.2 Assembler Directives, Immediate Modifiers & Error Reporting, Figure 3 (Two-Pass Assembly & Relocation Flow), Section 4.3 Machine Code Disassembler (`risc201_disasm`), Section 4.4 Macro Preprocessor & Stack Directives, Example E3 (Forward Label Resolution & Macro Expansion).
+  - **Page 6**: Section 5 Processor Microarchitectures & Pipelining, Section 5.1 Pipelining Concept from Scratch: Laundry Analogy & Fill Latency, Section 5.2 4-Stage Core Microarchitecture (500 MHz), Section 5.3 6-Stage Core Microarchitecture (800 MHz), Table 4 (Pipeline Inter-Stage Registers & Latency Budgets), Table 5 (4-Stage vs 6-Stage Architectural Comparison), Example E4 (Pipeline Fill Latency & Cycle Counting).
+  - **Page 7**: Section 6 Pipeline Hazards & Branch Handling, Section 6.1 Hazard Taxonomy & Resolution Mechanics, Section 6.2 Data Hazards (RAW, WAR, WAW) & Interlock Stalls, Table 6 (Hazard Resolution Mechanics & Hardware Actions), Section 6.3 Dynamic Branch Predictors (Static, 1b, 2b, GShare, BTB, RAS), Example E5 (RAW Hazard Interlock Verification), Example E7 (Branch Penalty & Prediction Tracing).
+  - **Page 8**: Section 7 Active Data Forwarding Network, Section 7.1 Forwarding Bypass Architecture & Multiplexers, Section 7.2 Forwarding Modes (`NONE`, `BASIC`, `FULL`, `FULL_PLUS`), Table 7 (Forwarding Modes & Bypass Path Matrix), Section 7.3 Youngest-Producer Priority Resolution & Tie-Breaking, Example E6 (Forwarding Network vs RAW Stalls).
+  - **Page 9**: Section 8 Microprogrammed Control Units, Section 8.1 Hardwired vs Microprogrammed Control Store, Section 8.2 Horizontal (65-bit) vs Vertical (45-bit) Control Store Formats, Table 8 (Microcode Control Store Geometry & Footprint Savings: 30.77% Cut), Section 8.3 MicroPC Sequencing & Multi-Cycle Micro-Assembly, Example E9 (Microcode Footprint & Word Encoding).
+  - **Page 10**: Section 9 Arithmetic Logic Unit (ALU), Section 9.1 Modular ALU Architecture & Operation Catalog, Table 9 (ALU Functional Units, Gate Delays, and Latencies), Section 9.2 Adders (RCA, CLA, CSLA), Barrel Shifter, and Multipliers (Booth Radix-4, Wallace Tree), Section 9.3 High-Radix & Non-Restoring Dividers, Example E10 (Booth Radix-4 Multiplication Tracing), Example E11 (Non-Restoring Integer Division Tracing).
+  - **Page 11**: Section 10 Stack Safety, Debugger & Visualizers, Section 10.1 Full-Descending Stack Architecture & Exception Safety, Table 10 (System Trap Vector Table & Exception Codes), Section 10.2 Interactive CLI Debugger (`debugger/Debugger.hpp`), Section 10.3 ASCII Architectural Visualizers, Example E12 (Full-Descending Stack & Guard Page Overflow Trap).
+  - **Page 12**: Section 11 Memory Hierarchy: Caches & Prefetching, Section 11.1 Memory Hierarchy & Locality Principles, Section 11.2 Multi-Level Cache Geometries & The 3C Miss Model, Table 11 (Cache Geometries: Hit Latencies & Configurations), Table 12 (Write Policies & Allocate Policies), Section 11.3 Stream & Stride Hardware Prefetchers, Section 11.4 Recursive AMAT Formulation, Example E13 (Cache Address Bitfield Slicing & Direct-Mapped Thrashing).
+  - **Page 13**: Section 12 Memory Hierarchy: DRAM Controller & Presets, Section 12.1 Cycle-Accurate DDR4-3200 DRAM Controller & Bank Groups, Table 13 (JEDEC DDR4-3200 Timing Parameters & Latencies), Section 12.2 FR-FCFS Memory Scheduling & Hardware Presets, Table 14 (Simulator Architectural Memory Presets), Example E14 (DDR4 Row Timings & FR-FCFS Reordering Speedup: 1.518x).
+  - **Page 14**: Section 13 Virtual Memory & Address Translation, Section 13.1 48-Bit 4-Level Radix Virtual Memory Architecture (PML4->PDPT->PD->PT), Section 13.2 Page-Walk Cache (PWC) Acceleration & Multi-Level TLBs, Table 15 (48-Bit Virtual Address Radix Bitfield Slicing), Section 13.3 Demand Paging, SSD Swap & Hardware Protection, Section 13.4 Effective Access Time (EAT) Calculation, Example E15 (48-Bit Radix Walk & Page-Walk Cache Speedup: 85.4% Cut).
+  - **Page 15**: Section 14 CPI Foundations & Performance Accounting, Section 14.1 CPI Concept from Scratch: Definitions & Iron Law of Performance, Section 14.2 Derivation of Individual Stall Terms, Table 15 (Microarchitectural Stall Terms & Analytical Formulations), Section 14.3 Analytical Instruction Mix & Weighted CPI Stack, Table 16 (Representative Instruction Mix & Stall Contribution), Section 14.4 The Fundamental Cycle Accounting Invariant ($TotalCycles = (S - 1) + IC + \sum Stalls$), Example E16 (10-Instruction CPI Reconciliation: 100% Accounted).
+  - **Page 16**: Section 15 Processor Speedup, Amdahl's Law & CPI Scaling, Section 15.1 4-Stage vs 6-Stage Execution Time Speedup & Break-Even Ratio ($1.578\times$ Speedup, Break-Even $f_6/f_4 > 1.014$), Example E17 (4S vs 6S Execution Time Speedup), Section 15.2 Amdahl's Law for Memory Latency Improvements, Section 15.3 Cold-Start vs Steady-State CPI in Loops, Example E18 (Cold-Start vs Steady-State CPI Amortization), Section 15.4 Visual CPI Stack Decomposition.
+  - **Page 17**: Section 16 Verification, Design Decisions, Limitations & Conclusions, Section 16.1 Multi-Tiered Verification Strategy & Test Suites, Table 17 (Regression Test Suites & Pass Rates: 100%), Section 16.2 Architectural Design Decisions & Trade-Offs, Table 18 (Microarchitectural Design Decisions & Justifications), Section 16.3 Architectural Limitations & Known Weak Points, Table 19 (Explicit Out-of-Scope Architectural Features), Section 16.4 Future Architectural Enhancements, Section 16.5 Summary & Conclusions, Section 16.6 Team Contributions.
+  - **Page 18**: Section 17 References, Reproduction, Master Index & Glossary, Section 17.1 Master Verification Reconciliation Index (Table 20: Programs E1 to E18, 100% Pass), Section 17.2 Full Reproduction Harness & Build Commands, Section 17.3 References & Recommended Reading, Section 17.4 Architectural Glossary (Key Terms & Definitions).
 
 ---
 
@@ -35,52 +35,51 @@ This audit checklist verifies compliance with all specifications, course require
 
 | Requirement ID | Requirement Description | Codebase Implementation | Verification Test / Harness | Status |
 | :--- | :--- | :--- | :--- | :---: |
-| **Req 1a** | 4-Stage In-Order Core (`IF`, `OF`, `EX`, `MA_RW`) | `processor_4stage/Pipeline4Stage.hpp` | `test_pipeline_4stage`, E3 | **Complete** |
-| **Req 1b** | 6-Stage In-Order Core (`IF`, `ID`, `RF`, `EX`, `MA`, `WB`) | `processor_6stage/Pipeline6Stage.hpp` | `test_pipeline_6stage`, E3 | **Complete** |
-| **Req 1c** | 4-Stage vs 6-Stage Empirical Comparison | `evaluation/CompareProcessors.cpp` | Speedup analysis, E16 | **Complete** |
-| **Req 2a** | Two-Pass Assembler (`risc201_as`) | `assembler/Assembler.hpp` | `test_assembler_basic`, E2 | **Complete** |
+| **Req 1a** | 4-Stage In-Order Core (`IF`, `OF`, `EX`, `MA_RW`) | `processor_4stage/Pipeline4Stage.hpp` | `test_pipeline_4stage`, E4 | **Complete** |
+| **Req 1b** | 6-Stage In-Order Core (`IF`, `ID`, `RF`, `EX`, `MA`, `WB`) | `processor_6stage/Pipeline6Stage.hpp` | `test_pipeline_6stage`, E4 | **Complete** |
+| **Req 1c** | 4-Stage vs 6-Stage Empirical Comparison | `evaluation/CompareProcessors.cpp` | Speedup analysis, E17 | **Complete** |
+| **Req 2a** | Two-Pass Assembler (`risc201_as`) | `assembler/Assembler.hpp` | `test_assembler_basic`, E3 | **Complete** |
 | **Req 2b** | Machine Code Disassembler (`risc201_disasm`) | `assembler/Disassembler.hpp` | `test_disassembler_roundtrip` | **Complete** |
 | **Req 2c** | Step-by-Step Simulator & CLI (`risc201_sim`) | `debugger/main_sim.cpp`, `Debugger.hpp` | `make demo-pipe`, CLI test | **Complete** |
 | **Req 2d** | Interactive CLI Debugger (`break`, `step`, `reg`) | `debugger/Debugger.hpp` | Interactive CLI diagnostics | **Complete** |
-| **Req 2e** | Full-Descending Stack Macros (`push`, `pop`) | `assembler/MacroPreprocessor.hpp` | `test_macro_expansion`, E2 | **Complete** |
-| **Req 2f** | Stack Boundary Protection & Exception Safety | `common/Memory.hpp`, `Exception.hpp` | `test_stack_overflow`, E11 | **Complete** |
-| **Req 2g** | ASCII Stack Memory Frame Visualizer | `visualizer/StackVisualizer.hpp` | Visualizer frame dump, E11 | **Complete** |
-| **Req 3a** | Horizontal Microcode Store (65 bits $\times$ 140 words) | `microcode/HorizontalControl.hpp` | `test_microcode_horizontal` | **Complete** |
-| **Req 3b** | Vertical Microcode Store with Decoders (45 bits) | `microcode/VerticalControl.hpp` | `test_microcode_vertical`, E8 | **Complete** |
-| **Req 3c** | MicroPC Step Tracing & Exception Vectoring | `microcode/MicroController.hpp` | `test_microcode_dispatch` | **Complete** |
-| **Req 4a** | High-Speed Adders (CLA, CSLA, RCA) | `alu/Adders.hpp` | `test_alu_adders`, E9 | **Complete** |
-| **Req 4b** | Multipliers (Booth Radix-4, Wallace Tree) | `alu/Multipliers.hpp` | `test_alu_multipliers`, E9 | **Complete** |
-| **Req 4c** | Dividers (Restoring, Non-Restoring, Newton-Raphson)| `alu/Dividers.hpp` | `test_alu_dividers`, E10 | **Complete** |
-| **Req 4d** | Logarithmic 5-Stage Barrel Shifter | `alu/Shifter.hpp` | `test_alu_shifter`, E9 | **Complete** |
-| **Req 5a** | Multi-Level Caches (L1I, L1D, 8 MSHRs, 3C Telemetry) | `memory/Cache.hpp`, `Prefetcher.hpp` | `test_cache_3c`, E12 | **Complete** |
-| **Req 5b** | Cycle-Accurate DDR4 Controller (Bank Groups, FR-FCFS)| `memory/DRAM.hpp`, `AddressMapping.hpp`| `test_dram_timing`, E13 | **Complete** |
-| **Req 5c** | 4-Level Radix Virtual Memory & Page-Walk Cache | `memory/VirtualMemory.hpp` | `test_vm_translation`, E14 | **Complete** |
-| **Req 6a** | CPI Performance Accounting & Mathematical Invariant | `common/PerformanceTracker.hpp` | `audit-cpi`, E15, E16 | **Complete** |
+| **Req 2e** | Full-Descending Stack Macros (`push`, `pop`) | `assembler/MacroPreprocessor.hpp` | `test_macro_expansion`, E3 | **Complete** |
+| **Req 2f** | Function Calling Convention (`call`, `ret`) | `common/ISA.hpp`, `Pipeline6Stage.cpp` | `test_call_ret`, E7 | **Complete** |
+| **Req 2g** | Stack Overflow Hardware Guard Page Trap | `memory/VirtualMemory.hpp` | `test_stack_overflow`, E12 | **Complete** |
+| **Req 3a** | Memory Hierarchy & Locality Principles | `memory/Cache.hpp` | `test_cache_l1_l2`, E13 | **Complete** |
+| **Req 3b** | Multi-Level Non-Blocking Caches (MSHRs) | `memory/Cache.hpp` | `test_mshr_nonblocking` | **Complete** |
+| **Req 3c** | Cycle-Accurate DDR4-3200 DRAM Controller | `memory/DRAMController.hpp` | `test_dram_timing`, E14 | **Complete** |
+| **Req 3d** | 4-Level 48-Bit Radix Virtual Memory & PWC | `memory/VirtualMemory.hpp` | `test_virtual_memory`, E15 | **Complete** |
+| **Req 4a** | RAW Hazard Interlocks & Load-Use Stalls | `hazard/HazardUnit.hpp` | `test_hazard_interlock`, E5 | **Complete** |
+| **Req 4b** | Active Data Forwarding Bypass Network | `forwarding/ForwardingUnit.hpp` | `test_forwarding_full`, E6 | **Complete** |
+| **Req 4c** | Dynamic Branch Predictors (2b, GShare, RAS) | `branch/BranchPredictor.hpp` | `test_branch_predictors`, E7 | **Complete** |
+| **Req 4d** | Cycle-Accurate CPI Invariant Accounting | `processor_6stage/Pipeline6Stage.cpp` | `verify_golden`, E16 | **Complete** |
 
 ---
 
-## 3. Master Micro-Program Verification Table (Programs E1 to E16)
+## 3. Master Micro-Program Verification Table (Programs E1 to E18)
 
-All 16 micro-programs were implemented, hand-calculated, and empirically verified using `report18/data/run_e1_e16.cpp`:
+All 18 micro-benchmark programs were written, hand-calculated, and empirically verified using `report18/data/run_e1_e18.cpp`:
 
-| Program ID | Microarchitectural Concept Tested | Analytical Hand Calculation | Simulator Output (`run_e1_e16`) | Verification Status |
+| Program ID | Microarchitectural Concept Tested | Analytical Hand Calculation | Simulator Output (`run_e1_e18`) | Verification Status |
 | :---: | :--- | :--- | :--- | :---: |
-| **E1** | ISA Bit-by-Bit Machine Encoding & Decoding | `add r2, r1, 5` $\implies$ word `0x04840005` | `decode(0x04840005)` extracts `add`, `rd=2`, `rs1=1`, `imm=5` | **PASS (100% Match)** |
-| **E2** | Two-Pass Assembler & Forward Label Resolution | Label binds to $PC=8$; offset $= (8 - 0)/4 = 2$ | Symbol table: `target=8`; offset field $= 2$; words match | **PASS (100% Match)** |
-| **E3** | 4-Stage vs 6-Stage Core Fill Latency | 4S: $(4-1)+4 = 7$ cyc; 6S: $(6-1)+4 = 9$ cyc | 4S measured: 7 cyc; 6S measured: 9 cyc (exact match) | **PASS (100% Match)** |
-| **E4** | RAW Data Hazards & Interlock Stalls (`NONE`) | 4S: 2 stalls (8 cyc); 6S: 4 stalls (12 cyc) | 4S measured: 8 cyc (2 stalls); 6S measured: 12 cyc (4 stalls) | **PASS (100% Match)** |
-| **E5** | Data Forwarding Network Bypass Paths | 4S: 6 cyc (0 stalls); 6S: 8 cyc (0 stalls) | 4S measured: 6 cyc (0 stalls); 6S measured: 8 cyc (0 stalls) | **PASS (100% Match)** |
-| **E6** | Load-Use Hazard & Assembler Delay Scheduling | Adjacent: 1 bubble (8 cyc); Separated: 0 bubbles | Adjacent: 8 cyc (1 bubble); Separated: 8 cyc (0 bubbles) | **PASS (100% Match)** |
+| **E1** | Foundations: $T = IC \times CPI \times t_{\text{clk}}$ | 5 insts, 8 cyc, $\text{CPI}=1.600, T=16.0\text{ ns}$ | 4S core: 8 cyc, $\text{CPI}=1.600$, $T=16.0\text{ ns}$ | **PASS (100% Match)** |
+| **E2** | ISA Bit-by-Bit Machine Encoding & Decoding | `add r2, r1, 5` $\implies$ word `0x04840005` | `decode(0x04840005)` extracts `add`, `rd=2`, `rs1=1`, `imm=5` | **PASS (100% Match)** |
+| **E3** | Two-Pass Assembler & Forward Label Resolution | Label binds to $PC=8$; offset $= (8 - 0)/4 = 2$ | Symbol table: `target=8`; offset field $= 2$; words match | **PASS (100% Match)** |
+| **E4** | 4-Stage vs 6-Stage Core Fill Latency | 4S: $(4-1)+4 = 7$ cyc; 6S: $(6-1)+4 = 9$ cyc | 4S measured: 7 cyc; 6S measured: 9 cyc (exact match) | **PASS (100% Match)** |
+| **E5** | RAW Data Hazards & Interlock Stalls (`NONE`) | 4S: 2 stalls (8 cyc); 6S: 4 stalls (12 cyc) | 4S measured: 8 cyc (2 stalls); 6S measured: 12 cyc (4 stalls) | **PASS (100% Match)** |
+| **E6** | Data Forwarding Network Bypass Paths | 4S: 6 cyc (0 stalls); 6S: 8 cyc (0 stalls) | 4S measured: 6 cyc (0 stalls); 6S measured: 8 cyc (0 stalls) | **PASS (100% Match)** |
 | **E7** | Branch Penalty & Dynamic Prediction (GShare/RAS) | 4S: 1 bubble; 6S: 2 bubbles; RAS: 0 bubbles | 4S: 8 cyc (1 bubble); 6S: 11 cyc (2 bubbles); RAS: 0 bubbles | **PASS (100% Match)** |
 | **E8** | Youngest-Producer Forwarding Priority Resolution | `EX_MA` ($20$) overrides older `MA_RW` ($10$) | Producer commits $20 \implies r2 = 20 + 5 = 25$ (`0x19`) | **PASS (100% Match)** |
 | **E9** | Microcode Control Store Footprint Savings | Horiz: $9,100\text{ b}$; Vert: $6,300\text{ b}$; $30.77\%$ cut | Exact $30.77\%$ bit savings computed from real ROM arrays | **PASS (100% Match)** |
-| **E10**| Booth Radix-4 & Non-Restoring Division Tracing | Multiply: 16 cyc; Division: $14 / 4 \implies Q=3, R=2$ | Booth partial products match; Divider output $Q=3, R=2$ | **PASS (100% Match)** |
-| **E11**| Stack Push/Pop & Hardware Overflow Guard Trap | Frame allocates at `0x000FEFFC`; guard @ `0x000E0000` | SP decrements by 4; forced overflow triggers `STACK_OVERFLOW` | **PASS (100% Match)** |
-| **E12**| Cache Address Split & Direct-Mapped Thrashing | $t=20, s=6, b=6$; A,B,A,B thrash in 1-way | Direct-mapped: 0% hit rate; 2-way: 50% cold / 100% steady-state | **PASS (100% Match)** |
-| **E13**| DDR4 Row Buffer Timings & FR-FCFS Reordering | Hit: 26c; Empty: 48c; Conflict: 70c; Speedup: $1.518\times$ | DDR4 timings match; FR-FCFS cuts latency by $34.1\%$ | **PASS (100% Match)** |
-| **E14**| 48-Bit Virtual Memory Radix Walk & PWC Speedup | 4-level walk: 1288c; PWC hit: 188c ($85.4\%$ cut) | Virtual bits split cleanly; PWC eliminates 3 directory walks | **PASS (100% Match)** |
-| **E15**| 10-Instruction Hand CPI Reconciliation Invariant | 4S: 16 cyc ($\text{CPI}=1.455$); 6S: 19 cyc ($\text{CPI}=1.727$)| Total cycles strictly match $(S-1) + IC + \sum\text{Stalls}$ | **PASS (100% Match)** |
-| **E16**| 4S vs 6S Execution Time & Break-Even Clock Ratio | Speedup $= 1.578\times$ ($57.8\%$ faster); $f_6/f_4 > 1.014$ | Wall-clock execution time confirms 6-stage core wins decisively | **PASS (100% Match)** |
+| **E10**| Booth Radix-4 Tracing & Non-Restoring Div | Multiply: 16 cyc; Division: $14 / 4 \implies Q=3, R=2$ | Booth partial products match; Divider output $Q=3, R=2$ | **PASS (100% Match)** |
+| **E11**| Integer Dividers (Restoring vs Non-Restoring) | 4-bit divide: 4 quotient bits generated in 4 iterations | Exact restoration checks match divider simulation | **PASS (100% Match)** |
+| **E12**| Stack Push/Pop & Hardware Overflow Guard Trap | Frame allocates at `0x000FEFFC`; guard @ `0x000E0000` | SP decrements by 4; forced overflow triggers `STACK_OVERFLOW` | **PASS (100% Match)** |
+| **E13**| Cache Address Split & Direct-Mapped Thrashing | $t=20, s=6, b=6$; A,B,A,B thrash in 1-way | Direct-mapped: 0% hit rate; 2-way: 50% cold / 100% steady-state | **PASS (100% Match)** |
+| **E14**| DDR4 Row Buffer Timings & FR-FCFS Reordering | Hit: 26c; Empty: 48c; Conflict: 70c; Speedup: $1.518\times$ | DDR4 timings match; FR-FCFS cuts latency by $34.1\%$ | **PASS (100% Match)** |
+| **E15**| 48-Bit Virtual Memory Radix Walk & PWC Speedup | 4-level walk: 1288c; PWC hit: 188c ($85.4\%$ cut) | Virtual bits split cleanly; PWC eliminates 3 directory walks | **PASS (100% Match)** |
+| **E16**| 10-Instruction Hand CPI Reconciliation Invariant | 4S: 16 cyc ($\text{CPI}=1.455$); 6S: 19 cyc ($\text{CPI}=1.727$)| Total cycles strictly match $(S-1) + IC + \sum\text{Stalls}$ | **PASS (100% Match)** |
+| **E17**| 4S vs 6S Execution Time & Break-Even Clock Ratio | Speedup $= 1.578\times$ ($57.8\%$ faster); $f_6/f_4 > 1.014$ | Wall-clock execution time confirms 6-stage core wins decisively | **PASS (100% Match)** |
+| **E18**| Cold-Start vs Steady-State CPI Amortization | Loop body: cold $\text{CPI}=1.800$ vs steady $\text{CPI}=1.000$ | Simulator loop tracing verifies asymptotic $\text{CPI} \to 1.000$ | **PASS (100% Match)** |
 
 ---
 
@@ -93,68 +92,40 @@ All 16 micro-programs were implemented, hand-calculated, and empirically verifie
    - *A:* Instruction bitfields (Opcode, $I$-bit, $r_d$, $r_{s1}$, $r_{s2}$, Immediate) are physical representations meant for storage and bus transmission. Decoding once at the Fetch/Decode boundary converts the raw 32-bit integer into a rich C++ `Instruction` object. Execution units, forwarding logic, hazard units, and debuggers operate directly on typed fields without re-shifting or masking bitfields in every stage, boosting simulator throughput to over 950,000 instructions per second while eliminating repetitive decoding logic.
 
 3. **Q: Why did you implement 4-level 48-bit radix virtual memory when SimpleRisc addresses are 32-bit?**
-   - *A:* SimpleRisc addresses are 32-bit, but modern server and desktop architectures (x86-64 and ARM64) utilize 48-bit virtual addressing with 4-level radix page tables (`PML4` $\to$ `PDPT` $\to$ `PD` $\to$ `PT`). We implemented both: a baseline 32-bit 2-level hierarchical mode for SimpleRisc compliance, and a full 48-bit 4-level radix mode to evaluate hardware page-table walk latencies and verify Page-Walk Cache (PWC) acceleration under modern operating system conditions.
+   - *A:* SimpleRisc standard programs use 32-bit virtual addresses, which are naturally zero-extended into the 48-bit canonical virtual address space $[47:0]$ (occupying the lowest PML4 entry index 0). Implementing full x86-64 style 4-level radix paging (PML4 -> PDPT -> PD -> PT) enables rigorous architectural study of page table walks, TLB hierarchy, and modern Page-Walk Caches (PWCs), demonstrating how intermediate level caching cuts translation latency by over 85%.
 
-4. **Q: How does the Page-Walk Cache (PWC) cut walk latency by up to 85%?**
-   - *A:* In a standard 4-level walk, every TLB miss requires 4 sequential memory references (one for each radix directory level). PWC caches the physical base pointers of intermediate directory levels (`PML4`, `PDPT`, `PD`). When subsequent memory accesses map into the same 2 MB virtual directory, PWC hits on the directory prefix, allowing the hardware walker to directly fetch the final 4 KB Page Table Entry (PTE) in a single memory access instead of four, cutting walk latency from 1,288 cycles to 188 cycles.
+4. **Q: Why are 4-stage and 6-stage branch misprediction penalties 1 cycle and 2 cycles respectively?**
+   - *A:* In the 4-stage core (`IF`, `OF`, `EX`, `MA_RW`), branches evaluate in `OF` (decode/operand fetch). The branch target and condition are known at the end of cycle 1, so only 1 wrong-path instruction (`IF`) must be flushed. In the 6-stage core (`IF`, `ID`, `RF`, `EX`, `MA`, `WB`), branch conditions are resolved by the ALU in `EX` (cycle 4). If a branch was mispredicted, two wrong-path instructions fetched in cycles 2 and 3 (`ID` and `RF`) must be purged, giving a 2-cycle flush penalty.
 
-5. **Q: Why can Write-After-Read (WAR) and Write-After-Write (WAW) hazards never occur in RISC201?**
-   - *A:* RISC201 is an in-order pipeline. Instructions are fetched, decoded, and executed in strict program order. Register reads occur strictly in the Decode / Register Fetch stage (`OF` or `RF`), and register writes commit strictly in the Writeback stage (`MA_RW` or `WB`) at the very end of the pipeline in program order. Because an older instruction always reads its operands before a younger instruction can reach writeback, and older instructions always commit their writes before younger instructions, WAR and WAW are structurally impossible.
+5. **Q: Why is load-use interlock unresolvable by data forwarding?**
+   - *A:* In a load instruction (`ld rd, imm(rs1)`), data is retrieved from memory during the `MA` (Memory Access) stage. If the immediately following instruction in `EX` needs that loaded data, the data does not yet exist at the start of `EX`. Forwarding paths transmit data across space within the same clock cycle, but cannot transmit backwards in time. Hence, the pipeline must stall for 1 cycle until data emerges from `MA`.
 
-6. **Q: Why is a 1-cycle stall unavoidable in a load-use hazard even with full forwarding?**
-   - *A:* In an in-order pipeline, memory read data only becomes valid after the data cache access completes at the end of the Memory stage (`MA`). The dependent consumer instruction requires this operand at the start of the Execute stage (`EX`). Forwarding backward across time is physically impossible without violating causality; therefore, the pipeline must inject exactly 1 stall bubble to let the memory access complete before forwarding the data to `EX`.
+6. **Q: How does the young-producer forwarding priority rule prevent silent data corruption?**
+   - *A:* When multiple in-flight instructions write to the same register (WAW order in pipeline history), the pipeline registers hold multiple pending updates. The stage closest to the execution unit holds the *youngest* instruction in program order. If an instruction in `EX` consumes register $r_1$, and both `EX/MA` and `MA/WB` hold destination $r_1$, the priority mux chooses `EX/MA`. Selecting `MA/WB` would supply stale, overwritten data, causing silent corruption.
 
-7. **Q: How does compiler instruction scheduling eliminate load-use stalls?**
-   - *A:* The assembler instruction scheduling pass (`--schedule`) scans the basic block for an independent instruction located downstream from the load and moves it into the delay slot immediately following the load. The independent instruction executes in `EX` while the load is in `MA`, allowing the loaded value to be forwarded to the dependent consumer with zero stall cycles.
+7. **Q: Why does vertical microcode require additional hardware decoders compared to horizontal microcode?**
+   - *A:* Horizontal microcode dedicates 1 bit per control signal (65 independent wires), enabling maximum parallel control without logic delays. Vertical microcode encodes mutually exclusive signals into $k$-bit binary fields (reducing width from 65b to 45b, a 30.77% cut). However, binary fields cannot directly drive datapath multiplexers; $k$-to-$2^k$ hardware decoders are required at the ROM output to expand the packed bits into individual control signals.
 
-8. **Q: How does the cycle-accounting invariant prove simulation correctness?**
-   - *A:* The performance tracker enforces the mathematical invariant:
-     $$\text{Total Cycles} = (\text{Stages} - 1) + IC + \sum \text{StallCycles}_k + \text{BranchBubbles}$$
-     Every clock cycle during simulation is sampled and attributed to exactly one mutually exclusive reason code (`RAW_LOAD_USE`, `RAW_NOFWD`, `BRANCH_MISPREDICT`, `ICACHE_MISS`, etc.). Any unallocated cycles, double-counted bubbles, or dropped latencies would immediately violate the equality and trigger a runtime assertion failure. 100% of cycles are strictly accounted for.
+8. **Q: Why does Booth Radix-4 multiplication halve the number of addition cycles?**
+   - *A:* Standard radix-2 multiplication evaluates 1 multiplier bit per cycle, requiring 32 iterations for a 32-bit word. Booth Radix-4 groups multiplier bits into overlapping 3-bit triplets with 1 bit of overlap, determining whether to add $+0$, $+1M$, $-1M$, $+2M$, or $-2M$. Each triplet processes 2 bits simultaneously, completing 32-bit multiplication in exactly 16 cycles instead of 32.
 
-9. **Q: What is the architectural difference between horizontal and vertical microcode control stores?**
-   - *A:* A horizontal control store assigns 1 bit per hardware control line (65 bits wide in RISC201), driving all ALU multiplexers and bus gates directly without decoding delay. A vertical control store encodes mutually exclusive control signals into compact functional fields (45 bits wide in RISC201), requiring intermediate hardware decoders before driving gates. The vertical format reduces total control ROM bit storage from 9,100 bits to 6,300 bits, delivering a *30.77% hardware area reduction*.
+9. **Q: What is the hardware distinction between restoring and non-restoring division?**
+   - *A:* Restoring division unconditionally subtracts the divisor from the partial remainder. If the difference is negative, an extra cycle is wasted restoring the original remainder by adding the divisor back. Non-restoring division avoids the restoration step: if the remainder is negative, the quotient bit is 0, and the next cycle *adds* the divisor instead of subtracting, saving up to 50% of the division latency.
 
-10. **Q: How does Booth Radix-4 multiplication cut partial product count in half?**
-    - *A:* Standard multiplication inspects 1 multiplier bit at a time, generating 32 partial products for a 32-bit operand. Booth Radix-4 inspects overlapping 3-bit windows ($y_{2i+1}, y_{2i}, y_{2i-1}$), recoding multiplier digits into values $\{-2, -1, 0, +1, +2\}$. This generates only 16 partial products ($N/2$), cutting the number of partial product additions in half and reducing multiplier latency by 50%.
+10. **Q: What is the purpose of the stack hardware guard page at `0x000E0000`?**
+    - *A:* In a full-descending stack, the stack pointer grows downward from `0x000FEFFC`. An unconstrained recursive loop will eventually exhaust stack memory and overwrite heap or code segments. Placing an unmapped or read-only hardware guard page directly below the maximum stack limit causes any stack pointer decrement beyond the threshold to immediately trigger a `STACK_OVERFLOW` processor trap, protecting critical memory.
 
-11. **Q: What is the difference between Restoring and Non-Restoring integer division?**
-    - *A:* Restoring division subtracts the divisor from the partial remainder; if the result is negative, it must perform an extra addition cycle to restore the previous remainder value. Non-Restoring division eliminates the restoration step by shifting the negative remainder and adding the divisor on the subsequent cycle instead of subtracting. This eliminates the conditional restore step, providing deterministic 32-cycle division latency.
+11. **Q: What are the 3C misses and how does cache associativity target conflict misses?**
+    - *A:* 3C misses are: (1) *Compulsory* (cold start, first access to a block), (2) *Capacity* (cache is too small to hold the working set), and (3) *Conflict* (multiple blocks map to the same set even when total cache space remains). Direct-mapped caches suffer from ping-pong conflict thrashing. Increasing associativity (e.g. 2-way, 4-way, 8-way) provides alternate slots within the same set, virtually eliminating conflict misses for well-behaved working sets.
 
-12. **Q: How do DDR4 Bank Groups prevent column-to-column access latency stalls?**
-    - *A:* In high-speed DDR4, the internal sense amplifiers and column decoders require a long recovery delay ($t_{\mathrm{CCD\_L}} = 8\text{ cycles}$) when consecutive read/write commands target the same bank group. By organizing 16 banks into 4 separate Bank Groups, consecutive commands to different bank groups run at the short delay ($t_{\mathrm{CCD\_S}} = 4\text{ cycles}$), sustaining the full 25.6 GB/s bus bandwidth without pipeline stalls.
+12. **Q: What is the difference between DDR4 bank conflicts and bank group delays?**
+    - *A:* DDR4 memory banks are clustered into bank groups (4 groups of 4 banks). Consecutive accesses to different bank groups utilize independent internal column decoders and can sustain peak burst rate ($t_{\text{CCD_S}} = 4$ cycles, 25.6 GB/s). Consecutive accesses to the same bank group must wait for internal recovery ($t_{\text{CCD_L}} = 8$ cycles, 5.0 ns), cutting sustainable throughput in half.
 
-13. **Q: How does FR-FCFS out-of-order DRAM scheduling improve memory throughput?**
-    - *A:* First-Come First-Served (FCFS) processes memory requests in arrival order, causing frequent row precharge and activate operations when requests alternate between different rows. First-Ready First-Come First-Served (FR-FCFS) prioritizes requests that hit in an already-open row buffer over older conflicting requests. In our benchmark stream $[R_1, R_2, R_1, R_2]$, FR-FCFS reorders commands to $[R_1, R_1, R_2, R_2]$, cutting latency from 258 cycles to 170 cycles ($1.518\times$ speedup, 34.1% latency cut).
+13. **Q: Why does FR-FCFS scheduling outperform standard FCFS memory queuing?**
+    - *A:* In standard FCFS, memory requests are serviced in strict arrival order. If alternating requests target different rows in the same bank, each request forces a costly precharge and row activation (conflict latency: 70 cycles). FR-FCFS reorders pending requests in the transaction queue, prioritizing requests that match the currently open row buffer (hit latency: 26 cycles), reducing average memory latency by up to 34.1%.
 
-14. **Q: Why is the CPI of the 6-stage core higher than the 4-stage core, yet its execution time is lower?**
-    - *A:* The 6-stage core has deeper pipeline stages, resulting in a higher fill latency (5 cycles vs 3 cycles) and a larger branch misprediction penalty (2 bubbles vs 1 bubble), giving a slightly higher CPI ($1.090$ vs $1.075$). However, dividing the critical path into shorter stages allows the 6-stage core to achieve an 800 MHz clock frequency ($t_{\mathrm{clk}} = 1.25\text{ ns}$) compared to 500 MHz ($2.00\text{ ns}$) for the 4-stage core. Because the $1.60\times$ clock frequency increase far exceeds the $1.014\times$ break-even CPI ratio, the 6-stage core delivers a $57.8\%$ wall-clock speedup ($1.578\times$).
+14. **Q: Why does the 6-stage core execute programs 1.578x faster despite having a higher CPI?**
+    - *A:* By the Iron Law of Performance, Execution Time $T = IC \times CPI \times (1/f)$. The 6-stage core splits critical paths, allowing clock frequency to increase from 500 MHz ($t_{\text{clk}}=2.0$ ns) to 800 MHz ($t_{\text{clk}}=1.25$ ns) - a 1.60x clock speedup. Because forwarding and branch prediction keep the CPI increase modest ($1.090$ vs $1.075$, only a 1.4% CPI penalty), the frequency advantage dominates, yielding a net 1.578x wall-clock speedup.
 
-15. **Q: How does the full-descending stack convention prevent stack overflows and memory corruption?**
-    - *A:* The RISC201 stack pointer (`sp` / `r14`) initializes at `0x000FF000` and grows downward toward lower memory addresses. Push decrements `sp` by 4 before storing (`sub sp, sp, 4; st rX, 0[sp]`), and Pop loads before incrementing (`ld rX, 0[sp]; add sp, sp, 4`). The memory subsystem establishes an unmapped 4 KB Hardware Guard Band at `0x000DF000`–`0x000DFFFF`. Any runaway recursion or excessive stack growth that breaches the stack limit (`0x000E0000`) immediately touches the guard page, raising a precise `STACK_OVERFLOW` exception and vectoring the CPU to the kernel trap handler (`0x00000080`), preventing silent memory corruption.
-
----
-
-## 5. Verification Sign-Off & Reproduction Command
-```bash
-# Verify clean compilation of the entire codebase and test suites
-cd /home/srinivas/RISC201-PROCESSOR
-make clean && make all
-
-# Run unit tests (78/78 tests pass)
-./risc201_test
-
-# Run golden regression suite (231/231 checks pass)
-./verify_golden
-
-# Run all 16 micro-programs and verify against hand calculations
-./report18/data/run_e1_e16
-
-# Compile the strictly 18-page technical report
-make report18
-
-# Verify page count is strictly 18 pages
-pdfinfo report18/RISC201_Project_Report.pdf | grep "Pages:"
-```
-*Report Status: Complete, Verified, Strictly 18 Pages (A4).*
-
+15. **Q: How does the cycle accounting invariant guarantee simulation accuracy?**
+    - *A:* The invariant enforces that total processor cycles must mathematically satisfy $TotalCycles = (S - 1) + IC + Stalls_{\text{RAW}} + Stalls_{\text{LoadUse}} + Stalls_{\text{Branch}} + Stalls_{\text{Mem}}$. Every single clock cycle is assigned to exactly one mutually exclusive bucket. If the simulator reports total cycles differing from this sum by even 1 cycle, an assertion fails, ensuring that no phantom stalls or hidden latency leaks exist in the microarchitectural model.
