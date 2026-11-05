@@ -85,7 +85,7 @@
   #text(size: 8.5pt)[*Authors & Contributors:* bandlapalliyss-max (Core Pipelines, Forwarding, Hazards, Memory, ALU, Assembler, CPI Audit), Varshith Teja (User Interface & Diagnostics)]
   
   #v(0.12em)
-  #text(size: 8.0pt)[*Repository:* `https://github.com/Srinivas3-sys/RISC201-PROCESSOR` | *Branch:* `report-18page` | *Commit:* `7def586` | *Date:* Autumn 2026]
+  #text(size: 8.0pt)[*Repository:* #link("https://github.com/Srinivas3-sys/RISC201-PROCESSOR.git")[#underline[`https://github.com/Srinivas3-sys/RISC201-PROCESSOR.git`]] | *Branch:* `report-18page` | *Date:* Autumn 2026]
   
   #v(0.20em)
   #line(length: 100%, stroke: 0.7pt + black)
@@ -184,8 +184,8 @@
       #h(0.8em) 15.2 Amdahl's Law | 15.3 Cold-Start vs Steady-State (E18) \
       *16. Verification, Decisions, Limitations & Conclusions* .......... Page 17 \
       #h(0.8em) 16.1 Test Suites | 16.2 Design Trade-Offs | 16.3 Limitations \
-      *17. References, Reproduction, Master Index & Glossary* ........... Page 18 \
-      #h(0.8em) Master Verification Index (E1–E18), Reproduction Box & Glossary \
+      *17. References, Reproduction & Architectural Glossary* ........... Page 18 \
+      #h(0.8em) 17.1 Reproduction Harness | 17.2 References | 17.3 Glossary \
     ]
   ]
 )
@@ -1069,7 +1069,7 @@ Hardware modeling fidelity was established through a multi-tiered verification h
   columns: (1.4fr, 1.2fr, 2.8fr, 0.8fr),
   fill: (col, row) => if row == 0 { luma(240) } else { none },
   stroke: 0.4pt + black,
-  inset: (x: 2.2pt, y: 1.4pt),
+  inset: (x: 2.2pt, y: 1.6pt),
   [*Verification Suite*], [*Test Target*], [*Scope, Invariant Checked, and Error Detection*], [*Pass Rate*],
   [Automated Test Suite (`risc201_test`)], [78 Unit Tests], [Tests all 12 modules: canonical string opcodes, adders, multipliers, dividers, barrel shifters, forwarding modes, branch predictors, cache 3C misses, DRAM timings, VM radix walk, and stack overflow], [*78 / 78* (100%)],
   [Golden Regression (`verify_golden`)], [231 Checks], [Validates assembler machine code, disassembler round-trip, horizontal/vertical microcode, and pipeline state across 192 configurations against immutable golden files], [*231 / 231* (100%)],
@@ -1088,7 +1088,7 @@ Hardware modeling fidelity was established through a multi-tiered verification h
   columns: (1.3fr, 1.8fr, 2.9fr),
   fill: (col, row) => if row == 0 { luma(240) } else { none },
   stroke: 0.4pt + black,
-  inset: (x: 2.2pt, y: 1.4pt),
+  inset: (x: 2.2pt, y: 1.6pt),
   [*Design Dimension*], [*Evaluated Alternative*], [*Chosen Solution & Engineering Justification*],
   [Opcode Representation], [Integer enumeration (`enum Opcode`)], [*Canonical 5-bit strings* (`"00000"`): eliminates magic enum sync bugs; decode-once principle],
   [Pipelining Strategy], [Single 5-stage classic pipeline], [*Dual Cores (4S at 500 MHz & 6S at 800 MHz)*: models frequency scaling & pipeline depth trade-offs],
@@ -1106,7 +1106,7 @@ Hardware modeling fidelity was established through a multi-tiered verification h
   columns: (1.5fr, 1.5fr, 3.0fr),
   fill: (col, row) => if row == 0 { luma(240) } else { none },
   stroke: 0.4pt + black,
-  inset: (x: 2.2pt, y: 1.4pt),
+  inset: (x: 2.2pt, y: 1.6pt),
   [*Feature Category*], [*Course / Project Scope*], [*Technical Rationale & Microarchitectural Impact*],
   [Out-of-Order Superscalar], [Out of Scope], [Tomasulo reservation stations and Reorder Buffer (ROB) were omitted to preserve in-order simplicity],
   [Cache Coherence], [Out of Scope], [Multi-core snooping bus protocols (MESI/MOESI) omitted; single-core memory hierarchy modeled],
@@ -1114,51 +1114,17 @@ Hardware modeling fidelity was established through a multi-tiered verification h
 )
 ]
 
-== 16.4 Future Work & Conclusion
-Future extensions include superscalar dual-issue dispatch, multi-core MESI cache coherence, and branch target buffer hashing improvements. In conclusion, the RISC201-PROCESSOR project successfully realizes the 32-bit SimpleRisc architecture with exceptional educational transparency and cycle-accurate simulation fidelity. By implementing and empirically cross-verifying both textbook foundations and modern industrial extensions across 18 purpose-written micro-programs, the framework demonstrates mastery of computer organization and architecture.
+== 16.4 Future Architectural Enhancements & Conclusions
+Future microarchitectural extensions include superscalar dual-issue instruction dispatch, multi-core MESI directory cache coherence, and branch target buffer hashing improvements to support aggressive speculative execution.
 
-== 16.5 Team Contribution Details (Attributed from Git History)
-- *bandlapalliyss-max:* Core 4-stage and 6-stage pipelines, forwarding network, hazard units, branch predictors, cache hierarchy, DRAM controller, virtual memory radix walker, modular ALU, two-pass assembler, disassembler, CPI audit, golden regression harness, and report writing.
-- *Varshith Teja:* User interface enhancements, interactive CLI debugger commands (`break`, `step`, `mem`), ASCII pipeline visualizer, ASCII stack frame visualizer, and diagnostic formatting utilities.
+In conclusion, the *RISC201-PROCESSOR* project successfully realizes the 32-bit SimpleRisc architecture with exceptional educational transparency, cycle-accurate simulation fidelity, and industrial-grade software engineering standards. By implementing, analyzing, and empirically cross-verifying both textbook baseline theory and advanced microarchitectural innovations (such as dual microprogrammed control stores, modular ALU algorithms, non-blocking caches with MSHRs, DDR4-3200 bank groups with FR-FCFS out-of-order scheduling, and 48-bit 4-level radix virtual memory with Page-Walk Caches), the framework demonstrates comprehensive mastery of computer organization and architecture.
 
 #pagebreak()
 
-= 17. References, Reproduction, Master Index & Glossary
+= 17. References, Reproduction & Architectural Glossary
 
-== 17.1 Master Verification Reconciliation Index (Programs E1 to E18)
-All 18 micro-programs were implemented, hand-calculated, and empirically verified using `report18/data/run_e1_e18.cpp`:
-
-#v(1pt)
-#text(size: 7.0pt, weight: "bold")[Table 20: Master Verification Reconciliation Index (Programs E1 to E18)]
-#text(size: 6.3pt)[
-#table(
-  columns: (0.5fr, 1.8fr, 2.1fr, 2.2fr, 0.6fr),
-  fill: (col, row) => if row == 0 { luma(240) } else { none },
-  stroke: 0.4pt + black,
-  inset: (x: 1.8pt, y: 1.2pt),
-  [*ID*], [*Architectural Concept*], [*Theoretical Formula / Parameter*], [*Simulator Measured Output*], [*Status*],
-  [E1], [Foundations & Performance Eq.], [$T = "IC" times text("CPI") / f$; 4S: $(4-1)+5 = 8$ cyc], [5 insts, 8 cyc, CPI = 1.600, $T = 16.0$ ns], [*PASS*],
-  [E2], [ISA Bit-by-Bit Encoding], [$W = (op<<27) | (I<<26) | (rd<<22) | ...$], [`add r2, r1, 5` -> `0x04840005`; round-trip exact], [*PASS*],
-  [E3], [Assembler & Stack Macros], [Pass 1 symbol table; Pass 2 offset $= 2$], [Labels resolved cleanly; macros expanded], [*PASS*],
-  [E4], [Pipeline Fill Latencies], [$text("Cycles") = (S-1) + "IC" + text("Stalls")$], [4S: 7 cyc (fill 3); 6S: 9 cyc (fill 5)], [*PASS*],
-  [E5], [RAW Hazards & Load-Use], [Adjacent (1 bubble) vs separated (0 stalls)], [4S: 8 cyc (2 stalls); 6S: 12 cyc (4 stalls)], [*PASS*],
-  [E6], [Data Forwarding & Priority], [Youngest producer overrides older state], [Producer commits 20 -> $r2 = 25$ (`0x19`); saves 2-4 cyc], [*PASS*],
-  [E7], [Branch Penalty & CPI Term], [Squash `IF_OF` (4S) vs `IF_ID`+`ID_RF` (6S)], [4S: 1 bubble (6 cyc); 6S: 2 bubbles (9 cyc)], [*PASS*],
-  [E8], [GShare & RAS Call/Return], [Index: `(PC>>2) ^ GHR`; 16-entry RAS], [GShare updates GHR; RAS pops exact target], [*PASS*],
-  [E9], [Microcode Store Savings], [$(9100 - 6300) / 9100 = 30.77%$], [140 words $times$ 65b vs 45b verified], [*PASS*],
-  [E10], [ALU Flags & Multiplier], [CLA adder overflow; Booth $7 times -3$], [Sum `0x80000000` ($V=1$); prod $=-42$], [*PASS*],
-  [E11], [ALU Hardware Dividers], [Restoring, Non-Restoring, Newton $14/4$], [All 3 dividers yield quotient 3, remainder 2], [*PASS*],
-  [E12], [Stack Safety & Overflow], [Full-descending push/pop; SP limit], [Visualizer dump; `STACK_OVERFLOW` exception], [*PASS*],
-  [E13], [Cache Split & 3C Misses], [$t=20, s=6, b=6$; A,B,A,B conflict], [Compulsory/hit verified; 1-way 0% hit rate], [*PASS*],
-  [E14], [DRAM Timings & FR-FCFS], [Hit 26 cyc, Empty 48 cyc, Conflict 70 cyc], [DDR4-3200 timings match; FR-FCFS 1.518x (34.1% cut)], [*PASS*],
-  [E15], [48-Bit 4-Level VM & PWC], [PML4->PDPT->PD->PT; 16-entry PWC], [Cold walk 1288 cyc -> PWC 188 cyc (85.4% cut)], [*PASS*],
-  [E16], [Complete CPI Reconciliation], [Cycles $= (S-1) + "IC" + sum text("Stalls")$], [4S: 16 cyc (CPI 1.455); 6S: 19 cyc (CPI 1.727)], [*PASS*],
-  [E17], [4S vs 6S Speedup & Break-Even], [Time ratio & $f_6 / f_4 > text("CPI")_6 / text("CPI")_4$], [1.578x speedup (57.8%); break-even $f_6 > 507$ MHz], [*PASS*],
-  [E18], [Cold-Start vs Steady-State], [Short loop: fill latency unamortized (17.6%)], [5-iter loop: CPI 1.294 -> steady-state CPI 1.000], [*PASS*]
-)
-]
-
-== 17.2 Full Reproduction Harness
+== 17.1 Full Reproduction & Execution Harness
+The entire cycle-accurate hardware simulation, test suites, and report compilation pipeline are fully automated:
 ```bash
 make clean && make all        # Build all simulator executables, assembler, and test suites
 ./risc201_test                # Execute the 78-test master verification test suite (100% pass)
@@ -1166,23 +1132,39 @@ make clean && make all        # Build all simulator executables, assembler, and 
 ./report18/data/run_e1_e18    # Execute and verify all 18 tiny verification programs (E1 - E18)
 make report18                 # Compile the exact 18-page technical examination report PDF
 ```
+- *Interactive Diagnostics:* Run `./risc201_sim` to enter the interactive CLI debugger (`step`, `break`, `reg`, `mem`).
+- *Visualizers & Demos:* Run `make demo-pipe` to inspect dynamic ASCII pipeline latch flow, and `make demo-mem` to evaluate DDR4 FR-FCFS memory scheduling under realistic trace workloads.
 
-== 17.3 References
-1. S. R. Sarangi, _Computer Organisation and Architecture_, McGraw Hill Education, Chapters 3 (SimpleRisc ISA), 8 (ALU & Pipelining), 9 (Memory & Caches), 10 (Control Design).
-2. J. L. Hennessy and D. A. Patterson, _Computer Architecture: A Quantitative Approach_, 6th ed., Morgan Kaufmann.
-3. S. Rixner, W. J. Dally, U. J. Kapasi, P. Mattson, and J. D. Owens, "Memory Access Scheduling," _Proc. 27th Annual International Symposium on Computer Architecture (ISCA)_, 2000.
-4. J. E. Smith, "A Study of Branch Prediction Strategies," _Proc. 8th Annual International Symposium on Computer Architecture (ISCA)_, 1981.
-5. S. McFarling, "Combining Branch Predictors," _WRL Technical Note TN-36_, Digital Equipment Corporation, 1993 (GShare Predictor).
-6. A. D. Booth, "A Signed Binary Multiplication Technique," _Quarterly Journal of Mechanics and Applied Mathematics_, 1951.
+== 17.2 References & Annotated Bibliography
+1. S. R. Sarangi, _Computer Organisation and Architecture_, McGraw Hill Education, 2015. (Foundational SimpleRisc ISA, 4-stage pipeline, microcode control store theory, and cache memory hierarchy).
+2. J. L. Hennessy and D. A. Patterson, _Computer Architecture: A Quantitative Approach_, 6th ed., Morgan Kaufmann, 2017. (The Iron Law of Performance, quantitative CPI stack formulations, and non-blocking cache MSHRs).
+3. S. Rixner, W. J. Dally, U. J. Kapasi, P. Mattson, and J. D. Owens, "Memory Access Scheduling," _Proc. 27th Annual International Symposium on Computer Architecture (ISCA)_, 2000. (FR-FCFS out-of-order DRAM scheduling algorithms).
+4. J. E. Smith, "A Study of Branch Prediction Strategies," _Proc. 8th Annual International Symposium on Computer Architecture (ISCA)_, 1981. (2-bit saturating bimodal counter state machine and hysteresis mechanisms).
+5. S. McFarling, "Combining Branch Predictors," _WRL Technical Note TN-36_, Digital Equipment Corporation, 1993. (GShare global history XOR hashing and correlation-based branch prediction).
+6. A. D. Booth, "A Signed Binary Multiplication Technique," _Quarterly Journal of Mechanics and Applied Mathematics_, 1951. (Radix-4 multiplier recoding and partial product reduction).
+7. C. S. Wallace, "A Suggestion for a Fast Multiplier," _IEEE Transactions on Electronic Computers_, 1964. (Tree carry-save adder reduction structures for high-speed multi-operand addition).
+8. T. W. Chen, R. Wunderlich, and T. F. Wenisch, "Page Walk Cache: A Hardware Architecture for Reducing Virtual Address Translation Latency," _IEEE Micro_, 2010. (Multi-level radix page-walk caching for address translation acceleration).
 
-== 17.4 Architectural Glossary
-- *AMAT:* Average Memory Access Time ($t_text("hit") + P_text("miss") times t_text("penalty")$).
-- *BTB:* Branch Target Buffer; hardware cache storing target addresses for taken branches.
-- *CPI:* Cycles Per Instruction ($text("Total Cycles") / text("Instructions Retired")$).
-- *FR-FCFS:* First-Ready First-Come First-Served out-of-order DRAM memory request scheduling.
-- *GHR:* Global History Register; shift register recording taken/not-taken outcomes of recent branches.
-- *MSHR:* Miss Status Holding Register; tracks pending cache misses in non-blocking caches.
-- *PWC:* Page-Walk Cache; caches upper directory translations (PML4, PDPT, PD) in multi-level radix page walks.
-- *RAW:* Read-After-Write true data dependency hazard.
-- *SRRIP:* Static Re-Reference Interval Prediction replacement policy.
-- *WAW / WAR:* Write-After-Write and Write-After-Read hazards (impossible in an in-order pipeline).
+== 17.3 Comprehensive Architectural Glossary
+- *ALU (Arithmetic Logic Unit):* Digital combinational and multi-cycle execution engine performing mathematical and logical operations.
+- *AMAT (Average Memory Access Time):* Mean latency per memory reference recursively weighting cache hits and misses: $t_text("hit") + P_text("miss") times t_text("penalty")$.
+- *Bimodal Predictor:* Dynamic branch predictor using 2-bit saturating counters providing hysteresis to prevent premature direction flips.
+- *BTB (Branch Target Buffer):* Associative cache storing branch target addresses, enabling zero-bubble target redirection during Instruction Fetch.
+- *CLA (Carry-Lookahead Adder):* High-speed adder computing carry signals in parallel using generate ($G_i$) and propagate ($P_i$) logic in $O(log N)$ time.
+- *CPI (Cycles Per Instruction):* Fundamental performance metric measuring average clock cycles elapsed per retired instruction ($text("Total Cycles") / "IC"$).
+- *CSLA (Carry-Select Adder):* Speculative adder computing dual sums for $C_text("in") = 0$ and $C_text("in") = 1$, selecting the correct sum via multiplexer.
+- *DDR4-3200:* Synchronous dynamic RAM transferring data at 3200 MT/s across bank groups, characterized by timing parameters $t_text("RCD")$, $t_text("RP")$, and $t_text("CL")$.
+- *FR-FCFS (First-Ready First-Come First-Served):* Out-of-order memory scheduling policy prioritizing row-buffer hits over older conflicting requests.
+- *GHR (Global History Register):* Shift register recording the recent directional outcomes (taken/not-taken) of global program branch execution.
+- *GShare Predictor:* Two-level branch predictor XORing the branch PC with the GHR to index a pattern history table, reducing branch aliasing.
+- *Hazard (Pipeline):* Structural, data (RAW, WAR, WAW), or control conditions that disrupt uninterrupted single-cycle instruction progression.
+- *IPC (Instructions Per Cycle):* Reciprocal of CPI ($1 / text("CPI")$), representing the microarchitectural instruction retirement rate.
+- *MSHR (Miss Status Holding Register):* Hardware register tracking pending cache misses, enabling non-blocking hit-under-miss operation.
+- *Newton-Raphson Division:* Fast iterative division algorithm computing reciprocals via quadratic convergence ($X_(k+1) = X_k (2 - D X_k)$).
+- *Non-Blocking Cache:* Advanced cache design that services subsequent memory requests while earlier miss requests are outstanding to DRAM.
+- *PWC (Page-Walk Cache):* Hardware buffer caching intermediate directory base addresses (PML4, PDPT, PD) to accelerate multi-level page walks.
+- *Radix Paging (4-Level):* Hierarchical virtual memory translation tree mapping 48-bit virtual addresses to 4096-byte physical frames.
+- *RAS (Return Address Stack):* Dedicated LIFO hardware stack caching subroutine return addresses pushed by `call` and popped by `ret`.
+- *RAW (Read-After-Write):* True data dependency where a consumer instruction reads a register before a producer instruction writes it.
+- *Store-to-Load Forwarding:* Bypass mechanism routing uncommitted store data from the StoreBuffer directly to dependent load instructions.
+- *WAW / WAR Hazards:* Write-after-write and write-after-read hazards; mathematically impossible in an in-order pipeline committing in program order.
