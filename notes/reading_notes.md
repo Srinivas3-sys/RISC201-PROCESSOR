@@ -216,3 +216,4 @@ This document provides deep technical reading notes on every module in the repos
 
 ### 8.3 `visualizer/StackVisualizer.hpp`
 - ASCII rendering of the full-descending stack frame, highlighting `SP`, `FP`, saved return addresses, and local variables.
+

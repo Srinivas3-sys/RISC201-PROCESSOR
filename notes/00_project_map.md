@@ -352,3 +352,4 @@ This project contains substantial state-of-the-art microarchitecture far exceedi
 6. **Advanced Dynamic Branch Prediction**: Static (always not taken), 1-bit dynamic, 2-bit bimodal saturating counter, gshare global branch history, Branch Target Buffer (BTB), and Return Address Stack (RAS).
 7. **Empirical CPI Decomposition & Telemetry**: Cycle-accurate accounting decomposing CPI into base, RAW load-use, branch mispredict, and memory stall categories.
 8. **Visual ASCII Debugger Console**: Live pipeline ASCII latch views with forwarding arrows, cache set-way occupancy tables, DRAM bank state monitors, and stack frame renderers.
+
