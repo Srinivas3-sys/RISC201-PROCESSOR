@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 230" width="100%" height="100%" style="background:#f8f8f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <marker id="arrDram" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#3f3f3f"/>
+    </marker>
+  </defs>
+
+  <rect x="10" y="10" width="860" height="210" rx="10" fill="#f8f8f8" stroke="#d3d3d3" stroke-width="1.5"/>
+  <text x="30" y="32" font-size="12" font-weight="bold" fill="#0f0f0f">DDR4-3200 Bank-Group Architecture &amp; Row Buffer Access Timings</text>
+
+  <!-- Left: 4 Bank Groups Container -->
+  <g transform="translate(30, 45)">
+    <!-- Bank Group 0 -->
+    <rect x="0" y="0" width="100" height="135" rx="6" fill="#f8f8f8" stroke="#797979" stroke-width="1.2"/>
+    <text x="50" y="20" font-size="10.5" font-weight="bold" fill="#4f4f4f" text-anchor="middle">Bank Group 0</text>
+    <rect x="10" y="30" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#bcbcbc"/><text x="50" y="45" font-size="8.5" fill="#272727" text-anchor="middle">Bank 0 (Open)</text>
+    <rect x="10" y="56" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="50" y="71" font-size="8.5" fill="#717171" text-anchor="middle">Bank 1 (Idle)</text>
+    <rect x="10" y="82" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="50" y="97" font-size="8.5" fill="#717171" text-anchor="middle">Bank 2 (Idle)</text>
+    <rect x="10" y="108" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="50" y="123" font-size="8.5" fill="#717171" text-anchor="middle">Bank 3 (Idle)</text>
+
+    <!-- Bank Group 1 -->
+    <rect x="110" y="0" width="100" height="135" rx="6" fill="#f8f8f8" stroke="#6e6e6e" stroke-width="1.2"/>
+    <text x="160" y="20" font-size="10.5" font-weight="bold" fill="#585858" text-anchor="middle">Bank Group 1</text>
+    <rect x="120" y="30" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#c7c7c7"/><text x="160" y="45" font-size="8.5" fill="#272727" text-anchor="middle">Bank 4 (Open)</text>
+    <rect x="120" y="56" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="160" y="71" font-size="8.5" fill="#717171" text-anchor="middle">Bank 5 (Idle)</text>
+    <rect x="120" y="82" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="160" y="97" font-size="8.5" fill="#717171" text-anchor="middle">Bank 6 (Idle)</text>
+    <rect x="120" y="108" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="160" y="123" font-size="8.5" fill="#717171" text-anchor="middle">Bank 7 (Idle)</text>
+
+    <!-- Bank Group 2 -->
+    <rect x="220" y="0" width="100" height="135" rx="6" fill="#f8f8f8" stroke="#797979" stroke-width="1.2"/>
+    <text x="270" y="20" font-size="10.5" font-weight="bold" fill="#4f4f4f" text-anchor="middle">Bank Group 2</text>
+    <rect x="230" y="30" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="270" y="45" font-size="8.5" fill="#717171" text-anchor="middle">Bank 8 (Idle)</text>
+    <rect x="230" y="56" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="270" y="71" font-size="8.5" fill="#717171" text-anchor="middle">Bank 9 (Idle)</text>
+    <rect x="230" y="82" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="270" y="97" font-size="8.5" fill="#717171" text-anchor="middle">Bank 10 (Idle)</text>
+    <rect x="230" y="108" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="270" y="123" font-size="8.5" fill="#717171" text-anchor="middle">Bank 11 (Idle)</text>
+
+    <!-- Bank Group 3 -->
+    <rect x="330" y="0" width="100" height="135" rx="6" fill="#f8f8f8" stroke="#6e6e6e" stroke-width="1.2"/>
+    <text x="380" y="20" font-size="10.5" font-weight="bold" fill="#585858" text-anchor="middle">Bank Group 3</text>
+    <rect x="340" y="30" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="380" y="45" font-size="8.5" fill="#717171" text-anchor="middle">Bank 12 (Idle)</text>
+    <rect x="340" y="56" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="380" y="71" font-size="8.5" fill="#717171" text-anchor="middle">Bank 13 (Idle)</text>
+    <rect x="340" y="82" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="380" y="97" font-size="8.5" fill="#717171" text-anchor="middle">Bank 14 (Idle)</text>
+    <rect x="340" y="108" width="80" height="22" rx="3" fill="#f8f8f8" stroke="#d3d3d3"/><text x="380" y="123" font-size="8.5" fill="#717171" text-anchor="middle">Bank 15 (Idle)</text>
+  </g>
+
+  <!-- Right: Timings & Scheduling Panel -->
+  <g transform="translate(480, 45)">
+    <rect x="0" y="0" width="370" height="135" rx="6" fill="#f8f8f8" stroke="#d3d3d3" stroke-width="1"/>
+    <rect x="0" y="0" width="370" height="26" rx="6" fill="#f8f8f8"/>
+    <text x="12" y="17" font-size="10" font-weight="bold" fill="#3f3f3f">DDR4-3200 Timing &amp; FR-FCFS Performance</text>
+
+    <text x="12" y="45" font-size="9" fill="#0f0f0f">• <tspan font-weight="bold">Across Different Bank Groups (BG0 -&gt; BG1):</tspan> tCCD_S = 4 cyc (2.5 ns) -&gt; 25.6 GB/s peak</text>
+    <text x="12" y="65" font-size="9" fill="#0f0f0f">• <tspan font-weight="bold">Within Same Bank Group (BG0 -&gt; BG0):</tspan> tCCD_L = 8 cyc (5.0 ns) -&gt; 2x internal recovery</text>
+    <text x="12" y="85" font-size="9" fill="#0f0f0f">• <tspan font-weight="bold">Row Access:</tspan> Hit = 26 cyc (16.25 ns), Empty = 48 cyc (30 ns), Conflict = 70 cyc (43.75 ns)</text>
+    <text x="12" y="105" font-size="9" fill="#585858">• <tspan font-weight="bold">FR-FCFS Reordering:</tspan> Reorders queued requests to hit open row buffers</text>
+    <text x="12" y="123" font-size="9" fill="#585858">• <tspan font-weight="bold">Verified Speedup:</tspan> 258 cyc (FCFS) -&gt; 170 cyc (FR-FCFS) = 1.518x speedup (34.1% latency cut)</text>
+  </g>
+
+  <text x="30" y="202" font-size="9" fill="#717171">16 Banks partitioned into 4 Bank Groups enable pipelined burst transfers, avoiding internal sense amplifier recovery bottlenecks.</text>
+</svg>
+

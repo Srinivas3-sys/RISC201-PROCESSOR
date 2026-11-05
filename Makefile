@@ -131,7 +131,12 @@ report8:
 	@echo "Report compiled successfully: report8/RISC201_Memory_Hazards_CPI_Report.pdf"
 	@pdfinfo report8/RISC201_Memory_Hazards_CPI_Report.pdf | grep "Pages:"
 
+report18:
+	typst compile --root . report18/source/report.typ report18/RISC201_Project_Report.pdf
+	@echo "Report compiled successfully: report18/RISC201_Project_Report.pdf"
+	@pdfinfo report18/RISC201_Project_Report.pdf | grep "Pages:"
+
 clean:
 	rm -f $(TARGETS) *.hex *.bin
 
-.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi perf-docs lint-docs lint-docs-fix lint-isa verify-golden test-asan notes report8
+.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi perf-docs lint-docs lint-docs-fix lint-isa verify-golden test-asan notes report8 report18

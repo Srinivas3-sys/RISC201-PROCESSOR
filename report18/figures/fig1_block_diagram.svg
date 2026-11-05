@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="100%" height="100%" style="background:#f8f8f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <linearGradient id="gradCore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#797979"/>
+    </linearGradient>
+    <linearGradient id="gradHazard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a4a4a"/>
+      <stop offset="100%" stop-color="#777777"/>
+    </linearGradient>
+    <linearGradient id="gradFwd" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#515151"/>
+      <stop offset="100%" stop-color="#808080"/>
+    </linearGradient>
+    <linearGradient id="gradMem" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#535353"/>
+      <stop offset="100%" stop-color="#717171"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#3f3f3f"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#777777"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#808080"/>
+    </marker>
+  </defs>
+
+  <!-- Title / Outer Border -->
+  <rect x="10" y="10" width="860" height="300" rx="10" fill="#f8f8f8" stroke="#d3d3d3" stroke-width="1.5"/>
+
+  <!-- CPU Pipeline Container -->
+  <rect x="30" y="45" width="460" height="150" rx="8" fill="#f8f8f8" stroke="#a0a0a0" stroke-width="1.2"/>
+  <text x="45" y="68" font-size="13" font-weight="700" fill="#272727">RISC201 Core Pipeline (Canonical 5-Bit String Opcodes: "00000"–"11011")</text>
+
+  <!-- Stages Inside Pipeline -->
+  <g transform="translate(45, 80)">
+    <rect x="0" y="0" width="95" height="95" rx="6" fill="#f8f8f8" stroke="#797979" stroke-width="1.5"/>
+    <text x="47" y="28" font-size="14" font-weight="bold" fill="#4f4f4f" text-anchor="middle">IF</text>
+    <text x="47" y="48" font-size="10" fill="#535353" text-anchor="middle">PC Fetch</text>
+    <text x="47" y="64" font-size="9" fill="#717171" text-anchor="middle">BP Predict</text>
+    <text x="47" y="80" font-size="9" fill="#646464" text-anchor="middle">L1 I-Cache</text>
+
+    <!-- Pipeline Register 1 -->
+    <rect x="102" y="10" width="10" height="75" rx="2" fill="#d3d3d3"/>
+
+    <rect x="119" y="0" width="95" height="95" rx="6" fill="#f8f8f8" stroke="#797979" stroke-width="1.5"/>
+    <text x="166" y="28" font-size="14" font-weight="bold" fill="#4f4f4f" text-anchor="middle">OF / ID</text>
+    <text x="166" y="48" font-size="10" fill="#535353" text-anchor="middle">Decode ISA</text>
+    <text x="166" y="64" font-size="9" fill="#717171" text-anchor="middle">RegFile Read</text>
+    <text x="166" y="80" font-size="9" fill="#646464" text-anchor="middle">Imm Gen</text>
+
+    <!-- Pipeline Register 2 -->
+    <rect x="221" y="10" width="10" height="75" rx="2" fill="#d3d3d3"/>
+
+    <rect x="238" y="0" width="95" height="95" rx="6" fill="#f8f8f8" stroke="#797979" stroke-width="1.5"/>
+    <text x="285" y="28" font-size="14" font-weight="bold" fill="#4f4f4f" text-anchor="middle">EX</text>
+    <text x="285" y="48" font-size="10" fill="#535353" text-anchor="middle">ALU &amp; Flags</text>
+    <text x="285" y="64" font-size="9" fill="#717171" text-anchor="middle">Branch Eval</text>
+    <text x="285" y="80" font-size="9" fill="#646464" text-anchor="middle">Operand MUX</text>
+
+    <!-- Pipeline Register 3 -->
+    <rect x="340" y="10" width="10" height="75" rx="2" fill="#d3d3d3"/>
+
+    <rect x="357" y="0" width="95" height="95" rx="6" fill="#f8f8f8" stroke="#797979" stroke-width="1.5"/>
+    <text x="404" y="28" font-size="14" font-weight="bold" fill="#4f4f4f" text-anchor="middle">MA / WB</text>
+    <text x="404" y="48" font-size="10" fill="#535353" text-anchor="middle">Data Access</text>
+    <text x="404" y="64" font-size="9" fill="#717171" text-anchor="middle">Reg Writeback</text>
+    <text x="404" y="80" font-size="9" fill="#646464" text-anchor="middle">L1 D-Cache</text>
+  </g>
+
+  <!-- Hazard Unit -->
+  <rect x="30" y="215" width="220" height="80" rx="8" fill="#f8f8f8" stroke="#777777" stroke-width="1.5"/>
+  <text x="140" y="238" font-size="12" font-weight="bold" fill="#4a4a4a" text-anchor="middle">HazardUnit</text>
+  <text x="140" y="256" font-size="9.5" fill="#535353" text-anchor="middle">Detects RAW Load-Use &amp; Branch Mispredict</text>
+  <text x="140" y="272" font-size="9.5" fill="#535353" text-anchor="middle">Outputs: Stall IF/OF, Bubble EX, Squash Flush</text>
+  <text x="140" y="287" font-size="9" font-weight="600" fill="#5c5c5c" text-anchor="middle">Canonical Stall Attribution</text>
+
+  <!-- Forwarding Unit -->
+  <rect x="270" y="215" width="220" height="80" rx="8" fill="#f8f8f8" stroke="#808080" stroke-width="1.5"/>
+  <text x="380" y="238" font-size="12" font-weight="bold" fill="#515151" text-anchor="middle">ForwardingUnit</text>
+  <text x="380" y="256" font-size="9.5" fill="#535353" text-anchor="middle">Bypass Paths: EX_MA / MA_RW / WB -> EX</text>
+  <text x="380" y="272" font-size="9.5" fill="#535353" text-anchor="middle">Priority: Youngest Producer Overrides Older</text>
+  <text x="380" y="287" font-size="9" font-weight="600" fill="#656565" text-anchor="middle">Zero-Stall RAW Forwarding</text>
+
+  <!-- Memory System -->
+  <rect x="520" y="45" width="330" height="250" rx="8" fill="#f8f8f8" stroke="#717171" stroke-width="1.5"/>
+  <text x="535" y="70" font-size="13" font-weight="700" fill="#0f0f0f">Memory Hierarchy (Sarangi Ch. 9)</text>
+
+  <!-- Subsystems inside Memory -->
+  <!-- L1 Caches -->
+  <rect x="535" y="85" width="145" height="90" rx="6" fill="#f8f8f8" stroke="#a0a0a0" stroke-width="1.2"/>
+  <text x="607" y="105" font-size="11" font-weight="bold" fill="#272727" text-anchor="middle">L1 Cache (I &amp; D)</text>
+  <text x="607" y="122" font-size="9" fill="#535353" text-anchor="middle">32 KB, 8-way, 64 B line</text>
+  <text x="607" y="137" font-size="9" fill="#535353" text-anchor="middle">Write-Back + Allocate</text>
+  <text x="607" y="152" font-size="9" fill="#535353" text-anchor="middle">LRU Replacement</text>
+  <text x="607" y="167" font-size="9" font-weight="bold" fill="#646464" text-anchor="middle">Hit Latency = 1 cyc</text>
+
+  <!-- Virtual Memory & TLB -->
+  <rect x="690" y="85" width="145" height="90" rx="6" fill="#f8f8f8" stroke="#a0a0a0" stroke-width="1.2"/>
+  <text x="762" y="105" font-size="11" font-weight="bold" fill="#272727" text-anchor="middle">Virtual Memory &amp; TLB</text>
+  <text x="762" y="122" font-size="9" fill="#535353" text-anchor="middle">32-bit VA, 4 KB Pages</text>
+  <text x="762" y="137" font-size="9" fill="#535353" text-anchor="middle">2-Level (PD -> PT)</text>
+  <text x="762" y="152" font-size="9" fill="#535353" text-anchor="middle">64-Entry 4-Way TLB</text>
+  <text x="762" y="167" font-size="9" font-weight="bold" fill="#646464" text-anchor="middle">TLB Hit = 1 cyc</text>
+
+  <!-- SimpleDRAM Controller -->
+  <rect x="535" y="190" width="300" height="90" rx="6" fill="#f8f8f8" stroke="#535353" stroke-width="1.2"/>
+  <text x="685" y="210" font-size="11" font-weight="bold" fill="#0f0f0f" text-anchor="middle">SimpleDRAM Main Memory (1T-1C Cells)</text>
+  <text x="685" y="228" font-size="9.5" fill="#3f3f3f" text-anchor="middle">Open-Page Policy | tCK = 1.0 ns, tRCD = 15, tRP = 15, tCAS = 15, tBURST = 4</text>
+  <text x="685" y="246" font-size="9.5" fill="#3f3f3f" text-anchor="middle">Row Hit: 19 ns (10 cyc @ 500MHz) | Row Empty: 34 ns (17 cyc @ 500MHz)</text>
+  <text x="685" y="264" font-size="9.5" font-weight="600" fill="#4a4a4a" text-anchor="middle">Row Conflict: 49 ns (25 cyc @ 500MHz / 40 cyc @ 800MHz)</text>
+
+  <!-- Interconnect Arrows -->
+  <path d="M 140 215 L 140 180" stroke="#777777" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <path d="M 380 215 L 340 180" stroke="#808080" stroke-width="1.8" marker-end="url(#arrowGreen)"/>
+  <path d="M 450 125 L 535 125" stroke="#3f3f3f" stroke-width="1.8" marker-end="url(#arrow)"/>
+</svg>
+

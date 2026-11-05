@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 240" width="100%" height="100%" style="background:#ffffff; font-family: sans-serif;">
+  <rect x="10" y="10" width="820" height="220" rx="6" fill="#fcfcfc" stroke="#333333" stroke-width="1.2"/>
+  <text x="420" y="32" text-anchor="middle" font-size="14" font-weight="bold" fill="#111111">Modular Arithmetic Logic Unit (ALU) Architecture</text>
+
+  <!-- Adders -->
+  <rect x="30" y="55" width="175" height="135" rx="4" fill="#f4f4f4" stroke="#222222" stroke-width="1.2"/>
+  <text x="117" y="78" text-anchor="middle" font-size="11" font-weight="bold" fill="#111111">Binary Adders</text>
+  <line x1="45" y1="85" x2="190" y2="85" stroke="#cccccc"/>
+  <text x="45" y="105" font-size="9.5" fill="#333333">• Ripple-Carry (RCA)</text>
+  <text x="45" y="125" font-size="9.5" fill="#333333">• Carry-Lookahead (CLA)</text>
+  <text x="45" y="145" font-size="9.5" fill="#333333">• Carry-Select (CSLA)</text>
+  <text x="45" y="172" font-size="8.5" fill="#666666">Flags: Z, N, C, V</text>
+
+  <!-- Shifter -->
+  <rect x="225" y="55" width="175" height="135" rx="4" fill="#f4f4f4" stroke="#222222" stroke-width="1.2"/>
+  <text x="312" y="78" text-anchor="middle" font-size="11" font-weight="bold" fill="#111111">Barrel Shifter</text>
+  <line x1="240" y1="85" x2="385" y2="85" stroke="#cccccc"/>
+  <text x="240" y="105" font-size="9.5" fill="#333333">• Logarithmic 5-Stage</text>
+  <text x="240" y="125" font-size="9.5" fill="#333333">• LSL (Logical Left)</text>
+  <text x="240" y="145" font-size="9.5" fill="#333333">• LSR (Logical Right)</text>
+  <text x="240" y="165" font-size="9.5" fill="#333333">• ASR (Arithmetic Right)</text>
+  <text x="240" y="180" font-size="8.5" fill="#666666">1-cycle latency</text>
+
+  <!-- Multipliers -->
+  <rect x="420" y="55" width="185" height="135" rx="4" fill="#f4f4f4" stroke="#222222" stroke-width="1.2"/>
+  <text x="512" y="78" text-anchor="middle" font-size="11" font-weight="bold" fill="#111111">Multipliers</text>
+  <line x1="435" y1="85" x2="590" y2="85" stroke="#cccccc"/>
+  <text x="435" y="105" font-size="9.5" fill="#333333">• Sequential Shift-Add</text>
+  <text x="435" y="125" font-size="9.5" fill="#333333">• Booth Radix-4 Recoding</text>
+  <text x="435" y="145" font-size="9.5" fill="#333333">• Wallace Tree 3:2 CSA</text>
+  <text x="435" y="172" font-size="8.5" fill="#666666">Signed 64-bit UV product</text>
+
+  <!-- Dividers -->
+  <rect x="625" y="55" width="185" height="135" rx="4" fill="#f4f4f4" stroke="#222222" stroke-width="1.2"/>
+  <text x="717" y="78" text-anchor="middle" font-size="11" font-weight="bold" fill="#111111">Dividers</text>
+  <line x1="640" y1="85" x2="795" y2="85" stroke="#cccccc"/>
+  <text x="640" y="105" font-size="9.5" fill="#333333">• Restoring Algorithm</text>
+  <text x="640" y="125" font-size="9.5" fill="#333333">• Non-Restoring Algorithm</text>
+  <text x="640" y="145" font-size="9.5" fill="#333333">• Newton-Raphson Reciprocal</text>
+  <text x="640" y="172" font-size="8.5" fill="#666666">Division-by-zero detection</text>
+
+  <text x="420" y="210" text-anchor="middle" font-size="9.5" fill="#444444">All functional units are coordinated by ALU.hpp keyed by canonical 5-bit string opcodes.</text>
+</svg>
