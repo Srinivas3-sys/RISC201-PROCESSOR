@@ -55,7 +55,7 @@ RISC201 protects against stack overflows, corrupted return addresses, and buffer
 - The Guard Page PTE is marked:
   $$\text{Present} = 1, \quad \text{Readable} = 0, \quad \text{Writable} = 0$$
 - If an infinite recursive loop (like a broken factorial or stack smashing attack) pushes too many frames, the `sp` eventually crosses into the Guard Page.
-- The MMU triggers an immediate, unmaskable **`GUARD_PAGE_FAULT`** / **`STACK_OVERFLOW_EXCEPTION`**, halting execution cleanly without overwriting code or heap memory!
+- The MMU triggers an immediate, unmaskable **GUARD_PAGE_FAULT** or **STACK_OVERFLOW_EXCEPTION**, halting execution cleanly without overwriting code or heap memory!
 
 ---
 

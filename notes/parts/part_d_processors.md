@@ -76,7 +76,7 @@ mov r4, 40
 - **Cycle 4**: Inst 1 in `MA_RW` (retires!); Inst 2 in `EX`; Inst 3 in `OF`; Inst 4 in `IF`.
 - **Cycles 5, 6, 7**: Inst 2, 3, 4 retire one by one.
 - Total cycles = 7 cycles for 4 instructions (due to 3 cycles of initial pipeline filling).
-- For $N = 100,000$ instructions, total cycles $\approx 100,003 \rightarrow \text{CPI} \approx 1.00003$.
+- For $N = 100000$ instructions, total cycles $\approx 100003 \rightarrow \text{CPI} \approx 1.00003$.
 
 ---
 

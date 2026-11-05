@@ -45,7 +45,7 @@ When running fresh cycle-accurate simulations, short benchmarks showed cold CPIs
 2. **Steady-State Reality**:
    - In real-world software, programs execute millions of instructions.
    - On scaled benchmarks (`*_long.s`), that initial 120-cycle startup penalty gets divided across $> 100,000$ instructions:
-     $$\Delta \text{CPI}_{\text{startup}} = \frac{120}{100,000} = +\mathbf{0.0012\text{ CPI}} \approx 0$$
+     $$\Delta \text{CPI}_{\text{startup}} = \frac{120}{100000} = +\mathbf{0.0012\text{ CPI}} \approx 0$$
    - Once caches and TLBs are warm, the true steady-state CPI is **1.02 to 1.15**!
 
 ---

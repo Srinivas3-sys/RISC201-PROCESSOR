@@ -136,7 +136,7 @@ Find the Byte Offset, Set Index, and Tag.
 **Step-by-Step Solution**:
 1. **Find Bit Widths**:
    - Block Size $B = 64\text{ bytes} \rightarrow 2^b = 64 \implies b = \mathbf{6\text{ offset bits}}$.
-   - Number of cache lines = $\text{Total Size} / \text{Block Size} = 32,768 / 64 = 512\text{ lines}$.
+   - Number of cache lines = $\text{Total Size} / \text{Block Size} = 32768 / 64 = 512\text{ lines}$.
    - Number of Sets $S = 512 / 8 = 64\text{ sets} \rightarrow 2^s = 64 \implies s = \mathbf{6\text{ index bits}}$.
    - Tag bits $t = 32 - (s + b) = 32 - (6 + 6) = \mathbf{20\text{ tag bits}}$.
 
@@ -209,16 +209,16 @@ State Encoding:
 
 ## Example 9: 4-Stage vs 6-Stage Execution Time & Speedup
 
-**Problem**: A program executes $IC = 1,000,000$ instructions:
+**Problem**: A program executes $IC = 1000000$ instructions:
 - 4-Stage Core: $f = 500\text{ MHz}$, $\text{CPI} = 1.12$
 - 6-Stage Core: $f = 800\text{ MHz}$, $\text{CPI} = 1.14$  
 Calculate execution time for both cores and the speedup.
 
 **Solution**:
 1. 4-Stage Time:
-   $$T_4 = \frac{1,000,000 \times 1.12}{500 \times 10^6} = \frac{1,120,000}{500,000,000} = \mathbf{2.24\text{ ms}}$$
+   $$T_4 = \frac{1000000 \times 1.12}{500 \times 10^6} = \frac{1120000}{500000000} = \mathbf{2.24\text{ ms}}$$
 2. 6-Stage Time:
-   $$T_6 = \frac{1,000,000 \times 1.14}{800 \times 10^6} = \frac{1,140,000}{800,000,000} = \mathbf{1.425\text{ ms}}$$
+   $$T_6 = \frac{1000000 \times 1.14}{800 \times 10^6} = \frac{1140000}{800000000} = \mathbf{1.425\text{ ms}}$$
 3. Speedup:
    $$\text{Speedup } S = \frac{T_4}{T_6} = \frac{2.24}{1.425} = \mathbf{1.57\times \text{ (57% Faster!)}}$$
 
