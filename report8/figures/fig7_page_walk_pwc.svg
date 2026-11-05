@@ -1,74 +1,75 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 230" width="100%" height="100%" style="background:#ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 230" width="100%" height="100%" style="background:#f8f8f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
   <defs>
     <marker id="pwArr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 8 5 L 0 9 z" fill="#334155"/>
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#3f3f3f"/>
     </marker>
     <marker id="pwcFast" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 8 5 L 0 9 z" fill="#059669"/>
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#656565"/>
     </marker>
   </defs>
 
-  <rect x="10" y="10" width="860" height="210" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="30" y="32" font-size="12" font-weight="bold" fill="#0f172a">4-Level Hardware Page-Table Walk &amp; Page-Walk Cache (PWC) Acceleration</text>
+  <rect x="10" y="10" width="860" height="210" rx="10" fill="#f8f8f8" stroke="#d3d3d3" stroke-width="1.5"/>
+  <text x="30" y="32" font-size="12" font-weight="bold" fill="#0f0f0f">4-Level Hardware Page-Table Walk &amp; Page-Walk Cache (PWC) Acceleration</text>
 
   <!-- Without PWC (Top Flow) -->
   <g transform="translate(30, 48)">
-    <text x="0" y="14" font-size="10" font-weight="bold" fill="#b91c1c">Standard 4-Level Walk (No PWC): 4 Serial Memory References (~80-89 cycles)</text>
+    <text x="0" y="14" font-size="10" font-weight="bold" fill="#4a4a4a">Standard 4-Level Walk (No PWC): 4 Serial Memory References (~80-89 cycles)</text>
     
-    <rect x="0" y="24" width="85" height="36" rx="4" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.2"/>
-    <text x="42" y="46" font-size="9.5" font-weight="bold" fill="#1d4ed8" text-anchor="middle">CR3 / PML4</text>
+    <rect x="0" y="24" width="85" height="36" rx="4" fill="#f8f8f8" stroke="#797979" stroke-width="1.2"/>
+    <text x="42" y="46" font-size="9.5" font-weight="bold" fill="#4f4f4f" text-anchor="middle">CR3 / PML4</text>
 
-    <path d="M 85 42 L 120 42" stroke="#334155" stroke-width="1.5" marker-end="url(#pwArr)"/>
+    <path d="M 85 42 L 120 42" stroke="#3f3f3f" stroke-width="1.5" marker-end="url(#pwArr)"/>
 
-    <rect x="120" y="24" width="85" height="36" rx="4" fill="#faf5ff" stroke="#a855f7" stroke-width="1.2"/>
-    <text x="162" y="46" font-size="9.5" font-weight="bold" fill="#7e22ce" text-anchor="middle">PDPT Ref 1</text>
+    <rect x="120" y="24" width="85" height="36" rx="4" fill="#f8f8f8" stroke="#808080" stroke-width="1.2"/>
+    <text x="162" y="46" font-size="9.5" font-weight="bold" fill="#515151" text-anchor="middle">PDPT Ref 1</text>
 
-    <path d="M 205 42 L 240 42" stroke="#334155" stroke-width="1.5" marker-end="url(#pwArr)"/>
+    <path d="M 205 42 L 240 42" stroke="#3f3f3f" stroke-width="1.5" marker-end="url(#pwArr)"/>
 
-    <rect x="240" y="24" width="85" height="36" rx="4" fill="#fdf4ff" stroke="#d946ef" stroke-width="1.2"/>
-    <text x="282" y="46" font-size="9.5" font-weight="bold" fill="#a21caf" text-anchor="middle">PD Ref 2</text>
+    <rect x="240" y="24" width="85" height="36" rx="4" fill="#f8f8f8" stroke="#858585" stroke-width="1.2"/>
+    <text x="282" y="46" font-size="9.5" font-weight="bold" fill="#545454" text-anchor="middle">PD Ref 2</text>
 
-    <path d="M 325 42 L 360 42" stroke="#334155" stroke-width="1.5" marker-end="url(#pwArr)"/>
+    <path d="M 325 42 L 360 42" stroke="#3f3f3f" stroke-width="1.5" marker-end="url(#pwArr)"/>
 
-    <rect x="360" y="24" width="85" height="36" rx="4" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.2"/>
-    <text x="402" y="46" font-size="9.5" font-weight="bold" fill="#1d4ed8" text-anchor="middle">PT Ref 3</text>
+    <rect x="360" y="24" width="85" height="36" rx="4" fill="#f8f8f8" stroke="#797979" stroke-width="1.2"/>
+    <text x="402" y="46" font-size="9.5" font-weight="bold" fill="#4f4f4f" text-anchor="middle">PT Ref 3</text>
 
-    <path d="M 445 42 L 480 42" stroke="#334155" stroke-width="1.5" marker-end="url(#pwArr)"/>
+    <path d="M 445 42 L 480 42" stroke="#3f3f3f" stroke-width="1.5" marker-end="url(#pwArr)"/>
 
-    <rect x="480" y="24" width="105" height="36" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
-    <text x="532" y="46" font-size="9.5" font-weight="bold" fill="#15803d" text-anchor="middle">4 KB Frame (PA)</text>
+    <rect x="480" y="24" width="105" height="36" rx="4" fill="#f8f8f8" stroke="#6e6e6e" stroke-width="1.2"/>
+    <text x="532" y="46" font-size="9.5" font-weight="bold" fill="#585858" text-anchor="middle">4 KB Frame (PA)</text>
   </g>
 
   <!-- With PWC (Bottom Flow) -->
   <g transform="translate(30, 130)">
-    <text x="0" y="14" font-size="10" font-weight="bold" fill="#047857">With Page-Walk Cache (PWC): Bypasses Intermediate Levels (1 Memory Reference, ~13-24 cycles)</text>
+    <text x="0" y="14" font-size="10" font-weight="bold" fill="#515151">With Page-Walk Cache (PWC): Bypasses Intermediate Levels (1 Memory Reference, ~13-24 cycles)</text>
 
-    <rect x="0" y="24" width="140" height="36" rx="4" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"/>
-    <text x="70" y="40" font-size="9.5" font-weight="bold" fill="#047857" text-anchor="middle">16-Entry PWC Hit</text>
-    <text x="70" y="52" font-size="8" fill="#64748b" text-anchor="middle">(Caches PML4+PDPT+PD)</text>
+    <rect x="0" y="24" width="140" height="36" rx="4" fill="#f8f8f8" stroke="#808080" stroke-width="1.5"/>
+    <text x="70" y="40" font-size="9.5" font-weight="bold" fill="#515151" text-anchor="middle">16-Entry PWC Hit</text>
+    <text x="70" y="52" font-size="8" fill="#717171" text-anchor="middle">(Caches PML4+PDPT+PD)</text>
 
     <!-- Fast Bypass Arrow -->
-    <path d="M 140 42 L 360 42" stroke="#059669" stroke-width="2.5" marker-end="url(#pwcFast)"/>
-    <text x="250" y="34" font-size="9" font-weight="bold" fill="#059669" text-anchor="middle">Direct PT Base Pointer (3 cycles)</text>
+    <path d="M 140 42 L 360 42" stroke="#656565" stroke-width="2.5" marker-end="url(#pwcFast)"/>
+    <text x="250" y="34" font-size="9" font-weight="bold" fill="#656565" text-anchor="middle">Direct PT Base Pointer (3 cycles)</text>
 
-    <rect x="360" y="24" width="85" height="36" rx="4" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.2"/>
-    <text x="402" y="46" font-size="9.5" font-weight="bold" fill="#1d4ed8" text-anchor="middle">PT Ref (Only 1)</text>
+    <rect x="360" y="24" width="85" height="36" rx="4" fill="#f8f8f8" stroke="#797979" stroke-width="1.2"/>
+    <text x="402" y="46" font-size="9.5" font-weight="bold" fill="#4f4f4f" text-anchor="middle">PT Ref (Only 1)</text>
 
-    <path d="M 445 42 L 480 42" stroke="#334155" stroke-width="1.5" marker-end="url(#pwArr)"/>
+    <path d="M 445 42 L 480 42" stroke="#3f3f3f" stroke-width="1.5" marker-end="url(#pwArr)"/>
 
-    <rect x="480" y="24" width="105" height="36" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
-    <text x="532" y="46" font-size="9.5" font-weight="bold" fill="#15803d" text-anchor="middle">4 KB Frame (PA)</text>
+    <rect x="480" y="24" width="105" height="36" rx="4" fill="#f8f8f8" stroke="#6e6e6e" stroke-width="1.2"/>
+    <text x="532" y="46" font-size="9.5" font-weight="bold" fill="#585858" text-anchor="middle">4 KB Frame (PA)</text>
   </g>
 
   <!-- Right stats box -->
   <g transform="translate(635, 55)">
-    <rect x="0" y="0" width="215" height="135" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
-    <rect x="0" y="0" width="215" height="24" rx="6" fill="#f1f5f9"/>
-    <text x="10" y="16" font-size="9.5" font-weight="bold" fill="#334155">PWC Acceleration Verified</text>
-    <text x="10" y="44" font-size="8.5" fill="#0f172a">• Memory Refs: 4 down to 1 (75% cut)</text>
-    <text x="10" y="64" font-size="8.5" fill="#0f172a">• Walk Latency: ~89 cyc to ~13-24 cyc</text>
-    <text x="10" y="84" font-size="8.5" fill="#15803d">• Latency Reduction: 74% - 85%</text>
-    <text x="10" y="104" font-size="8.5" fill="#0f172a">• Preserves TLB hit rate across</text>
-    <text x="10" y="120" font-size="8.5" fill="#0f172a">  strided memory access patterns</text>
+    <rect x="0" y="0" width="215" height="135" rx="6" fill="#f8f8f8" stroke="#d3d3d3" stroke-width="1"/>
+    <rect x="0" y="0" width="215" height="24" rx="6" fill="#f8f8f8"/>
+    <text x="10" y="16" font-size="9.5" font-weight="bold" fill="#3f3f3f">PWC Acceleration Verified</text>
+    <text x="10" y="44" font-size="8.5" fill="#0f0f0f">• Memory Refs: 4 down to 1 (75% cut)</text>
+    <text x="10" y="64" font-size="8.5" fill="#0f0f0f">• Walk Latency: ~89 cyc to ~13-24 cyc</text>
+    <text x="10" y="84" font-size="8.5" fill="#585858">• Latency Reduction: 74% - 85%</text>
+    <text x="10" y="104" font-size="8.5" fill="#0f0f0f">• Preserves TLB hit rate across</text>
+    <text x="10" y="120" font-size="8.5" fill="#0f0f0f">  strided memory access patterns</text>
   </g>
 </svg>
+

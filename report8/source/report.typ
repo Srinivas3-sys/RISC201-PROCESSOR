@@ -1,64 +1,59 @@
 // RISC201 Complete 8-Page Technical Report
+// Styling: Formal Black-and-White Academic Format (matching PROJECT_REPORT.pdf)
 // Covers All Implemented Features for: Memory, Hazards, Forwarding, and CPI Analysis
 // Target: Exactly 8 Pages (A4)
 // Subject: CSC-201 Computer Organization & Architecture (Autumn 2026), "Processor Design"
 
 #set document(
-  title: "RISC201: Memory Systems, Pipeline Hazards, Data Forwarding, and CPI Performance Analysis",
+  title: "RISC201-PROCESSOR: Architectural Design, Cycle-Accurate Simulation, Microcode Control, and Empirical Evaluation",
   author: "bandlapalliyss-max, Varshith Teja"
 )
 
 #set page(
   paper: "a4",
-  margin: (top: 1.35cm, bottom: 1.35cm, left: 1.4cm, right: 1.4cm),
+  margin: (top: 1.5cm, bottom: 1.5cm, left: 1.5cm, right: 1.5cm),
   header: locate(loc => {
     let p = loc.page()
     if p > 1 {
       align(center)[
-        #text(size: 8.5pt, fill: rgb("475569"))[
-          *RISC201: Memory, Hazards, Forwarding & CPI Analysis* | CSC-201 Computer Organization & Architecture
+        #text(size: 8.5pt, font: "Linux Libertine")[
+          *RISC201-PROCESSOR: Architectural Design, Cycle-Accurate Simulation, Microcode Control, and Empirical Evaluation*
         ]
         #v(-4pt)
-        #line(length: 100%, stroke: 0.5pt + rgb("cbd5e1"))
+        #line(length: 100%, stroke: 0.5pt + black)
       ]
     }
   }),
   footer: locate(loc => {
     let p = loc.page()
     align(center)[
-      #line(length: 100%, stroke: 0.5pt + rgb("cbd5e1"))
-      #v(-2pt)
-      #text(size: 8.5pt, fill: rgb("64748b"))[
-        Page #p of 8 | Autumn 2026 Examination Report | Repository: Srinivas3-sys/RISC201-PROCESSOR (Branch: `report-8page`)
-      ]
+      #text(size: 9.5pt, font: "Linux Libertine")[#p]
     ]
   })
 )
 
 #set text(
-  font: "Liberation Sans",
-  size: 10pt,
-  fill: rgb("0f172a"),
-  spacing: 115%
+  font: "Linux Libertine",
+  size: 9.8pt,
+  fill: black,
+  spacing: 100%
 )
 
 #set par(
   justify: true,
-  leading: 0.48em,
+  leading: 0.52em,
 )
 
-#show heading.where(level: 1): it => block(below: 0.4em, above: 0.6em)[
-  #text(size: 12pt, weight: "bold", fill: rgb("1e3a8a"))[#it.body]
-  #v(-4pt)
-  #line(length: 100%, stroke: 1.1pt + rgb("3b82f6"))
+#show heading.where(level: 1): it => block(below: 0.45em, above: 0.7em)[
+  #text(size: 12.5pt, weight: "bold", fill: black)[#it.body]
 ]
 
-#show heading.where(level: 2): it => block(below: 0.3em, above: 0.45em)[
-  #text(size: 10.5pt, weight: "bold", fill: rgb("0f172a"))[#it.body]
+#show heading.where(level: 2): it => block(below: 0.35em, above: 0.5em)[
+  #text(size: 10.5pt, weight: "bold", fill: black)[#it.body]
 ]
 
-#show heading.where(level: 3): it => block(below: 0.2em, above: 0.3em)[
-  #text(size: 9.8pt, weight: "bold", fill: rgb("334155"))[#it.body]
+#show heading.where(level: 3): it => block(below: 0.25em, above: 0.35em)[
+  #text(size: 9.8pt, weight: "bold", fill: black)[#it.body]
 ]
 
 // =========================================================================
@@ -66,53 +61,51 @@
 // =========================================================================
 
 #align(center)[
-  #block(width: 100%, fill: rgb("f8fafc"), inset: 8pt, radius: 4pt, stroke: 0.8pt + rgb("cbd5e1"))[
-    #text(size: 15pt, weight: "bold", fill: rgb("1e3a8a"))[RISC201: Comprehensive Architecture Report on Memory Systems,\ Pipeline Hazards, Data Forwarding, and CPI Analysis]
-    
-    #v(2pt)
-    #text(size: 9pt, weight: "bold", fill: rgb("334155"))[
-      Course: CSC-201 Computer Organization & Architecture (Autumn 2026) | Assignment: "Processor Design"
-    ]
-    
-    #v(2pt)
-    #text(size: 8.5pt, fill: rgb("475569"))[
-      *Repository:* `https://github.com/Srinivas3-sys/RISC201-PROCESSOR` | *Branch:* `report-8page` | *Commit:* `427d904` | *Date:* Autumn 2026 \
-      *Contributors (Git Shortlog):* bandlapalliyss-max (Core Pipelines, Forwarding, Hazards, Memory Subsystem, CPI Audit), Varshith Teja (User Interface & Diagnostics)
-    ]
-  ]
+  #v(0.1em)
+  #text(size: 15pt, weight: "bold")[RISC201: Comprehensive Architecture Report on Memory Systems,\ Pipeline Hazards, Data Forwarding, and CPI Analysis]
+  
+  #v(0.35em)
+  #text(size: 10pt)[*Course:* CSC-201 Computer Organization & Architecture (Autumn 2026) | Assignment: "Processor Design"]
+  
+  #v(0.25em)
+  #text(size: 9pt)[*Authors & Contributors:* bandlapalliyss-max (Core Architecture, Pipeline, Memory, Hazard & Forwarding Units, CPI Audit), Varshith Teja (User Interface & Diagnostics)]
+  
+  #v(0.2em)
+  #text(size: 8.5pt)[*Repository:* `https://github.com/Srinivas3-sys/RISC201-PROCESSOR` | *Branch:* `report-8page` | *Commit:* `ab4c4e0` | *Date:* Autumn 2026]
+  
+  #v(0.3em)
+  #line(length: 100%, stroke: 0.8pt + black)
 ]
 
 #v(1pt)
 
 #grid(
   columns: (1fr, 1fr),
-  gutter: 8pt,
+  gutter: 12pt,
   [
-    #block(fill: rgb("eff6ff"), inset: 7pt, radius: 4pt, stroke: 0.8pt + rgb("93c5fd"))[
-      #text(weight: "bold", size: 9.2pt, fill: rgb("1d4ed8"))[Abstract]
-      #v(2pt)
-      #text(size: 8.8pt)[
-        This report delivers a rigorous microarchitectural evaluation of the *RISC201-PROCESSOR*, an extensible C++ cycle-accurate simulator implementing the 32-bit SimpleRisc architecture with 28 canonical 5-bit binary string opcodes. Spanning four foundational pillars, the report documents: (1) memory systems featuring non-blocking caches with MSHRs, hardware stream/stride prefetchers, cycle-accurate DDR4-3200 bank groups, and 48-bit 4-level virtual memory with Page-Walk Caching (PWC); (2) pipeline hazard taxonomy, interlocks, and 8 branch prediction policies including GShare, BTB, and RAS; (3) an active data forwarding network with youngest-producer priority; and (4) cycle-exact CPI accounting. All features are verified via 12 purpose-written programs (E1–E12).
-      ]
+    #text(weight: "bold", size: 9.5pt)[Abstract]
+    #v(2pt)
+    #text(size: 8.8pt)[
+      This report delivers a rigorous microarchitectural evaluation of the *RISC201-PROCESSOR*, an extensible C++ cycle-accurate simulator implementing the 32-bit SimpleRisc architecture with 28 canonical 5-bit binary string opcodes. Spanning four foundational pillars, the report documents: (1) memory systems featuring non-blocking caches with MSHRs, hardware stream/stride prefetchers, cycle-accurate DDR4-3200 bank groups, and 48-bit 4-level virtual memory with Page-Walk Caching (PWC); (2) pipeline hazard taxonomy, interlocks, and 8 branch prediction policies including GShare, BTB, and RAS; (3) an active data forwarding network with youngest-producer priority; and (4) cycle-exact CPI accounting. All features are verified via 12 purpose-written programs (E1–E12).
     ]
   ],
   [
-    #block(fill: rgb("f8fafc"), inset: 7pt, radius: 4pt, stroke: 0.8pt + rgb("cbd5e1"))[
-      #text(weight: "bold", size: 9.2pt, fill: rgb("0f172a"))[Key Architectural Metrics at a Glance]
-      #v(2pt)
-      #text(size: 8.5pt)[
-        - *ISA & Pipeline:* SimpleRisc 32-bit; 4-Stage Core (500 MHz, 2.0 ns) & 6-Stage Core (800 MHz, 1.25 ns).
-        - *Data Forwarding:* `NONE`, `BASIC`, `FULL`, and `FULL_PLUS` (+StoreBuffer bypass).
-        - *Branch Prediction:* Static, 1-bit, 2-bit Bimodal, GShare (10-bit GHR), 64-entry BTB, 16-entry RAS.
-        - *L1 Caches:* 32 KB, 8-way, 64 B line, 1 cyc hit, WB+WA, LRU/SRRIP/BIP, 8 MSHRs (non-blocking).
-        - *DRAM Controller:* DDR4-3200 JEDEC (0.625 ns, 16 banks in 4 bank groups, FR-FCFS scheduling).
-        - *Virtual Memory:* 48-bit 4-level radix walk (PML4->PDPT->PD->PT), 16-entry PWC (74% latency cut).
-        - *Accounting:* $100%$ cycles strictly attributed via performance invariant formula.
-      ]
+    #text(weight: "bold", size: 9.5pt)[Key Architectural Metrics at a Glance]
+    #v(2pt)
+    #text(size: 8.5pt)[
+      - *ISA & Pipeline:* SimpleRisc 32-bit; 4-Stage Core (500 MHz, 2.0 ns) & 6-Stage Core (800 MHz, 1.25 ns).
+      - *Data Forwarding:* `NONE`, `BASIC`, `FULL`, and `FULL_PLUS` (+StoreBuffer bypass).
+      - *Branch Prediction:* Static, 1-bit, 2-bit Bimodal, GShare (10-bit GHR), 64-entry BTB, 16-entry RAS.
+      - *L1 Caches:* 32 KB, 8-way, 64 B line, 1 cyc hit, WB+WA, LRU/SRRIP/BIP, 8 MSHRs (non-blocking).
+      - *DRAM Controller:* DDR4-3200 JEDEC (0.625 ns, 16 banks in 4 bank groups, FR-FCFS scheduling).
+      - *Virtual Memory:* 48-bit 4-level radix walk (PML4->PDPT->PD->PT), 16-entry PWC (74% latency cut).
+      - *Accounting:* $100%$ cycles strictly attributed via performance invariant formula.
     ]
   ]
 )
 
+#v(1pt)
+#line(length: 100%, stroke: 0.5pt + black)
 #v(1pt)
 #text(size: 8.5pt)[*Keywords:* SimpleRisc, Pipelining, Data Forwarding, Branch Prediction, GShare, Non-Blocking Cache, MSHR, Hardware Prefetching, DDR4 Bank Groups, FR-FCFS, Virtual Memory, Page-Walk Cache, CPI Stack.]
 
@@ -126,8 +119,8 @@ Modern processor design bridges instruction throughput and physical latency thro
 #text(size: 8.5pt, weight: "bold")[Table 1: Architectural Requirement Checklist & Code Implementation Mapping]
 #table(
   columns: (1.3fr, 2.5fr, 1.8fr, 0.9fr),
-  fill: (col, row) => if row == 0 { rgb("f1f5f9") } else { none },
-  stroke: 0.5pt + rgb("cbd5e1"),
+  fill: (col, row) => if row == 0 { luma(240) } else { none },
+  stroke: 0.5pt + black,
   inset: 4pt,
   [*Domain*], [*Feature Inventory & Architectural Scope*], [*Code Location & Presets*], [*Status*],
   [Memory System], [Blocking & non-blocking caches (8 MSHRs), stream/stride prefetchers, 3C misses, DDR4 bank groups, FR-FCFS, 4-level 48-bit VM, PWC], [`memory/Cache.hpp`, `DRAM.hpp`, `VirtualMemory.hpp`], [*Complete* (E1-E4)],
@@ -149,7 +142,7 @@ The processor implements the 32-bit SimpleRisc ISA (`common/ISA.hpp:20-65`), fea
 
 #figure(
   image("../figures/fig1_block_diagram.svg", width: 62%),
-  caption: [Figure 1: RISC201 Architectural Block Diagram: Core Pipeline, HazardUnit, ForwardingUnit, and Memory Hierarchy.]
+  caption: [RISC201 Architectural Block Diagram: Core Pipeline, HazardUnit, ForwardingUnit, and Memory Hierarchy.]
 )
 
 == 2.2 4-Stage vs 6-Stage Core Microarchitectures
@@ -159,7 +152,7 @@ RISC201 models two distinct in-order pipeline microarchitectures:
 
 #figure(
   image("../figures/fig2_pipeline_stages.svg", width: 62%),
-  caption: [Figure 2: Pipeline Stage Organization: 4-Stage (500 MHz) and 6-Stage (800 MHz) with Inters-Stage Latches.]
+  caption: [Pipeline Stage Organization: 4-Stage (500 MHz) and 6-Stage (800 MHz) with Inter-Stage Latches.]
 )
 
 == 2.3 Cycle Accounting Invariant & Textbook vs Project Extensions
@@ -171,8 +164,8 @@ Dividing by $"IC"$ yields the system CPI: $text("CPI") = 1.000 + (text("Stages")
 #text(size: 8.5pt, weight: "bold")[Table 2: Compact Comparison: Standard Textbook Theory vs RISC201 Implemented Extensions]
 #table(
   columns: (1.1fr, 2.3fr, 2.6fr),
-  fill: (col, row) => if row == 0 { rgb("f1f5f9") } else { none },
-  stroke: 0.5pt + rgb("cbd5e1"),
+  fill: (col, row) => if row == 0 { luma(240) } else { none },
+  stroke: 0.5pt + black,
   inset: 3pt,
   [*Domain*], [*Standard Textbook Baseline*], [*RISC201 Implemented Microarchitectural Extensions*],
   [Memory System], [Blocking cache, LRU, single-bank 1T-1C DRAM, 32-bit 1-/2-level page table, basic TLB], [Non-blocking cache (8 MSHRs), stream/stride prefetchers, DDR4 bank groups, FR-FCFS scheduler, 48-bit 4-level radix VM, Page-Walk Cache (PWC)],
@@ -206,7 +199,7 @@ The `HazardUnit` (`common/HazardUnit.hpp:18-120`) continuously inspects inter-st
 
 #figure(
   image("../figures/fig4_bimodal_predictor.svg", width: 62%),
-  caption: [Figure 4: 2-Bit Bimodal Saturating Counter State Machine with Hysteresis Property.]
+  caption: [2-Bit Bimodal Saturating Counter State Machine with Hysteresis Property.]
 )
 
 == 3.3 Dynamic Branch Prediction, GShare, BTB & RAS (E7, E9)
@@ -222,8 +215,8 @@ RISC201 implements 8 branch prediction policies (`common/BranchPredictor.hpp:13-
 #text(size: 8.5pt, weight: "bold")[Table 3: Branch Predictor Policies, Structures, and Hardware Mechanisms]
 #table(
   columns: (1.2fr, 1.2fr, 2.3fr, 1.3fr),
-  fill: (col, row) => if row == 0 { rgb("f1f5f9") } else { none },
-  stroke: 0.5pt + rgb("cbd5e1"),
+  fill: (col, row) => if row == 0 { luma(240) } else { none },
+  stroke: 0.5pt + black,
   inset: 3pt,
   [*Policy / Structure*], [*Hardware Size*], [*Indexing / Algorithm*], [*Stall Penalty*],
   [Static Not-Taken], [0 bits], [Always fetch sequential $"PC"+4$; squash on taken in `EX`], [1 cyc (4S) / 2 cyc (6S)],
@@ -250,8 +243,8 @@ Data forwarding routes computed results directly from pipeline register outputs 
   - `FULL_PLUS`: Includes all `FULL` paths plus a 16-entry `StoreBuffer` for Store-to-Load bypassing before cache commitment.
 
 #figure(
-  image("../figures/fig3_forwarding_matrix.svg", width: 75%),
-  caption: [Figure 3: Data Forwarding Bypass Paths, Forwarding Multiplexers, and Producer-Consumer Matrix.]
+  image("../figures/fig3_forwarding_matrix.svg", width: 66%),
+  caption: [Data Forwarding Bypass Paths, Forwarding Multiplexers, and Producer-Consumer Matrix.]
 )
 
 == 4.2 Youngest-Producer Priority Resolution (E8)
@@ -268,8 +261,8 @@ $ text("Priority:") quad text("Stage")_(k-1) (text("EX\\_MA")) > text("Stage")_(
 #text(size: 8.5pt, weight: "bold")[Table 4: Minimum Stall Cycles Across Pipeline Stages and Forwarding Modes]
 #table(
   columns: (1.5fr, 1.3fr, 1.0fr, 1.0fr, 1.0fr, 1.2fr),
-  fill: (col, row) => if row == 0 { rgb("f1f5f9") } else { none },
-  stroke: 0.5pt + rgb("cbd5e1"),
+  fill: (col, row) => if row == 0 { luma(240) } else { none },
+  stroke: 0.5pt + black,
   inset: 4pt,
   [*Producer Inst*], [*Consumer Inst*], [*Distance*], [*`NONE`*], [*`BASIC`*], [*`FULL` / `FULL+`*],
   [ALU (`add`, `sub`)], [ALU (`op1` / `op2`)], [Distance 1], [1 cyc (4S) / 2 cyc (6S)], [0 cyc], [*0 cyc*],
@@ -294,8 +287,8 @@ CPUs operate orders of magnitude faster than main memory. RISC201 bridges this g
 - *Spatial Locality:* Addresses adjacent to recently referenced addresses are likely to be accessed. Exploited by transferring *64-byte lines*.
 
 #figure(
-  image("../figures/fig5_cache_address_split.svg", width: 78%),
-  caption: [Figure 5: Physical and Virtual Address Bitfield Splits: 32 KB 8-Way Cache and 48-Bit 4-Level Virtual Memory Radix Tree.]
+  image("../figures/fig5_cache_address_split.svg", width: 75%),
+  caption: [Physical and Virtual Address Bitfield Splits: 32 KB 8-Way Cache and 48-Bit 4-Level Virtual Memory Radix Tree.]
 )
 
 == 5.2 L1 Cache Architecture & The 3C Miss Model (E1)
@@ -340,8 +333,8 @@ Main memory is driven by a cycle-accurate DRAM controller (`memory/DRAM.hpp:20-1
   3. *Row Conflict:* Conflicting row open: $t_text("conflict") = t_text("RP") + t_text("RCD") + t_text("CL") + t_text("BURST") = 22 + 22 + 22 + 4 = bold(70text(" cyc"))$ ($43.75text(" ns")$).
 
 #figure(
-  image("../figures/fig6_dram_bank_groups.svg", width: 75%),
-  caption: [Figure 6: DDR4-3200 Bank-Group Hierarchy (16 Banks in 4 Bank Groups) and Inter-Bank Timing Differentials.]
+  image("../figures/fig6_dram_bank_groups.svg", width: 72%),
+  caption: [DDR4-3200 Bank-Group Hierarchy (16 Banks in 4 Bank Groups) and Inter-Bank Timing Differentials.]
 )
 
 - *Bank-Group Timing Differentials:* To avoid internal sense amplifier recovery bottlenecks, DDR4 partitions 16 banks into 4 Bank Groups:
@@ -350,8 +343,8 @@ Main memory is driven by a cycle-accurate DRAM controller (`memory/DRAM.hpp:20-1
 - *FR-FCFS Memory Scheduling (E3):* First-Ready First-Come First-Served reorders queued memory requests to prioritize row-buffer hits over older conflicting requests. For stream $[R_1, R_2, R_1, R_2]$, FCFS incurs 3 conflicts ($258text(" cyc")$ / $161.25text(" ns")$). FR-FCFS reorders to $[R_1, R_1, R_2, R_2]$, yielding 2 row hits ($170text(" cyc")$ / $106.25text(" ns")$), a verified *1.518x speedup (34.1% latency cut)* (analytic example).
 
 #figure(
-  image("../figures/fig7_page_walk_pwc.svg", width: 75%),
-  caption: [Figure 7: 4-Level Hardware Page Walk Acceleration via Page-Walk Cache (PWC).]
+  image("../figures/fig7_page_walk_pwc.svg", width: 72%),
+  caption: [4-Level Hardware Page Walk Acceleration via Page-Walk Cache (PWC).]
 )
 
 == 5.7 48-Bit 4-Level Virtual Memory & Page-Walk Cache (E4)
@@ -384,8 +377,8 @@ Consider a labeled instruction mix: $60%$ ALU, $20%$ Load (with $30%$ load-use d
 #text(size: 8.5pt, weight: "bold")[Table 5: Analytical CPI Stack Across Representative SimpleRisc Instruction Mix]
 #table(
   columns: (2.2fr, 1.3fr, 1.3fr, 1.3fr, 1.3fr),
-  fill: (col, row) => if row == 0 { rgb("f1f5f9") } else { none },
-  stroke: 0.5pt + rgb("cbd5e1"),
+  fill: (col, row) => if row == 0 { luma(240) } else { none },
+  stroke: 0.5pt + black,
   inset: 4pt,
   [*Performance Factor*], [*Formula / Source*], [*4-Stage (No Fwd)*], [*4-Stage (Full Fwd)*], [*6-Stage (Full Fwd)*],
   [Ideal Throughput ($text("CPI")_text("ideal")$)], [Base single-issue IPC = 1.0], [1.000], [1.000], [1.000],
@@ -443,8 +436,8 @@ The RISC201 project successfully demonstrates the design, cycle-accurate simulat
 == Master Verification Reconciliation Table (Programs E1 - E12)
 #table(
   columns: (0.7fr, 2.5fr, 2.4fr, 2.0fr, 1.0fr),
-  fill: (col, row) => if row == 0 { rgb("f1f5f9") } else { none },
-  stroke: 0.5pt + rgb("cbd5e1"),
+  fill: (col, row) => if row == 0 { luma(240) } else { none },
+  stroke: 0.5pt + black,
   inset: 3.5pt,
   [*ID*], [*Architectural Concept*], [*Theoretical Formula / Parameter*], [*Simulator Measured Output*], [*Status*],
   [E1], [Cache Split & 3C Thrashing], [$t=20, s=6, b=6$; A,B,A,B direct vs 2-way], [Direct: 0% hit; 2-way: 50% cold / 100% steady], [*VERIFIED*],
@@ -464,20 +457,20 @@ The RISC201 project successfully demonstrates the design, cycle-accurate simulat
 #v(1pt)
 #grid(
   columns: (1fr, 1fr),
-  gutter: 8pt,
+  gutter: 10pt,
   [
-    #block(fill: rgb("f8fafc"), inset: 5pt, radius: 3pt, stroke: 0.5pt + rgb("cbd5e1"))[
-      #text(weight: "bold", size: 8.5pt)[References]
+    #block(stroke: 0.5pt + black, inset: 5pt)[
+      #text(weight: "bold", size: 8.5pt)[References] \
       #text(size: 7.5pt)[
-        1. S. R. Sarangi, _Computer Organisation and Architecture_, McGraw Hill, Chapters 3, 8 & 9. \
-        2. J. L. Hennessy and D. A. Patterson, _Computer Architecture: A Quantitative Approach_, 6th ed., Morgan Kaufmann. \
+        1. S. R. Sarangi, _Computer Organisation and Architecture_, McGraw Hill, Ch. 3, 8, 9. \
+        2. J. L. Hennessy and D. A. Patterson, _Computer Architecture: A Quantitative Approach_. \
         3. S. Rixner et al., "Memory Access Scheduling," _ISCA 2000_.
       ]
     ]
   ],
   [
-    #block(fill: rgb("eff6ff"), inset: 5pt, radius: 3pt, stroke: 0.5pt + rgb("bfdbfe"))[
-      #text(weight: "bold", size: 8.5pt, fill: rgb("1d4ed8"))[Reproduction Box]
+    #block(stroke: 0.5pt + black, inset: 5pt)[
+      #text(weight: "bold", size: 8.5pt)[Reproduction Harness] \
       #text(size: 7.5pt)[
         ```bash
         make test                  # 78/78 unit tests pass
