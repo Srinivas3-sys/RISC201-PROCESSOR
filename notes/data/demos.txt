@@ -1,0 +1,150 @@
+=== DEMO PIPE ===
+./risc201_sim benchmarks/hazard_test.s --pipeline 6 --forwarding full --diagram --report
+Loaded assembly file: benchmarks/hazard_test.s
+Switched simulation mode to: 6-STAGE PIPELINE (Split ID/RF)
+Successfully assembled and loaded 19 instructions (76 bytes) at address 0x00000000.
+=== Configuration: 6-Stage Pipeline | MemPreset: ideal | Forwarding: full | BranchPolicy: 2bit | Divider: non-restoring ===
+Execution stopped after 25 cycles.
+=== Register File (r0 - r15) ===
+r0  : 0x00000000  r1  : 0x0000001E  r2  : 0x0000000A  r3  : 0x00000014  
+r4  : 0x00000019  r5  : 0x00000005  r6  : 0x000002EE  r7  : 0x00000000  
+r8  : 0x00002000  r9  : 0x000002EE  r10 : 0x00000320  r11 : 0x000002EE  
+r12 : 0x0000002A  r13 : 0x00000000  sp  : 0x000FFFFC  ra  : 0x00000000  
+Flags: [E=1, GT=0] | CPL=1 | oldPC=0x00000000 | oldSP=0x000FFFFC
+PC : 0x0000004C
+
++--------------------------------------------------------------------------+
+|               PIPELINE EXECUTION STATE (Clock Cycle:     25)             |
++--------------------------------------------------------------------------+
+  [IF    ] : -- BUBBLE / NOP --
+  [ID    ] : -- BUBBLE / NOP --
+  [RF    ] : -- BUBBLE / NOP --
+  [EX    ] : -- BUBBLE / NOP --
+  [MA    ] : -- BUBBLE / NOP --
+  [RW    ] : nop (PC: 0x00000048)
++--------------------------------------------------------------------------+
+========================================================================
+                  6-STAGE PROCESSOR REPORT
+========================================================================
+Total Cycles:               25
+Retired Instructions:       17
+Pipeline Stages:            6
+CPI:                        1.471
+IPC:                        0.680
+Branch Bubbles / Flushes:   2
+Pipeline Fill Cycles:       5
+------------------------------------------------------------------------
+CPI STACK BREAKDOWN BY CANONICAL STALL REASON:
+------------------------------------------------------------------------
+Reason                  Cycles      Delta CPI   Share
+RAW_LOAD_USE            1           0.059       33.3%
+BRANCH_MISPREDICT       2           0.118       66.7%
+------------------------------------------------------------------------
+Invariant Verification: PASSED (Cycles == Retired + Stalls + Bubbles)
+========================================================================
+=== DEMO MEM ===
+./risc201_sim benchmarks/factorial_iter.s --mem-preset modern
+Loaded assembly file: benchmarks/factorial_iter.s
+Switched simulation mode to: 4-STAGE PIPELINE (Merged MA_RW)
+Successfully assembled and loaded 8 instructions (32 bytes) at address 0x00000000.
+=== Configuration: 4-Stage Pipeline | MemPreset: modern | Forwarding: full | BranchPolicy: 2bit | Divider: non-restoring ===
+Execution stopped after 29 cycles.
+=== Register File (r0 - r15) ===
+r0  : 0x00000006  r1  : 0x000002D0  r2  : 0x00000001  r3  : 0x00000000  
+r4  : 0x00000000  r5  : 0x00000000  r6  : 0x00000000  r7  : 0x00000000  
+r8  : 0x00000000  r9  : 0x00000000  r10 : 0x00000000  r11 : 0x00000000  
+r12 : 0x00000000  r13 : 0x00000000  sp  : 0x000FFFFC  ra  : 0x00000000  
+Flags: [E=1, GT=0] | CPL=1 | oldPC=0x00000000 | oldSP=0x000FFFFC
+PC : 0x00000020
+========================================================================
+       CACHE STATE: L1D (32 KB, 8-Way, 64 B Lines)
+========================================================================
+Hit Rate: 100.00% (Hits: 0, Misses: 0, Writebacks: 0)
+3C Misses: Compulsory: 0, Capacity: 0, Conflict: 0
+------------------------------------------------------------------------
+Set     Way 0       Way 1       Way 2       Way 3       ...
+------------------------------------------------------------------------
+[0   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[1   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[2   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[3   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[4   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[5   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[6   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[7   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+  ... (56 more sets omitted)
+========================================================================
+========================================================================
+       DRAM CONTROLLER STATE: DDR4-3200 (1 Ch, 4 BG, 4 Banks/BG, open Page)
+========================================================================
+Row Hit Rate: 0.00% (Hits: 0, Misses: 1, Conflicts: 0)
+Refreshes: 0, Total CPU Stall Cycles: 15
+------------------------------------------------------------------------
+Bank ID   State           Active Row      Row Buffer
+------------------------------------------------------------------------
+Bank 0    IDLE            0x000000000000OPEN (Cached)
+Bank 1    IDLE            ---             CLOSED
+Bank 2    IDLE            ---             CLOSED
+Bank 3    IDLE            ---             CLOSED
+Bank 4    IDLE            ---             CLOSED
+Bank 5    IDLE            ---             CLOSED
+Bank 6    IDLE            ---             CLOSED
+Bank 7    IDLE            ---             CLOSED
+  ... (8 more banks omitted)
+========================================================================
+=== Memory Hierarchy Latency Analysis ===
+AMAT (Average Memory Access Time) : 1.00 cycles
+EAT  (Effective Access Time + VM) : 5.50 cycles
+=== DEMO VM ===
+./risc201_sim benchmarks/factorial_rec.s --mem-preset modern --pipeline 6
+Loaded assembly file: benchmarks/factorial_rec.s
+Switched simulation mode to: 6-STAGE PIPELINE (Split ID/RF)
+Successfully assembled and loaded 23 instructions (92 bytes) at address 0x00000000.
+=== Configuration: 6-Stage Pipeline | MemPreset: modern | Forwarding: full | BranchPolicy: 2bit | Divider: non-restoring ===
+Execution stopped after 164 cycles.
+=== Register File (r0 - r15) ===
+r0  : 0x0000000A  r1  : 0x00375F00  r2  : 0x00000000  r3  : 0x00000000  
+r4  : 0x00000000  r5  : 0x00000000  r6  : 0x00000000  r7  : 0x00000000  
+r8  : 0x00000000  r9  : 0x00000000  r10 : 0x00000000  r11 : 0x00000000  
+r12 : 0x00000000  r13 : 0x00000000  sp  : 0x000FFFFC  ra  : 0x00000008  
+Flags: [E=1, GT=0] | CPL=1 | oldPC=0x00000000 | oldSP=0x000FFFFC
+PC : 0x0000005C
+========================================================================
+       CACHE STATE: L1D (32 KB, 8-Way, 64 B Lines)
+========================================================================
+Hit Rate: 94.12% (Hits: 32, Misses: 2, Writebacks: 0)
+3C Misses: Compulsory: 2, Capacity: 0, Conflict: 0
+------------------------------------------------------------------------
+Set     Way 0       Way 1       Way 2       Way 3       ...
+------------------------------------------------------------------------
+[0   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[1   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[2   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[3   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[4   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[5   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[6   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+[7   ]  [ INV ]     [ INV ]     [ INV ]     [ INV ]     
+  ... (56 more sets omitted)
+========================================================================
+========================================================================
+       DRAM CONTROLLER STATE: DDR4-3200 (1 Ch, 4 BG, 4 Banks/BG, open Page)
+========================================================================
+Row Hit Rate: 0.00% (Hits: 0, Misses: 1, Conflicts: 0)
+Refreshes: 0, Total CPU Stall Cycles: 24
+------------------------------------------------------------------------
+Bank ID   State           Active Row      Row Buffer
+------------------------------------------------------------------------
+Bank 0    IDLE            0x000000000000OPEN (Cached)
+Bank 1    IDLE            ---             CLOSED
+Bank 2    IDLE            ---             CLOSED
+Bank 3    IDLE            ---             CLOSED
+Bank 4    IDLE            ---             CLOSED
+Bank 5    IDLE            ---             CLOSED
+Bank 6    IDLE            ---             CLOSED
+Bank 7    IDLE            ---             CLOSED
+  ... (8 more banks omitted)
+========================================================================
+=== Memory Hierarchy Latency Analysis ===
+AMAT (Average Memory Access Time) : 7.71 cycles
+EAT  (Effective Access Time + VM) : 12.21 cycles
