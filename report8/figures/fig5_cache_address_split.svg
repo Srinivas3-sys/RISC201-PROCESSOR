@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 230" width="100%" height="100%" style="background:#ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <rect x="10" y="10" width="860" height="210" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+
+  <!-- Top: Cache Bitfield Decomposition -->
+  <text x="30" y="34" font-size="12.5" font-weight="bold" fill="#0f172a">A. 32-Bit Physical Address -> 32 KB 8-Way Cache Decomposition (64-Byte Line)</text>
+
+  <g transform="translate(30, 45)">
+    <!-- Tag Field -->
+    <rect x="0" y="0" width="520" height="42" rx="4" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="260" y="20" font-size="11" font-weight="bold" fill="#1d4ed8" text-anchor="middle">Tag Field: 20 bits [31:12]</text>
+    <text x="260" y="34" font-size="9" fill="#64748b" text-anchor="middle">Compared against 8 tags in selected set</text>
+
+    <!-- Index Field -->
+    <rect x="528" y="0" width="156" height="42" rx="4" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="606" y="20" font-size="11" font-weight="bold" fill="#15803d" text-anchor="middle">Index: 6 bits [11:6]</text>
+    <text x="606" y="34" font-size="9" fill="#64748b" text-anchor="middle">Selects 1 of 64 sets</text>
+
+    <!-- Offset Field -->
+    <rect x="692" y="0" width="128" height="42" rx="4" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5"/>
+    <text x="756" y="20" font-size="11" font-weight="bold" fill="#c2410c" text-anchor="middle">Offset: 6 bits [5:0]</text>
+    <text x="756" y="34" font-size="9" fill="#64748b" text-anchor="middle">64 bytes / line</text>
+  </g>
+
+  <!-- Bottom: Virtual Memory 2-Level Decomposition -->
+  <text x="30" y="125" font-size="12.5" font-weight="bold" fill="#0f172a">B. 32-Bit Virtual Address -> 2-Level Hierarchical Page Table (4 KB Page)</text>
+
+  <g transform="translate(30, 136)">
+    <!-- Page Directory Index -->
+    <rect x="0" y="0" width="260" height="42" rx="4" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="130" y="20" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">Page Directory (PD): 10 bits [31:22]</text>
+    <text x="130" y="34" font-size="9" fill="#64748b" text-anchor="middle">1024 PDE pointers to PTs</text>
+
+    <!-- Page Table Index -->
+    <rect x="268" y="0" width="260" height="42" rx="4" fill="#fdf4ff" stroke="#d946ef" stroke-width="1.5"/>
+    <text x="398" y="20" font-size="11" font-weight="bold" fill="#a21caf" text-anchor="middle">Page Table (PT): 10 bits [21:12]</text>
+    <text x="398" y="34" font-size="9" fill="#64748b" text-anchor="middle">1024 PTEs to 4 KB Frames</text>
+
+    <!-- Page Offset -->
+    <rect x="536" y="0" width="284" height="42" rx="4" fill="#fff7ed" stroke="#ea580c" stroke-width="1.5"/>
+    <text x="678" y="20" font-size="11" font-weight="bold" fill="#c2410c" text-anchor="middle">Page Offset: 12 bits [11:0]</text>
+    <text x="678" y="34" font-size="9" fill="#64748b" text-anchor="middle">4096-byte page boundary offset</text>
+  </g>
+
+  <!-- Summary Caption -->
+  <text x="30" y="202" font-size="9.5" fill="#64748b">Direct mathematical relationship: Offset bits = log2(Granularity), Index bits = log2(NumSets or NumEntries), Tag bits = Total - (Index + Offset).</text>
+</svg>

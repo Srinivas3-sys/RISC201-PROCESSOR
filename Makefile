@@ -126,7 +126,12 @@ notes:
 	pandoc notes/ALL_NOTES.md -o notes/ALL_NOTES.pdf --pdf-engine=typst
 	pandoc notes/ALL_NOTES.md -o notes/ALL_NOTES.docx
 
+report8:
+	typst compile --root . report8/source/report.typ report8/RISC201_Memory_Hazards_CPI_Report.pdf
+	@echo "Report compiled successfully: report8/RISC201_Memory_Hazards_CPI_Report.pdf"
+	@pdfinfo report8/RISC201_Memory_Hazards_CPI_Report.pdf | grep "Pages:"
+
 clean:
 	rm -f $(TARGETS) *.hex *.bin
 
-.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi perf-docs lint-docs lint-docs-fix lint-isa verify-golden test-asan notes
+.PHONY: all clean test test-pipe test-isa test-mem test-vm fuzz test-all exp exp-pipe demo-mem demo-vm demo-pipe audit-cpi perf-docs lint-docs lint-docs-fix lint-isa verify-golden test-asan notes report8
