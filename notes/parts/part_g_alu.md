@@ -120,3 +120,4 @@ Data captured by running `./risc201_eval`:
 3. **Booth's Radix-4** multiplier scans 2 bits per cycle, **halving partial products**.
 4. **Non-Restoring division** eliminates the cycle spent restoring negative remainders.
 5. **Newton-Raphson division** uses quadratic reciprocal approximation for maximum throughput.
+

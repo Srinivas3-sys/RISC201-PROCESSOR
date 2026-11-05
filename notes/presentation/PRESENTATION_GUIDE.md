@@ -151,3 +151,4 @@ Based on commit history:
   - Present: Architecture overview, 4-stage vs 6-stage datapath, Forwarding and Hazard Units, Memory Hierarchy (Caches, DRAM, Radix-4 VM), and CPI performance analysis.
 - **`Varshith Teja`**:
   - Present: Software toolchain, UI/Visualizers (ASCII pipeline trace, startup prompt), Newton-Raphson division algorithms, CLI branch predictor selection, and execute the live terminal demo.
+

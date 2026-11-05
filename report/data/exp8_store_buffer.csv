@@ -1,0 +1,13 @@
+Pipeline,Benchmark,Mode,Cycles,CPI,Store_to_Load_Bypasses,Total_FWD_Events
+4-Stage,hazard_test.s,full,23,1.353,0,5
+4-Stage,hazard_test.s,full+,23,1.353,2,7
+4-Stage,array_sum.s,full,68,1.172,0,17
+4-Stage,array_sum.s,full+,68,1.172,2,19
+4-Stage,stack_test.s,full,22,1.158,0,1
+4-Stage,stack_test.s,full+,22,1.158,2,3
+6-Stage,hazard_test.s,full,26,1.529,0,8
+6-Stage,hazard_test.s,full+,26,1.529,2,10
+6-Stage,array_sum.s,full,71,1.224,0,33
+6-Stage,array_sum.s,full+,71,1.224,2,35
+6-Stage,stack_test.s,full,24,1.263,0,2
+6-Stage,stack_test.s,full+,24,1.263,2,4

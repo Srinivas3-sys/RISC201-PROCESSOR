@@ -107,3 +107,4 @@ In a university project defense, examiners respect honesty far more than exagger
 3. The project underwent two major refactors: the **CPI Audit** and the **String ISA Refactor**.
 4. Use **`make demo-pipe`**, **`make demo-mem`**, and **`make demo-vm`** for live presentation demos.
 5. Honestly acknowledge that the CPU is **in-order single-core**; examiners love mature technical honesty!
+

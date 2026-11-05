@@ -116,3 +116,4 @@ If you open the codebase in VS Code, follow this exact reading order. Each entry
   * `pass1()`: Builds the symbol table.
   * `pass2()`: Emits machine code words and resolves relative offsets.
 * **What to look at first**: Lines 60–100 (`pass1()`) and lines 120–180 (`pass2()`).
+

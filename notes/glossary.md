@@ -55,3 +55,4 @@ Alphabetical reference of every technical abbreviation and term used in this pro
 | **Two-Pass Assembler**| Assembler that discovers labels in Pass 1 and encodes machine code in Pass 2. | Chapter C1 |
 | **Vertical Microcode**| Encoded 16-bit control words using hardware decoders to save ROM space. | Chapter F3 |
 | **Wallace Tree** | High-speed multiplier tree using carry-save adders to reduce partial products in parallel. | Chapter G2 |
+

@@ -1,0 +1,4 @@
+Fault_Type,Backing_Medium,Typical_Latency_ns,CPU_Cycles_at_3GHz,Relative_DRAM_Multiple
+Minor Fault,Zero-fill / Free Page Allocator,500.0,1500,7.9x
+Major Fault (SSD),PCIe NVMe SSD Swap Partition,100000.0,300000,1589.8x
+Major Fault (HDD),Mechanical Hard Disk Swap Partition,3000000.0,9000000,47694.8x

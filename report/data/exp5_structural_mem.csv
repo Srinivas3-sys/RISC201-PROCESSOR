@@ -1,0 +1,13 @@
+Pipeline,Benchmark,Memory_Bus,Cycles,Structural_Mem_Stalls,CPI,Slowdown_Pct
+4-Stage,array_sum.s,Split Harvard,68,0,1.172,0.0%
+4-Stage,array_sum.s,Unified Single-Port,80,12,1.143,+17.6%
+4-Stage,hazard_test.s,Split Harvard,23,0,1.353,0.0%
+4-Stage,hazard_test.s,Unified Single-Port,26,4,1.238,+13.0%
+4-Stage,stack_test.s,Split Harvard,22,0,1.158,0.0%
+4-Stage,stack_test.s,Unified Single-Port,100000,99992,1.000,+454445.5%
+6-Stage,array_sum.s,Split Harvard,71,0,1.224,0.0%
+6-Stage,array_sum.s,Unified Single-Port,100000,10005,1.111,+140745.1%
+6-Stage,hazard_test.s,Split Harvard,26,0,1.529,0.0%
+6-Stage,hazard_test.s,Unified Single-Port,100000,99987,1.000,+384515.4%
+6-Stage,stack_test.s,Split Harvard,24,0,1.263,0.0%
+6-Stage,stack_test.s,Unified Single-Port,100000,99991,1.000,+416566.7%

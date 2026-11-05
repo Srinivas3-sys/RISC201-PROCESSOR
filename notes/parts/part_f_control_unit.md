@@ -130,3 +130,4 @@ MicroCycle 3: microPC=0x18 [EXEC_MOV] Reg[r1] <= 30, Next -> 0x00 (FETCH)
 3. **Horizontal microcode** is **32 bits wide, unencoded, and fast**.
 4. **Vertical microcode** is **16 bits wide, encoded, and saves 50% ROM space**.
 5. The interactive debugger (`mode micro`) lets you step through internal microPC states one by one.
+

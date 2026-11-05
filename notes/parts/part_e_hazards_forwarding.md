@@ -164,3 +164,4 @@ When a mispredict is detected in `EX`:
 3. The **2-Bit Bimodal Predictor** uses saturating counters to avoid tripping on loop exits.
 4. Branch penalty is **1 cycle in 4-stage** and **2 cycles in 6-stage**.
 5. When a branch mispredicts, wrong-path instructions are **squashed** into `nop` bubbles.
+

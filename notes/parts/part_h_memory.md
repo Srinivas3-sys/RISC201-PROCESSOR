@@ -206,3 +206,4 @@ The simulator includes 5 built-in presets (`--mem-preset`):
 3. **AMAT** measures average memory latency; caches drop access time from 120 cycles to **< 2 cycles**.
 4. **DRAM Row Conflicts** take $3\times$ longer than Row Hits ($t_{RP} + t_{RCD} + t_{CL}$).
 5. **Radix-4 VM** uses 4 levels (PML4, PDPT, PD, PT); the **PWC** cuts walk latency by **74%**.
+

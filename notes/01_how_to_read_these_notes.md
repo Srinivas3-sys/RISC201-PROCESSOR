@@ -53,3 +53,4 @@ If you are starting with zero computer architecture background:
 * **Day 5**: Part F (F1–F6) + Part G (G1–G3) + Code Walkthrough of `MicroController.hpp` and `ALU.hpp`.
 * **Day 6**: Part H (H1–H6) + Part I (I1–I3) + Code Walkthrough of `Cache.hpp`, `DRAM.hpp`, `VirtualMemory.hpp`.
 * **Day 7**: Full Mock Viva (run the 3 mock vivas in `notes/self_test/MOCK_VIVAS.md`) + Live Demo dress rehearsal.
+

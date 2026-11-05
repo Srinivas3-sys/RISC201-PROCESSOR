@@ -63,3 +63,4 @@ Tick each box once you can explain the concept out loud without looking at notes
 - [ ] **18. Golden ISS**: How differential testing verifies pipelined execution correctness.
 - [ ] **19. Live Demo Commands**: Ability to run `make demo-pipe`, `make demo-mem`, `make demo-vm` smoothly.
 - [ ] **20. Project Limitations**: Confidently stating that the processor is in-order single-core without pretending otherwise.
+

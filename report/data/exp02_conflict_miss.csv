@@ -1,0 +1,3 @@
+Config,Access_Pattern,Accesses,Hits,Misses,HitRate_Pct,ConflictMisses
+1-Way Direct-Mapped,"A,B,A,B (Same Index)",100,0,100,0.00,98
+2-Way Set-Associative,"A,B,A,B (Same Index)",100,98,2,98.00,0

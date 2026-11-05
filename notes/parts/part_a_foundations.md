@@ -449,3 +449,4 @@ Let's trace `mov r1, 10`:
 5. Why are labels needed in assembly language?
 
 *(Answers: 1. A comment; 2. `r4`; 3. 32 bits (4 bytes); 4. The Disassembler; 5. To allow branching to target locations without having to calculate raw numerical memory addresses by hand)*
+

@@ -1,0 +1,4 @@
+Retention_ms,tREFI_cycles,tRFC_cycles,Total_Refresh_Stalls,Overhead_Pct
+64,12480,560,44240,4.42
+32,6240,560,85680,8.57
+16,3120,560,159600,15.96

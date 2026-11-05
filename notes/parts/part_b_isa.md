@@ -312,3 +312,4 @@ If you ever need to add a new instruction (for example, a bitwise population cou
 5. What metadata field tells the forwarding unit whether an instruction writes to a destination register?
 
 *(Answers: 1. `common/ISA.hpp`; 2. Exactly 5 bits; 3. `./lint_isa`; 4. No, they are stored inline via Small String Optimization (SSO); 5. `writes_rd`)*
+

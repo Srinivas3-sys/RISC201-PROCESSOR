@@ -152,3 +152,4 @@ Grouped by difficulty into **Easy**, **Medium**, **Hard**, and **Examiner Trap**
 
 #### Q35: "Why do you use string opcodes instead of integer enums?"
 **Answer**: String opcodes (`isa::OP_ADD = "00000"`) prevent silent typecasting bugs, mirror physical 5-bit hardware wire lines, and serve as a single source of truth across the assembler, ISS, pipelines, and visualizers without translation layers (`common/ISA.hpp`). Verified by `./lint_isa`.
+

@@ -1,0 +1,3 @@
+Traversal_Algorithm,Matrix_Dim,L1D_Hits,L1D_Misses,L1D_HitRate_Pct,TLB_Hits,TLB_Misses,TLB_HitRate_Pct
+Row-Major (Sequential Stride),32x32,1019,5,99.51,1023,1,99.90
+Column-Major (Strided Stride),32x32,1018,6,99.41,1023,1,99.90

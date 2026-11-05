@@ -1,0 +1,7 @@
+Frames,FIFO_Faults,LRU_Faults,Clock_Faults,Belady_Anomaly_Detected
+2,12,12,12,NO
+3,9,10,10,NO
+4,10,8,8,YES (Belady Anomaly!)
+5,5,5,5,NO
+6,5,5,5,NO
+7,5,5,5,NO

@@ -541,3 +541,4 @@ r1  : 0x000002D0 (720 decimal, correct 6!)
 3. Use **`--mem-preset modern`** to activate caches, TLBs, and DDR4 DRAM.
 4. Launch with **`-i`** to enter the interactive step-by-step debugger.
 5. In the debugger, type **`pipe`**, **`regs`**, **`stack`**, and **`mem`** to inspect execution state.
+

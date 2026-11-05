@@ -1,0 +1,13 @@
+Workload,Prefetcher,Issued,Useful,Accuracy_Pct,L1D_Hits,L1D_Misses,L1D_HitRate_Pct
+Sequential,none,0,0,0.00,0,120,0.00
+Sequential,next_line,120,118,98.33,118,2,98.33
+Sequential,stride,112,104,92.86,104,16,86.67
+Sequential,stream,115,109,94.78,109,11,90.83
+Strided,none,0,0,0.00,0,120,0.00
+Strided,next_line,237,116,48.95,116,4,96.67
+Strided,stride,104,96,92.31,96,24,80.00
+Strided,stream,223,107,47.98,107,13,89.17
+Pointer_Chasing,none,0,0,0.00,0,120,0.00
+Pointer_Chasing,next_line,183,51,27.87,51,69,42.50
+Pointer_Chasing,stride,86,80,93.02,80,40,66.67
+Pointer_Chasing,stream,207,100,48.31,100,20,83.33

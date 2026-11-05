@@ -1,0 +1,54 @@
+========================================================================
+        RISC201 PROCESSOR DESIGN & EVALUATION COMPARISON SUITE          
+========================================================================
+
+| Benchmark | Configuration | Cycles | Retired Insts | CPI | IPC | Stalls | Branch Bubbles | Correct? |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Factorial (Iterative)    | 4-Stage (Forwarding)       |     29 |            24 |  1.21 |  0.83 |      0 |              2 | PASS |
+| Factorial (Iterative)    | 4-Stage (Interlocks Only)  |     35 |            24 |  1.46 |  0.69 |      6 |              2 | PASS |
+| Factorial (Iterative)    | 6-Stage (Forwarding)       |     33 |            24 |  1.38 |  0.73 |      0 |              4 | PASS |
+| Factorial (Iterative)    | 6-Stage (Interlocks Only)  |     46 |            24 |  1.92 |  0.52 |     13 |              4 | PASS |
+| Factorial (Iterative)    | Microprogrammed (Horizontal) |    230 |            24 |  9.58 |  0.10 |      0 |              0 | PASS |
+| Factorial (Recursive)    | 4-Stage (Forwarding)       |    154 |           143 |  1.08 |  0.93 |      0 |              8 | PASS |
+| Factorial (Recursive)    | 4-Stage (Interlocks Only)  |    181 |           143 |  1.27 |  0.79 |     27 |              8 | PASS |
+| Factorial (Recursive)    | 6-Stage (Forwarding)       |    164 |           143 |  1.15 |  0.87 |      0 |             16 | PASS |
+| Factorial (Recursive)    | 6-Stage (Interlocks Only)  |    235 |           143 |  1.64 |  0.61 |     71 |             16 | PASS |
+| Factorial (Recursive)    | Microprogrammed (Horizontal) |   1399 |           143 |  9.78 |  0.10 |      0 |              0 | PASS |
+| Prime Test (29)          | 4-Stage (Forwarding)       |    173 |           167 |  1.04 |  0.97 |      0 |              3 | PASS |
+| Prime Test (29)          | 4-Stage (Interlocks Only)  |    228 |           167 |  1.37 |  0.73 |     55 |              3 | PASS |
+| Prime Test (29)          | 6-Stage (Forwarding)       |    178 |           167 |  1.07 |  0.94 |      0 |              6 | PASS |
+| Prime Test (29)          | 6-Stage (Interlocks Only)  |    288 |           167 |  1.72 |  0.58 |    110 |              6 | PASS |
+| Prime Test (29)          | Microprogrammed (Horizontal) |   1546 |           167 |  9.26 |  0.11 |      0 |              0 | PASS |
+| Array Sum (5 elements)   | 4-Stage (Forwarding)       |     68 |            58 |  1.17 |  0.85 |      5 |              2 | PASS |
+| Array Sum (5 elements)   | 4-Stage (Interlocks Only)  |     85 |            58 |  1.47 |  0.68 |     22 |              2 | PASS |
+| Array Sum (5 elements)   | 6-Stage (Forwarding)       |     72 |            58 |  1.24 |  0.81 |      5 |              4 | PASS |
+| Array Sum (5 elements)   | 6-Stage (Interlocks Only)  |    115 |            58 |  1.98 |  0.50 |     48 |              4 | PASS |
+| Array Sum (5 elements)   | Microprogrammed (Horizontal) |    565 |            58 |  9.74 |  0.10 |      0 |              0 | PASS |
+| Hazard Stress Test       | 4-Stage (Forwarding)       |     22 |            17 |  1.29 |  0.77 |      1 |              1 | PASS |
+| Hazard Stress Test       | 4-Stage (Interlocks Only)  |     27 |            17 |  1.59 |  0.63 |      6 |              1 | PASS |
+| Hazard Stress Test       | 6-Stage (Forwarding)       |     25 |            17 |  1.47 |  0.68 |      1 |              2 | PASS |
+| Hazard Stress Test       | 6-Stage (Interlocks Only)  |     37 |            17 |  2.18 |  0.46 |     13 |              2 | PASS |
+| Hazard Stress Test       | Microprogrammed (Horizontal) |    166 |            17 |  9.76 |  0.10 |      0 |              0 | PASS |
+| Stack Macro Test         | 4-Stage (Forwarding)       |     22 |            19 |  1.16 |  0.86 |      0 |              0 | PASS |
+| Stack Macro Test         | 4-Stage (Interlocks Only)  |     23 |            19 |  1.21 |  0.83 |      1 |              0 | PASS |
+| Stack Macro Test         | 6-Stage (Forwarding)       |     24 |            19 |  1.26 |  0.79 |      0 |              0 | PASS |
+| Stack Macro Test         | 6-Stage (Interlocks Only)  |     26 |            19 |  1.37 |  0.73 |      2 |              0 | PASS |
+| Stack Macro Test         | Microprogrammed (Horizontal) |    179 |            19 |  9.42 |  0.11 |      0 |              0 | PASS |
+
+========================================================================
+                     ALU ALGORITHMIC TIMING BENCHMARKS                 
+========================================================================
+Adder Algorithm Comparison (5000 ops):
+  - Ripple Carry Adder (RCA, O(n))      : 426 us (Result: 0x00000000)
+  - Carry Select Adder (CSLA, O(sqrt(n))): 964 us (Result: 0x00000000)
+  - Carry Lookahead Adder (CLA, O(log n)): 824 us (Result: 0x00000000)
+
+Multiplier Algorithm Comparison (1000 ops):
+  - Iterative Shift-Add Multiplier (O(n log n)) : 0 us
+  - Radix-2 Booth Multiplier (O(n log n))       : 0 us
+  - Wallace Tree Multiplier (O(log n))          : 3919 us
+
+Divider Algorithm Comparison (1000 ops):
+  - Restoring Division Algorithm     : 0 us
+  - Non-Restoring Division Algorithm : 0 us
+
