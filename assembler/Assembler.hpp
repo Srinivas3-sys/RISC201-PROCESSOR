@@ -362,6 +362,7 @@ public:
             // 9. Standard 3-address ALU instructions: add, sub, mul, div, mod, and, or, xor, lsl, lsr, asr
             else {
                 std::string op = isa::opcodeOf(baseMnemonic);
+                if (baseMnemonic == "rotr") op = isa::OP_ROTS;
                 if (op == isa::OP_INVALID || !isa::isValidOpcode(op)) {
                     throw std::runtime_error("Unknown mnemonic: " + baseMnemonic);
                 }

@@ -127,6 +127,29 @@ public:
             } else {
                 outputLines.push_back(rawLine);
             }
+        } else if (mnemonic == "cbeq" || mnemonic == "cbgt") {
+            // Compare and branch pseudo-instructions:
+            // cbeq rs1, rs2, target -> cmp rs1, rs2 ; beq target
+            // cbgt rs1, rs2, target -> cmp rs1, rs2 ; bgt target
+            std::string rest;
+            std::getline(ss, rest);
+            std::vector<std::string> args;
+            std::string cur;
+            for (char c : rest) {
+                if (c == ',' || std::isspace(c)) {
+                    if (!cur.empty()) { args.push_back(cur); cur.clear(); }
+                } else {
+                    cur += c;
+                }
+            }
+            if (!cur.empty()) args.push_back(cur);
+            if (args.size() >= 3) {
+                std::string brMnemonic = (mnemonic == "cbeq") ? "beq" : "bgt";
+                outputLines.push_back(labelPrefix + "cmp " + args[0] + ", " + args[1] + commentSuffix);
+                outputLines.push_back(brMnemonic + " " + args[2]);
+            } else {
+                outputLines.push_back(rawLine);
+            }
         } else {
             // Not a macro, preserve line as is
             outputLines.push_back(rawLine);

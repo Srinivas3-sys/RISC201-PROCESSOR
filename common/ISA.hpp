@@ -36,36 +36,36 @@ static const std::string REG_RA_BITS   = "1111"; // r15
 // Canonical 5-Bit Binary-String Opcodes
 // =========================================================================
 namespace isa {
-inline const std::string OP_ADD     = "00000"; // 0:  add  rd, rs1, (rs2/imm)
-inline const std::string OP_SUB     = "00001"; // 1:  sub  rd, rs1, (rs2/imm)
-inline const std::string OP_MUL     = "00010"; // 2:  mul  rd, rs1, (rs2/imm)
-inline const std::string OP_DIV     = "00011"; // 3:  div  rd, rs1, (rs2/imm)
-inline const std::string OP_MOD     = "00100"; // 4:  mod  rd, rs1, (rs2/imm)
-inline const std::string OP_CMP     = "00101"; // 5:  cmp  rs1, (rs2/imm)
-inline const std::string OP_AND     = "00110"; // 6:  and  rd, rs1, (rs2/imm)
-inline const std::string OP_OR      = "00111"; // 7:  or   rd, rs1, (rs2/imm)
-inline const std::string OP_NOT     = "01000"; // 8:  not  rd, (rs2/imm)
-inline const std::string OP_MOV     = "01001"; // 9:  mov  rd, (rs2/imm)
-inline const std::string OP_LSL     = "01010"; // 10: lsl  rd, rs1, (rs2/imm)
-inline const std::string OP_LSR     = "01011"; // 11: lsr  rd, rs1, (rs2/imm)
-inline const std::string OP_ASR     = "01100"; // 12: asr  rd, rs1, (rs2/imm)
-inline const std::string OP_NOP     = "01101"; // 13: nop
-inline const std::string OP_LD      = "01110"; // 14: ld   rd, imm[rs1]
-inline const std::string OP_ST      = "01111"; // 15: st   rd, imm[rs1]
-inline const std::string OP_BEQ     = "10000"; // 16: beq  offset
-inline const std::string OP_BGT     = "10001"; // 17: bgt  offset
-inline const std::string OP_B       = "10010"; // 18: b    offset
-inline const std::string OP_CALL    = "10011"; // 19: call offset
-inline const std::string OP_RET     = "10100"; // 20: ret  (PC <- ra)
-inline const std::string OP_MOVZ    = "10101"; // 21: movz (transfer privileged <-> general)
-inline const std::string OP_RETZ    = "10110"; // 22: retz (PC <- oldPC, CPL <- 1)
-inline const std::string OP_MIN     = "10111"; // 23: min  rd, rs1, (rs2/imm)
-inline const std::string OP_MAX     = "11000"; // 24: max  rd, rs1, (rs2/imm)
-inline const std::string OP_ROTS    = "11001"; // 25: rots rd, rs1, (rs2/imm)
-inline const std::string OP_XOR     = "11010"; // 26: xor  rd, rs1, (rs2/imm)
-inline const std::string OP_ABS     = "11011"; // 27: abs  rd, (rs2/imm)
-inline const std::string OP_INVALID = "11111"; // 31: illegal / invalid opcode
-inline const std::string OP_BUBBLE  = OP_NOP;
+static const std::string OP_ADD     = "00000"; // 0:  add  rd, rs1, (rs2/imm)
+static const std::string OP_SUB     = "00001"; // 1:  sub  rd, rs1, (rs2/imm)
+static const std::string OP_MUL     = "00010"; // 2:  mul  rd, rs1, (rs2/imm)
+static const std::string OP_DIV     = "00011"; // 3:  div  rd, rs1, (rs2/imm)
+static const std::string OP_MOD     = "00100"; // 4:  mod  rd, rs1, (rs2/imm)
+static const std::string OP_CMP     = "00101"; // 5:  cmp  rs1, (rs2/imm)
+static const std::string OP_AND     = "00110"; // 6:  and  rd, rs1, (rs2/imm)
+static const std::string OP_OR      = "00111"; // 7:  or   rd, rs1, (rs2/imm)
+static const std::string OP_NOT     = "01000"; // 8:  not  rd, (rs2/imm)
+static const std::string OP_MOV     = "01001"; // 9:  mov  rd, (rs2/imm)
+static const std::string OP_LSL     = "01010"; // 10: lsl  rd, rs1, (rs2/imm)
+static const std::string OP_LSR     = "01011"; // 11: lsr  rd, rs1, (rs2/imm)
+static const std::string OP_ASR     = "01100"; // 12: asr  rd, rs1, (rs2/imm)
+static const std::string OP_NOP     = "01101"; // 13: nop
+static const std::string OP_LD      = "01110"; // 14: ld   rd, imm[rs1]
+static const std::string OP_ST      = "01111"; // 15: st   rd, imm[rs1]
+static const std::string OP_BEQ     = "10000"; // 16: beq  offset
+static const std::string OP_BGT     = "10001"; // 17: bgt  offset
+static const std::string OP_B       = "10010"; // 18: b    offset
+static const std::string OP_CALL    = "10011"; // 19: call offset
+static const std::string OP_RET     = "10100"; // 20: ret  (PC <- ra)
+static const std::string OP_MOVZ    = "10101"; // 21: movz (transfer privileged <-> general)
+static const std::string OP_RETZ    = "10110"; // 22: retz (PC <- oldPC, CPL <- 1)
+static const std::string OP_MIN     = "10111"; // 23: min  rd, rs1, (rs2/imm)
+static const std::string OP_MAX     = "11000"; // 24: max  rd, rs1, (rs2/imm)
+static const std::string OP_ROTS    = "11001"; // 25: rots rd, rs1, (rs2/imm)
+static const std::string OP_XOR     = "11010"; // 26: xor  rd, rs1, (rs2/imm)
+static const std::string OP_ABS     = "11011"; // 27: abs  rd, (rs2/imm)
+static const std::string OP_INVALID = "11111"; // 31: illegal / invalid opcode
+static const std::string OP_BUBBLE  = OP_NOP;
 } // namespace isa
 
 // Bit-String Conversion & Slicing Helper Utilities
