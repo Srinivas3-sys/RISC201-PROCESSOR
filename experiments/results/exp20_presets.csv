@@ -1,6 +1,0 @@
-Preset,L1D_HitRate,DRAM_RowHitRate,AMAT,EAT
-ideal,0.9360,0.5000,3.84,8.34
-simple,0.9360,0.0000,6.12,10.62
-modern,0.9368,0.0000,8.21,12.71
-modern-ddr5,0.9368,0.0000,8.21,12.71
-lecture,0.9368,0.0000,8.14,12.79

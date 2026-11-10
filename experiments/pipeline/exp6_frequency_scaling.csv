@@ -1,7 +1,0 @@
-Benchmark,P4_Cycles,P4_CPI,P4_Time_ns,P6_Cycles,P6_CPI,P6_Time_ns,P6_vs_P4_Speedup
-array_sum.s,68,1.172,136.0,71,1.224,88.8,1.53x
-factorial_iter.s,31,1.292,62.0,35,1.458,43.8,1.42x
-factorial_rec.s,152,1.063,304.0,157,1.098,196.2,1.55x
-hazard_test.s,23,1.353,46.0,26,1.529,32.5,1.42x
-prime_test.s,174,1.042,348.0,178,1.066,222.5,1.56x
-stack_test.s,22,1.158,44.0,24,1.263,30.0,1.47x

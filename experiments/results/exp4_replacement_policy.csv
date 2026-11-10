@@ -1,6 +1,0 @@
-Policy,HitRate,MissRate
-lru,0.6742,0.3258
-fifo,0.6742,0.3258
-random,0.5885,0.4115
-plru,0.6538,0.3462
-srrip,0.5923,0.4077
