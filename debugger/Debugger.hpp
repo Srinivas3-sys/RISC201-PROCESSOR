@@ -48,7 +48,7 @@ public:
     stage6::Pipeline6Stage p6;
     microcode::MicroController mcu;
 
-    SimMode currentSimMode{SimMode::MICROCODED};
+    SimMode currentSimMode{SimMode::PIPELINE_4STAGE};
     std::set<Word> breakpoints;
     std::string loadedProgramSource;
     bool enableScheduling{false};
@@ -204,7 +204,9 @@ public:
         } else if (currentSimMode == SimMode::PIPELINE_6STAGE) {
             std::cout << visualizer::PipelineVisualizer::renderStages(p6.getStageInfo(), p6.cycles);
         } else {
-            showMicroState();
+            std::cout << "\n[Notice] Simulator is currently in MICROPROGRAMMED mode.\n"
+                      << "Showing 4-Stage Pipeline State below. (Type 'mode 4' or 'mode 6' to switch permanently):\n";
+            std::cout << visualizer::PipelineVisualizer::renderStages(p4.getStageInfo(), p4.cycles);
         }
     }
 
@@ -626,6 +628,12 @@ public:
             } else if (cmd == "regs") {
                 showRegisters();
             } else if (cmd == "p" || cmd == "pipeline") {
+                std::string arg;
+                if (ss >> arg) {
+                    if (arg == "4" || arg == "4-stage" || arg == "4stage") setSimMode(SimMode::PIPELINE_4STAGE);
+                    else if (arg == "6" || arg == "6-stage" || arg == "6stage") setSimMode(SimMode::PIPELINE_6STAGE);
+                    else if (arg == "micro") setSimMode(SimMode::MICROCODED);
+                }
                 showPipeline();
             } else if (cmd == "stack") {
                 showStack();
@@ -743,11 +751,17 @@ public:
                 clearBreakpoint(addr);
             } else if (cmd == "mode") {
                 std::string m;
-                ss >> m;
-                if (m == "4") setSimMode(SimMode::PIPELINE_4STAGE);
-                else if (m == "6") setSimMode(SimMode::PIPELINE_6STAGE);
-                else if (m == "micro") setSimMode(SimMode::MICROCODED);
-                else std::cout << "Usage: mode <4|6|micro>\n";
+                if (ss >> m) {
+                    if (m == "4" || m == "4-stage" || m == "4stage" || m == "pipe4") setSimMode(SimMode::PIPELINE_4STAGE);
+                    else if (m == "6" || m == "6-stage" || m == "6stage" || m == "pipe6") setSimMode(SimMode::PIPELINE_6STAGE);
+                    else if (m == "micro" || m == "mcu" || m == "microcode") setSimMode(SimMode::MICROCODED);
+                    else std::cout << "Usage: mode <4 | 6 | micro>\n";
+                } else {
+                    std::cout << "Current mode: "
+                              << (currentSimMode == SimMode::PIPELINE_4STAGE ? "4-Stage Pipeline" :
+                                  currentSimMode == SimMode::PIPELINE_6STAGE ? "6-Stage Pipeline" : "Microprogrammed Control Unit")
+                              << "\nUsage: mode <4 | 6 | micro>\n";
+                }
             } else if (cmd == "micro_mode") {
                 std::string mm;
                 ss >> mm;
