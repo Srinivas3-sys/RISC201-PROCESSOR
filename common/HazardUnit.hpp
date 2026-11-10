@@ -26,6 +26,7 @@ public:
     bool unifiedMemory{false};
 
     // Telemetry
+    uint64_t rawHazardsDetected{0};
     uint64_t loadUseStalls{0};
     uint64_t rawNoFwdStalls{0};
     uint64_t structuralMemStalls{0};
@@ -35,6 +36,7 @@ public:
         : pipelineStages(stages), forwardingMode(fwd), unifiedMemory(unifiedMem) {}
 
     void reset() {
+        rawHazardsDetected = 0;
         loadUseStalls = 0;
         rawNoFwdStalls = 0;
         structuralMemStalls = 0;

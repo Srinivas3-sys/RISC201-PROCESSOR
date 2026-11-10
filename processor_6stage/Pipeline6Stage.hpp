@@ -208,6 +208,8 @@ public:
             if (d.isStore() && forwardingEnabled && !l_MA_RW.isBubble && l_MA_RW.decoded.writesRegister()) {
                 if (d.rd == l_MA_RW.decoded.getDestReg()) {
                     storeData = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
+                    fwdUnit.storeDataForwards++;
+                    hazardUnit.rawHazardsDetected++;
                 }
             }
 
@@ -264,9 +266,13 @@ public:
                 RegId r1 = (d.isRet()) ? REG_RA : d.rs1;
                 if (!l_EX_MA.isBubble && l_EX_MA.decoded.writesRegister() && l_EX_MA.decoded.getDestReg() == r1) {
                     opA = l_EX_MA.aluResult;
+                    fwdUnit.exToExForwards++;
+                    hazardUnit.rawHazardsDetected++;
                     fwdInfo = "r" + std::to_string(r1) + " forwarded from EX_MA -> EX_IN1";
                 } else if (!l_MA_RW.isBubble && l_MA_RW.decoded.writesRegister() && l_MA_RW.decoded.getDestReg() == r1) {
                     opA = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
+                    fwdUnit.memToExForwards++;
+                    hazardUnit.rawHazardsDetected++;
                     fwdInfo = "r" + std::to_string(r1) + " forwarded from MA_RW -> EX_IN1";
                 }
             }
@@ -277,10 +283,14 @@ public:
                 RegId r2 = d.rs2;
                 if (!l_EX_MA.isBubble && l_EX_MA.decoded.writesRegister() && l_EX_MA.decoded.getDestReg() == r2) {
                     opB = l_EX_MA.aluResult;
+                    fwdUnit.exToExForwards++;
+                    hazardUnit.rawHazardsDetected++;
                     if (!fwdInfo.empty()) fwdInfo += " | ";
                     fwdInfo += "r" + std::to_string(r2) + " forwarded from EX_MA -> EX_IN2";
                 } else if (!l_MA_RW.isBubble && l_MA_RW.decoded.writesRegister() && l_MA_RW.decoded.getDestReg() == r2) {
                     opB = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
+                    fwdUnit.memToExForwards++;
+                    hazardUnit.rawHazardsDetected++;
                     if (!fwdInfo.empty()) fwdInfo += " | ";
                     fwdInfo += "r" + std::to_string(r2) + " forwarded from MA_RW -> EX_IN2";
                 }
@@ -291,10 +301,14 @@ public:
             if (d.isStore() && forwardingEnabled) {
                 if (!l_EX_MA.isBubble && l_EX_MA.decoded.writesRegister() && l_EX_MA.decoded.getDestReg() == d.rd) {
                     storeVal = l_EX_MA.aluResult;
+                    fwdUnit.exToExForwards++;
+                    hazardUnit.rawHazardsDetected++;
                     if (!fwdInfo.empty()) fwdInfo += " | ";
                     fwdInfo += "r" + std::to_string(d.rd) + " forwarded from EX_MA -> STORE_DATA";
                 } else if (!l_MA_RW.isBubble && l_MA_RW.decoded.writesRegister() && l_MA_RW.decoded.getDestReg() == d.rd) {
                     storeVal = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
+                    fwdUnit.memToExForwards++;
+                    hazardUnit.rawHazardsDetected++;
                     if (!fwdInfo.empty()) fwdInfo += " | ";
                     fwdInfo += "r" + std::to_string(d.rd) + " forwarded from MA_RW -> STORE_DATA";
                 }
@@ -348,6 +362,7 @@ public:
                 bool mispredicted = (isBranchTaken != wasPredTaken) || (isBranchTaken && branchPC != wasPredTgt);
                 if (mispredicted) {
                     isBranchMispredict = true;
+                    hazardUnit.branchFlushCount++;
                     redirectPC = isBranchTaken ? branchPC : (l_RF_EX.pc + 4);
                 }
             }
@@ -401,6 +416,11 @@ public:
                 stall_RF = true;
                 bubble_EX = true;
                 stallCycles++;
+                if (loadUse) hazardUnit.loadUseStalls++;
+                if (rawNoForward) {
+                    hazardUnit.rawHazardsDetected++;
+                    hazardUnit.rawNoFwdStalls++;
+                }
                 stallReasonLabel = loadUse ? "RAW_LOAD_USE" : "RAW_NOFWD";
                 perfTracker.recordStall(stallReasonLabel);
             } else {
@@ -414,9 +434,21 @@ public:
                     Word wbData = l_MA_RW.decoded.isLoad() ? l_MA_RW.ldResult : l_MA_RW.aluResult;
                     if (l_MA_RW.decoded.isCall()) wbData = l_MA_RW.pc + 4;
 
-                    if (d.readsRs1() && d.rs1 == wbReg) op1 = wbData;
-                    if (d.readsRs2() && d.rs2 == wbReg) op2 = wbData;
-                    if (d.isStore() && d.rd == wbReg) op2 = wbData;
+                    if (d.readsRs1() && d.rs1 == wbReg) {
+                        op1 = wbData;
+                        fwdUnit.wbToExForwards++;
+                        hazardUnit.rawHazardsDetected++;
+                    }
+                    if (d.readsRs2() && d.rs2 == wbReg) {
+                        op2 = wbData;
+                        fwdUnit.wbToExForwards++;
+                        hazardUnit.rawHazardsDetected++;
+                    }
+                    if (d.isStore() && d.rd == wbReg) {
+                        op2 = wbData;
+                        fwdUnit.wbToExForwards++;
+                        hazardUnit.rawHazardsDetected++;
+                    }
                 }
 
                 next_RF_EX.pc = l_ID_RF.pc;

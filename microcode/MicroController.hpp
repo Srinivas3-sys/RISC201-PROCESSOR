@@ -383,7 +383,7 @@ public:
             executeFunctionalArg(hw.args);
         }
 
-        // 6. MicroPC update (µfetch multiplexer)
+        // 6. MicroPC update (ufetch multiplexer)
         uint8_t ufetchMux = hw.getUfetchMux();
         uint16_t nextUpc = upc + 1;
 

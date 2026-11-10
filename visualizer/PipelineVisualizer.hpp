@@ -66,7 +66,7 @@ public:
                 oss << "(empty)";
             }
             if (!st.forwardingInfo.empty()) {
-                oss << "\n             ↳ " << st.forwardingInfo;
+                oss << "\n             -> " << st.forwardingInfo;
             }
             oss << "\n";
         }

@@ -209,6 +209,8 @@ public:
             if (forwardingEnabled && !l_EX_MARW.isBubble && l_EX_MARW.decoded.writesRegister()) {
                 RegId destPrev = l_EX_MARW.decoded.getDestReg();
                 if (d.readsRs1() && d.rs1 == destPrev) {
+                    hazardUnit.rawHazardsDetected++;
+                    fwdUnit.exToExForwards++;
                     fwdInfo = "r" + std::to_string(d.rs1) + " forwarded from EX_MARW -> EX_IN1";
                     // Forwarded value from previous instruction (ALU result or Load result)
                     if (l_EX_MARW.decoded.isLoad()) {
@@ -226,6 +228,8 @@ public:
             if (!l_OF_EX.isImmediate && forwardingEnabled && !l_EX_MARW.isBubble && l_EX_MARW.decoded.writesRegister()) {
                 RegId destPrev = l_EX_MARW.decoded.getDestReg();
                 if (d.readsRs2() && d.rs2 == destPrev) {
+                    hazardUnit.rawHazardsDetected++;
+                    fwdUnit.exToExForwards++;
                     if (!fwdInfo.empty()) fwdInfo += " | ";
                     fwdInfo += "r" + std::to_string(d.rs2) + " forwarded from EX_MARW -> EX_IN2";
                     if (l_EX_MARW.decoded.isLoad()) {
@@ -242,6 +246,8 @@ public:
             Word storeData = l_OF_EX.op2;
             if (d.isStore() && forwardingEnabled && !l_EX_MARW.isBubble && l_EX_MARW.decoded.writesRegister()) {
                 if (d.rd == l_EX_MARW.decoded.getDestReg()) {
+                    hazardUnit.rawHazardsDetected++;
+                    fwdUnit.storeDataForwards++;
                     if (!fwdInfo.empty()) fwdInfo += " | ";
                     fwdInfo += "r" + std::to_string(d.rd) + " forwarded from EX_MARW -> STORE_DATA";
                     if (l_EX_MARW.decoded.isLoad()) {
@@ -300,6 +306,7 @@ public:
                 bool mispredicted = (isBranchTaken != wasPredTaken) || (isBranchTaken && branchPC != wasPredTgt);
                 if (mispredicted) {
                     isBranchMispredict = true;
+                    hazardUnit.branchFlushCount++;
                     redirectPC = isBranchTaken ? branchPC : (l_OF_EX.pc + 4);
                 }
             }
@@ -351,6 +358,11 @@ public:
                 stall_OF = true;
                 bubble_EX = true;
                 stallCycles++;
+                if (loadUseHazard) hazardUnit.loadUseStalls++;
+                if (rawHazardNoForward) {
+                    hazardUnit.rawHazardsDetected++;
+                    hazardUnit.rawNoFwdStalls++;
+                }
                 stallReasonLabel = loadUseHazard ? "RAW_LOAD_USE" : "RAW_NOFWD";
                 perfTracker.recordStall(stallReasonLabel);
             } else {
@@ -367,9 +379,21 @@ public:
                     } else if (l_EX_MARW.decoded.isCall()) {
                         wbData = l_EX_MARW.pc + 4;
                     }
-                    if (d.readsRs1() && d.rs1 == wbReg) op1 = wbData;
-                    if (d.readsRs2() && d.rs2 == wbReg) op2 = wbData;
-                    if (d.isStore() && d.rd == wbReg) op2 = wbData;
+                    if (d.readsRs1() && d.rs1 == wbReg) {
+                        op1 = wbData;
+                        hazardUnit.rawHazardsDetected++;
+                        fwdUnit.wbToExForwards++;
+                    }
+                    if (d.readsRs2() && d.rs2 == wbReg) {
+                        op2 = wbData;
+                        hazardUnit.rawHazardsDetected++;
+                        fwdUnit.wbToExForwards++;
+                    }
+                    if (d.isStore() && d.rd == wbReg) {
+                        op2 = wbData;
+                        hazardUnit.rawHazardsDetected++;
+                        fwdUnit.wbToExForwards++;
+                    }
                 }
 
                 next_OF_EX.pc = l_IF_OF.pc;

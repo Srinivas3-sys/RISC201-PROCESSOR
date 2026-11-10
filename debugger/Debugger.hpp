@@ -465,6 +465,7 @@ public:
     void showHazards() const {
         const auto& hz = (currentSimMode == SimMode::PIPELINE_6STAGE) ? p6.hazardUnit : p4.hazardUnit;
         std::cout << "=== Hazard Unit Telemetry ===\n"
+                  << "RAW Hazards Detected: " << hz.rawHazardsDetected << "\n"
                   << "Load-Use Stalls     : " << hz.loadUseStalls << "\n"
                   << "RAW No-Fwd Stalls   : " << hz.rawNoFwdStalls << "\n"
                   << "Structural Stalls   : " << hz.structuralMemStalls << "\n"

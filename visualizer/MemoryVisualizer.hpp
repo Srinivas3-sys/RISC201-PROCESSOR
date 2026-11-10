@@ -145,7 +145,7 @@ public:
         oss << (steadyState ? "             CPI STACK BREAKDOWN VISUALIZER (STEADY-STATE)              \n"
                             : "                      CPI STACK BREAKDOWN VISUALIZER                    \n");
         oss << "========================================================================\n";
-        oss << "Base CPI:  [████████████████████] 1.000\n";
+        oss << "Base CPI:  [####################] 1.000\n";
 
         uint64_t ret = perf.retiredInstructions;
         uint64_t cyc = perf.totalCycles;
