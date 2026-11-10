@@ -3,20 +3,10 @@
 risc201_sim
 risc201_as
 risc201_disasm
-risc201_eval
 risc201_test
-exp_memory
-exp_pipeline
-audit_cpi
-generate_perf_docs
-lint_docs
 risc201_test_asan
-verify_golden
-lint_isa
 
 # Generated output files
-benchmarks/*.hex
-benchmarks/*.bin
 *.hex
 *.bin
 !tests/golden/*.hex

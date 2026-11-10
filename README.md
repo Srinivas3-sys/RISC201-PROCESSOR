@@ -152,14 +152,14 @@ Configurations can be passed via command line flags or selected via `--mem-prese
 # Build all simulator binaries
 make all
 
-# Run a SimpleRisc assembly benchmark with modern memory hierarchy
-./risc201_sim benchmarks/factorial_iter.s --mem-preset modern
+# Run interactive simulator with custom assembly code prompt
+./risc201_sim
 
 # Run with 6-stage pipeline, full data forwarding, and 2-bit branch prediction
-./risc201_sim benchmarks/prime_test.s --pipeline 6 --forwarding full --branch-policy 2bit
+./risc201_sim --pipeline 6 --forwarding full --branch-policy 2bit
 
-# Run in interactive debugger REPL mode
-./risc201_sim benchmarks/factorial_iter.s -i
+# Run inline assembly code directly
+./risc201_sim -c "mov r1, 5; mov r2, 3; add r3, r1, r2; sub r4, r3, r2" --trace
 ```
 
 ### Interactive REPL Commands
