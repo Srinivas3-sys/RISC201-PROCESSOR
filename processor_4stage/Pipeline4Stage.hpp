@@ -20,41 +20,28 @@
 
 namespace risc201 {
 namespace stage4 {
-
-/**
- * 4-Stage Pipelined Processor: IF -> OF -> EX -> MA_RW
- *
- * Stage Merging Decision:
- *   Memory Access (MA) and Register Writeback (RW) are merged into MA_RW.
- *   Rationale: In SimpleRisc, ALU operations do no memory access, only writeback.
- *   Load operations read from memory and can latch into the register file in the same
- *   phase. Merging eliminates a dedicated pipeline stage, reduces pipeline depth,
- *   decreases branch misprediction penalty to 2 cycles, and achieves lower CPI.
- */
 class Pipeline4Stage {
 public:
-    // Core hardware elements
     RegisterFile regFile;
     Memory memory;
     alu::ALU aluUnit;
 
-    // Architectural state
     Word pc{0};
     Word programSize{0};
     bool halted{false};
     CpuException currentException{};
 
-    // Pipeline Latches
+    // Pipeline Latches (3 latches for 4 stages) 
     Latch_IF_OF l_IF_OF{};
     Latch_OF_EX l_OF_EX{};
     Latch_EX_MARW l_EX_MARW{};
 
-    // Next cycle latch buffers (to model edge-triggered synchronous transfers)
+    // Next cycle latch buffers
     Latch_IF_OF next_IF_OF{};
     Latch_OF_EX next_OF_EX{};
     Latch_EX_MARW next_EX_MARW{};
 
-    // Performance Counters
+    // countings 
     uint64_t cycles{0};
     uint64_t retiredInstructions{0};
     uint64_t stallCycles{0};
@@ -66,10 +53,9 @@ public:
     uint64_t nextInstId{1};
     std::vector<visualizer::CycleSnapshot> cycleHistory;
 
-    // Forwarding Enable toggle (for evaluation comparison)
+    // we are starting with forwarding enabled 
     bool forwardingEnabled{true};
 
-    // Advanced Subsystem Extensions
     memory::MemoryHierarchy memHierarchy;
     bool useMemoryHierarchy{false};
     ForwardingUnit fwdUnit{ForwardingMode::FULL};
@@ -83,6 +69,7 @@ public:
         reset();
     }
 
+// this is reset function which makes all the values to the initial value 
     void reset() {
         regFile.reset();
         memory.reset();
@@ -114,6 +101,7 @@ public:
     }
 
     void setProgramSize(Word sz) { programSize = sz; }
+//enable or disable forwarding function runs here and prints what ever there 
     void setForwarding(bool enable) {
         forwardingEnabled = enable;
         fwdUnit.mode = enable ? ForwardingMode::FULL : ForwardingMode::NONE;
@@ -146,15 +134,13 @@ public:
         setProgramSize(static_cast<Word>(words.size() * 4));
     }
 
-    // Check if pipeline has completely drained (no valid instructions in flight)
+    // Check if pipeline has completely drained or not 
     bool isDrained() const {
         return (programSize > 0 && pc >= programSize) &&
                l_IF_OF.isBubble && l_OF_EX.isBubble && l_EX_MARW.isBubble;
     }
 
-    /**
-     * Execute one clock cycle of the 4-stage pipeline.
-     */
+    // one clock cycle 
     void stepCycle() {
         if (halted) return;
         cycles++;
@@ -170,9 +156,6 @@ public:
         std::string fwdInfo = "";
         std::string stallReasonLabel = "";
 
-        // =========================================================================
-        // STAGE 4: MA_RW (Memory Access and Register Writeback Merged)
-        // =========================================================================
         if (!l_EX_MARW.isBubble) {
             const auto& d = l_EX_MARW.decoded;
             Word writebackData = l_EX_MARW.aluResult;
@@ -216,10 +199,8 @@ public:
 
             retiredInstructions++;
         }
-
-        // =========================================================================
-        // STAGE 3: EX (Execute Stage)
-        // =========================================================================
+        // 3.EX
+     
         if (!l_OF_EX.isBubble) {
             const auto& d = l_OF_EX.decoded;
 
@@ -335,10 +316,8 @@ public:
         } else {
             next_EX_MARW.reset();
         }
-
-        // =========================================================================
-        // STAGE 2: OF (Operand Fetch / Instruction Decode)
-        // =========================================================================
+        
+        // STAGE 2: OF
         if (!l_IF_OF.isBubble) {
             DecodedInst d = assembler::Disassembler::decode(l_IF_OF.instruction, l_IF_OF.pc);
 
@@ -411,9 +390,7 @@ public:
             next_OF_EX.reset();
         }
 
-        // =========================================================================
-        // STAGE 1: IF (Instruction Fetch)
-        // =========================================================================
+        // STAGE 1: IF 
         if (isBranchMispredict) {
             // Branch penalty / flush: Mispredicted branch in EX
             // Younger instruction in OF is flushed (1 cycle branch penalty for 4-stage)
@@ -565,7 +542,6 @@ public:
 
         cycleHistory.push_back(snap);
 
-        // Commit synchronous latch updates
         if (bubble_EX) {
             l_OF_EX.reset();
         } else if (!stall_OF) {
@@ -604,12 +580,10 @@ public:
         info.push_back({"MA_RW", l_EX_MARW.isBubble ? "" : l_EX_MARW.disassembly, l_EX_MARW.pc, l_EX_MARW.isBubble, false, l_EX_MARW.instId});
         return info;
     }
-
     std::string printStats() const {
         std::ostringstream oss;
         double cpi = (retiredInstructions > 0) ? (static_cast<double>(cycles) / retiredInstructions) : 0.0;
         double ipc = (cycles > 0) ? (static_cast<double>(retiredInstructions) / cycles) : 0.0;
-
         oss << "=== 4-Stage Pipeline Statistics ===\n"
             << "Total Clock Cycles      : " << cycles << "\n"
             << "Retired Instructions    : " << retiredInstructions << "\n"
@@ -623,8 +597,6 @@ public:
         return oss.str();
     }
 };
-
-} // namespace stage4
-} // namespace risc201
-
-#endif // RISC201_PIPELINE_4STAGE_HPP
+}
+} 
+#endif 
