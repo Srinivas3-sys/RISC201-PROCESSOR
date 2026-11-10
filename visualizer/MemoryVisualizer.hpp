@@ -145,7 +145,7 @@ public:
         oss << (steadyState ? "             CPI STACK BREAKDOWN VISUALIZER (STEADY-STATE)              \n"
                             : "                      CPI STACK BREAKDOWN VISUALIZER                    \n");
         oss << "========================================================================\n";
-        oss << "Base CPI:  [####################] 1.000\n";
+        oss << std::left << std::setw(28) << "Base Ideal CPI" << ": 1.000\n";
 
         uint64_t ret = perf.retiredInstructions;
         uint64_t cyc = perf.totalCycles;
@@ -154,18 +154,23 @@ public:
             cyc = cyc > warmCycles ? cyc - warmCycles : 0;
         }
 
+        if (!steadyState && perf.pipelineFillCycles > 0 && ret > 0) {
+            double fillDelta = static_cast<double>(perf.pipelineFillCycles) / ret;
+            oss << std::left << std::setw(28) << "Pipeline Fill (Cold-Start)" << ": +"
+                << std::fixed << std::setprecision(3) << fillDelta
+                << " (" << perf.pipelineFillCycles << " cyc)\n";
+        }
+
         uint64_t totalStalls = perf.getTotalStallCycles();
         for (const auto& r : CANONICAL_STALL_REASONS) {
             uint64_t c = perf.stallBreakdown.at(r);
             if (c > 0) {
                 double deltaCpi = (ret > 0) ? (static_cast<double>(c) / ret) : 0.0;
-                size_t barLen = std::min(size_t(30), static_cast<size_t>(deltaCpi * 20.0));
-                if (barLen == 0) barLen = 1;
-                std::string bar(barLen, '#');
+                double pct = (totalStalls > 0) ? (100.0 * c / totalStalls) : 0.0;
 
-                oss << std::left << std::setw(20) << r << " [" << std::setw(20) << bar << "] +"
+                oss << std::left << std::setw(28) << r << ": +"
                     << std::fixed << std::setprecision(3) << deltaCpi
-                    << " (" << c << " cyc, " << (100.0 * c / (totalStalls > 0 ? totalStalls : 1)) << "%)\n";
+                    << " (" << c << " cyc, " << std::fixed << std::setprecision(1) << pct << "%)\n";
             }
         }
         oss << "------------------------------------------------------------------------\n";
