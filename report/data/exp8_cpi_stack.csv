@@ -1,7 +1,0 @@
-Benchmark,Pipeline,Cycles,Retired,CPI,BaseCycles,RawStalls,LoadUseStalls,BranchBubbles
-Factorial (Iterative),4,29,24,1.208,24,0,0,2
-Factorial (Recursive),4,154,143,1.077,143,0,0,8
-Prime Test (29),4,173,167,1.036,167,0,0,3
-Array Sum (5 elements),4,68,58,1.172,58,0,5,2
-Hazard Stress Test,4,22,17,1.294,17,0,1,1
-Stack Macro Test,4,22,19,1.158,19,0,0,0
