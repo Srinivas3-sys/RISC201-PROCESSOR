@@ -9,8 +9,6 @@ risc201_test_asan
 # Generated output files
 *.hex
 *.bin
-!tests/golden/*.hex
-!tests/golden/*.bin
 
 # Object files
 *.o
